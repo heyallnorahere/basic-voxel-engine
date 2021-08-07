@@ -1,0 +1,21 @@
+name: build
+on: push
+jobs:
+  build:
+    runs-on: ${{ matrix.os-name }}-latest
+    strategy:
+      matrix:
+        os-name: [ windows, ubuntu, macos ]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: configure
+        shell: bash
+        run: |
+          cmake . -B build -DCMAKE_BUILD_TYPE=Release
+      - name: build!
+        shell: bash
+        run: |
+          cmake --build build --config Release -j 8
