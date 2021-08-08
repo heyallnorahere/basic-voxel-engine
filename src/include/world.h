@@ -14,6 +14,8 @@ namespace bve {
     class world {
     public:
         world(glm::ivec3 size);
+        world(const world&) = delete;
+        world& operator=(const world&) = delete;
     private:
         glm::ivec3 m_size;
         std::unordered_map<glm::ivec3, uint8_t, hash_vector<3, int32_t>> m_voxel_types;

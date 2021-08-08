@@ -1,5 +1,6 @@
 #include "bve_pch.h"
 #include "world.h"
+#include "registry.h"
 namespace bve {
     world::world(glm::ivec3 size) {
         this->m_size = size;
