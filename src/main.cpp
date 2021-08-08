@@ -2,6 +2,7 @@
 #include "window.h"
 #include "world.h"
 #include "block.h"
+#include "shader.h"
 using callback = std::function<void()>;
 static void update() {
     // todo: update
@@ -14,6 +15,7 @@ static void render(callback clear, callback swap_buffers) {
 static void main_loop(std::shared_ptr<bve::window> window) {
     callback clear = [window]() { window->clear(); };
     callback swap_buffers = [window]() { window->swap_buffers(); };
+    auto shader = bve::shader::create({ { "assets/shaders/vertex.glsl", GL_VERTEX_SHADER }, { "assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER } });
     while (!window->should_close()) {
         update();
         render(clear, swap_buffers);

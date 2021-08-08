@@ -17,6 +17,7 @@
 #include <stdexcept>
 #include <functional>
 #include <filesystem>
+#include <initializer_list>
 // saving this for later
 /*
 #ifdef BVE_PLATFORM_WINDOWS
