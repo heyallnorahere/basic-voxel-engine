@@ -16,6 +16,7 @@ namespace bve {
         shader(const std::vector<intermediate_shader_source>& sources);
         void create();
         void destroy();
+        GLuint create_shader(const std::string& path, GLenum type);
         GLuint m_program;
         std::vector<intermediate_shader_source> m_sources;
     };

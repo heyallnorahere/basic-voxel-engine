@@ -3,6 +3,7 @@
 #include "world.h"
 #include "block.h"
 #include "shader.h"
+#include "mesh_factory.h"
 using callback = std::function<void()>;
 static void update() {
     // todo: update

@@ -18,6 +18,8 @@
 #include <functional>
 #include <filesystem>
 #include <initializer_list>
+#include <utility>
+#include <tuple>
 // saving this for later
 /*
 #ifdef BVE_PLATFORM_WINDOWS
