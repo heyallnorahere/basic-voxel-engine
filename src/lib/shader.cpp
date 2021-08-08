@@ -12,6 +12,19 @@ namespace bve {
         return contents.str();
     }
     static GLuint create_shader(const std::string& path, GLenum type) {
+        std::string shader_type;
+        switch (type) {
+        case GL_VERTEX_SHADER:
+            shader_type = "vertex";
+            break;
+        case GL_FRAGMENT_SHADER:
+            shader_type = "fragment";
+            break;
+        default:
+            shader_type = "other";
+            break;
+        }
+        spdlog::info("[bve::shader] compiling " + shader_type + " shader...");
         std::string source = read_file(path);
         const char* src = source.c_str();
         GLuint id = glCreateShader(type);
@@ -22,19 +35,9 @@ namespace bve {
         if (!status) {
             GLchar info_log[512];
             glGetShaderInfoLog(id, 512, nullptr, info_log);
-            std::string shader_type;
-            switch (type) {
-            case GL_VERTEX_SHADER:
-                shader_type = "Vertex";
-                break;
-            case GL_FRAGMENT_SHADER:
-                shader_type = "Fragment";
-                break;
-            default:
-                shader_type = "Other";
-                break;
-            }
-            spdlog::error(shader_type + " shader: " + info_log);
+            spdlog::error("[bve::shader] error compiling " + shader_type + " shader: " + info_log);
+        } else {
+            spdlog::info("[bve::shader] successfully compiled " + shader_type + " shader!");
         }
         return id;
     }
@@ -76,7 +79,7 @@ namespace bve {
         if (!status) {
             GLchar info_log[512];
             glGetProgramInfoLog(this->m_program, 512, nullptr, info_log);
-            throw std::runtime_error("Shader program: " + std::string(info_log));
+            throw std::runtime_error("[bve::shader] error linking shader program: " + std::string(info_log));
         }
     }
     void shader::destroy() {
