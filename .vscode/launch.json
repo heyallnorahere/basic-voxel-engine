@@ -1,0 +1,34 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "launch (gdb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/basic-voxel-engine",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/src",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "launch (lldb)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/src/basic-voxel-engine",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/src",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "preLaunchTask": "build"
+        }
+    ]
+}
