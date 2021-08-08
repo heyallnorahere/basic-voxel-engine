@@ -1,5 +1,7 @@
 #include "bve_pch.h"
 #include "window.h"
+#include "world.h"
+#include "block.h"
 using callback = std::function<void()>;
 static void update() {
     // todo: update
@@ -21,6 +23,7 @@ static void main_loop(std::shared_ptr<bve::window> window) {
 int main(int argc, const char** argv) {
     try {
         auto window = std::make_shared<bve::window>(800, 600);
+        bve::block::register_all();
         main_loop(window);
         return EXIT_SUCCESS;
     } catch (std::runtime_error exc) {
