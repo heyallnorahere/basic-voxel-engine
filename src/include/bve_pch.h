@@ -15,3 +15,4 @@
 #include <list>
 #include <typeinfo>
 #include <stdexcept>
+#include <functional>
