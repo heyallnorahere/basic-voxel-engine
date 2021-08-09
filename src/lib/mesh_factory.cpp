@@ -7,13 +7,9 @@ namespace bve {
         glm::vec3 position, normal;
         glm::vec2 uv;
     };
-    struct block_data {
-        GLint texture;
-        glm::mat4 model;
-    };
     struct full_vertex {
         vertex vertex_data;
-        block_data block_data;
+        GLint texture;
     };
     struct cluster_member {
         std::vector<glm::ivec3> surroundings;
@@ -92,22 +88,25 @@ namespace bve {
         return clusters;
     }
     void mesh_factory::create_mesh(std::vector<processed_voxel> voxels, GLuint& vertex_buffer, GLuint& index_buffer, size_t& index_count) {
-        
-
+        std::vector<full_vertex> vertices;
+        std::vector<uint32_t> indices;
+        // todo: populate vertex and index vectors
         glGenBuffers(1, &vertex_buffer);
         glGenBuffers(1, &index_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vertices.size() * sizeof(full_vertex)), vertices.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(indices.size() * sizeof(uint32_t)), indices.data(), GL_STATIC_DRAW);
+        index_count = indices.size();
     }
     std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
         size_t stride = sizeof(full_vertex);
+        size_t vertex_offset = offsetof(full_vertex, vertex_data);
         return {
-            { stride, offsetof(vertex, position), vertex_attribute_type::VEC3, false },
-            { stride, offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
-            { stride, offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
-            { stride, offsetof(block_data, texture) + sizeof(vertex), vertex_attribute_type::INT, false },
-            { stride, offsetof(block_data, model) + sizeof(vertex), vertex_attribute_type::MAT4, false }
+            { stride, vertex_offset + offsetof(vertex, position), vertex_attribute_type::VEC3, false },
+            { stride, vertex_offset + offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
+            { stride, vertex_offset + offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
+            { stride, offsetof(full_vertex, texture), vertex_attribute_type::INT, false }
         };
     }
 }

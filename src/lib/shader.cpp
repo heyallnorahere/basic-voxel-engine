@@ -70,7 +70,7 @@ namespace bve {
             shader_type = "other";
             break;
         }
-        spdlog::info("[shader] compiling " + shader_type + " shader...");
+        spdlog::info("[shader] compiling " + shader_type + " shader... (" + path + ")");
         std::string source = read_file(path);
         const char* src = source.c_str();
         GLuint id = glCreateShader(type);
