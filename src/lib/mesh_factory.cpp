@@ -15,15 +15,35 @@ namespace bve {
         vertex vertex_data;
         block_data block_data;
     };
+    struct cluster_member {
+        std::vector<glm::ivec3> surroundings;
+        uint32_t cluster_index;
+    };
+    using cluster_member_map = std::unordered_map<glm::ivec3, cluster_member, hash_vector<3, int32_t>>;
+    static void walk(cluster_member_map& map, glm::ivec3 position, uint32_t& cluster_count) {
+        cluster_member& member = map[position];
+        if (member.cluster_index != (uint32_t)-1) {
+            return;
+        }
+        for (const auto& offset : member.surroundings) {
+            glm::ivec3 neighbor_position = position + offset;
+            const auto& neighbor = map[neighbor_position];
+            if (neighbor.cluster_index != (uint32_t)-1) {
+                member.cluster_index = neighbor.cluster_index;
+                break;
+            }
+        }
+        if (member.cluster_index == (uint32_t)-1) {
+            member.cluster_index = cluster_count++;
+        }
+        for (const auto& offset : member.surroundings) {
+            walk(map, position + offset, cluster_count);
+        }
+    }
     mesh_factory::mesh_factory(std::shared_ptr<world> _world) {
         this->m_world = _world;
     }
     std::vector<std::vector<mesh_factory::processed_voxel>> mesh_factory::get_clusters() {
-        struct cluster_member {
-            std::vector<glm::ivec3> surroundings;
-            uint32_t cluster_number;
-        };
-        uint32_t cluster_count = 0;
         auto& block_register = registry::get().get_register<block>();
         std::vector<glm::ivec3> offsets = {
             glm::ivec3(-1, 0, 0), glm::ivec3(1, 0, 0),
@@ -55,12 +75,20 @@ namespace bve {
                         }
                         member.surroundings.push_back(offset);
                     }
-                    member.cluster_number = (uint32_t)-1;
+                    member.cluster_index = (uint32_t)-1;
                     cluster_members.insert({ position, member });
                 }
             }
         }
-        std::vector<std::vector<processed_voxel>> clusters;
+        uint32_t cluster_count = 0;
+        for (const std::pair<glm::ivec3, cluster_member>& pair : cluster_members) {
+            walk(cluster_members, pair.first, cluster_count);
+        }
+        std::vector<std::vector<processed_voxel>> clusters(cluster_count);
+        // after that iteration, iterate the map again to get the clusters
+        for (const std::pair<glm::ivec3, cluster_member>& pair : cluster_members) {
+            clusters[pair.second.cluster_index].push_back({ pair.first, pair.second.surroundings });
+        }
         return clusters;
     }
     void mesh_factory::create_mesh(std::vector<processed_voxel> voxels, GLuint& vertex_buffer, GLuint& index_buffer, size_t& index_count) {

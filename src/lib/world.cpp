@@ -24,6 +24,10 @@ namespace bve {
                 }
             }
         }
+        // temporary
+        this->m_voxel_types[glm::ivec3(0)] = 1;
+        this->m_voxel_types[glm::ivec3(1, 1, 0)] = 1;
+        this->m_voxel_types[glm::ivec3(1, 0, 0)] = 1;
     }
     void world::update() {
         // todo: update

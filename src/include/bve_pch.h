@@ -13,6 +13,7 @@
 #include <sstream>
 #include <cstdint>
 #include <stddef.h>
+#include <map>
 #include <unordered_map>
 #include <memory>
 #include <vector>
