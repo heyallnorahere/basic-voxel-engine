@@ -48,7 +48,7 @@ int main(int argc, const char** argv) {
         block::register_all();
         main_loop(window_, world_);
         return EXIT_SUCCESS;
-    } catch (std::runtime_error exc) {
+    } catch (const std::runtime_error& exc) {
         spdlog::error(exc.what());
         return EXIT_FAILURE;
     }
