@@ -11,13 +11,55 @@ namespace bve {
             return hash;
         }
     };
+    class world;
+    class entity {
+    public:
+        entity(const entity& other);
+        entity& operator=(const entity& other);
+        template<typename T, typename... Args> T& add_component(Args&&... args);
+        template<typename T> T& get_component();
+        template<typename T> void remove_component();
+        template<typename T> bool has_component();
+    private:
+        entity(entt::entity handle, world* world_);
+        entt::entity m_handle;
+        world* m_world;
+        friend class world;
+    };
     class world {
     public:
         world(glm::ivec3 size);
         world(const world&) = delete;
         world& operator=(const world&) = delete;
+        void update();
+        entity create();
     private:
         glm::ivec3 m_size;
         std::unordered_map<glm::ivec3, uint8_t, hash_vector<3, int32_t>> m_voxel_types;
+        entt::registry m_registry;
+        friend class entity;
     };
+    template<typename T, typename... Args> inline T& entity::add_component(Args&&... args) {
+        if (this->has_component<T>()) {
+            throw std::runtime_error("[entity] a component of the specified type already exists on this entity!");
+        }
+        T& component = this->m_world->m_registry.emplace<T>(this->m_handle, std::forward<Args>(args)...);
+        // todo: call on_component_added or something
+        return component;
+    }
+    template<typename T> inline T& entity::get_component() {
+        if (!this->has_component<T>()) {
+            throw std::runtime_error("[entity] a component of the specified type does not exist on this entity!");
+        }
+        return this->m_world->m_registry.get<T>(this->m_handle);
+    }
+    template<typename T> inline void entity::remove_component() {
+        if (!this->has_component<T>()) {
+            throw std::runtime_error("[entity] a component of the specified type does not exist on this entity!");
+        }
+        this->m_world->m_registry.remove<T>(this->m_handle);
+    }
+    template<typename T> inline bool entity::has_component() {
+        return this->m_world->m_registry.all_of<T>(this->m_handle);
+    }
 }

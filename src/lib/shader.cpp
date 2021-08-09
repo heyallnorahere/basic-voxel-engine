@@ -87,4 +87,7 @@ namespace bve {
         }
         return id;
     }
+    GLint shader::get_location(const std::string& name) {
+        return glGetUniformLocation(this->m_program, name.c_str());
+    }
 }

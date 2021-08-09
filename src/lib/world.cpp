@@ -2,6 +2,19 @@
 #include "world.h"
 #include "registry.h"
 namespace bve {
+    entity::entity(const entity& other) {
+        this->m_handle = other.m_handle;
+        this->m_world = other.m_world;
+    }
+    entity& entity::operator=(const entity& other) {
+        this->m_handle = other.m_handle;
+        this->m_world = other.m_world;
+        return *this;
+    }
+    entity::entity(entt::entity handle, world* world_) {
+        this->m_handle = handle;
+        this->m_world = world_;
+    }
     world::world(glm::ivec3 size) {
         this->m_size = size;
         for (int32_t x = 0; x < this->m_size.x; x++) {
@@ -11,5 +24,13 @@ namespace bve {
                 }
             }
         }
+    }
+    void world::update() {
+        // todo: update
+    }
+    entity world::create() {
+        entity ent = entity(this->m_registry.create(), this);
+        // todo: add transform component
+        return ent;
     }
 }
