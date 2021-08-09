@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <list>
+#include <array>
 #include <typeinfo>
 #include <stdexcept>
 #include <functional>

@@ -5,15 +5,15 @@
 namespace bve {
     struct vertex {
         glm::vec3 position, normal;
-        glm::vec2 uv;
-    };
-    struct full_vertex {
-        vertex vertex_data;
-        GLint texture;
+        glm::vec2 uv, texture_offset;
     };
     struct cluster_member {
         std::vector<glm::ivec3> surroundings;
         uint32_t cluster_index;
+    };
+    struct face {
+        std::vector<vertex> vertices;
+        glm::vec3 normal;
     };
     using cluster_member_map = std::unordered_map<glm::ivec3, cluster_member, hash_vector<3, int32_t>>;
     static void walk(cluster_member_map& map, glm::ivec3 position, uint32_t& cluster_count) {
@@ -35,6 +35,55 @@ namespace bve {
         for (const auto& offset : member.surroundings) {
             walk(map, position + offset, cluster_count);
         }
+    }
+    template<typename T> static bool equal(const T& v1, const T& v2) {
+        return v1 == v2;
+    }
+    template<typename T> static bool contains(const std::vector<T>& container, const T& search_for, std::function<bool(const T&, const T&)> comparer = equal<T>) {
+        for (const auto& element : container) {
+            if (comparer(element, search_for)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    static glm::vec2 get_euler_angles(glm::vec3 direction) {
+        glm::vec2 angle;
+        angle.x = asin(direction.y);
+        float factor = cos(angle.x);
+        angle.y = atan2(direction.z / factor, direction.x / factor);
+        return glm::degrees(angle);
+    }
+    static std::vector<vertex> convert_face(const face& f, glm::vec3 new_normal) {
+        glm::vec2 offset = get_euler_angles(new_normal) - get_euler_angles(f.normal);
+        glm::mat4 rotation_matrix = glm::rotate(glm::mat4(1.f), glm::radians(1.f), glm::vec3(offset, 0.f));
+        std::vector<vertex> vertices;
+        for (const auto& v : f.vertices) {
+            vertices.push_back({ glm::vec3(rotation_matrix * glm::vec4(v.position, 1.f)), new_normal, v.uv });
+        }
+        return vertices;
+    }
+    static std::unordered_map<glm::ivec3, std::vector<vertex>, hash_vector<3, int32_t>> get_faces() {
+        std::vector<glm::ivec3> offsets = {
+            glm::ivec3(1, 0, 0), glm::ivec3(-1, 0, 0),
+            glm::ivec3(0, 1, 0), glm::ivec3(0, -1, 0),
+            glm::ivec3(0, 0, 1), glm::ivec3(0, 0, -1)
+        };
+        face f = {
+            {
+                { glm::vec3(0.5f, -0.5f,  0.5f), glm::vec3(0.f), glm::vec2(0.f, 0.f) },
+                { glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.f), glm::vec2(1.f, 0.f) },
+                { glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(0.f), glm::vec2(1.f, 1.f) },
+                { glm::vec3(0.5f,  0.5f,  0.5f), glm::vec3(0.f), glm::vec2(0.f, 1.f) }
+            },
+            glm::vec3(1.f, 0.f, 0.f)
+        };
+        std::unordered_map<glm::ivec3, std::vector<vertex>, hash_vector<3, int32_t>> faces;
+        for (const auto& offset : offsets) {
+            glm::vec3 normal = glm::vec3(offset);
+            faces[offset] = convert_face(f, normal);
+        }
+        return faces;
     }
     mesh_factory::mesh_factory(std::shared_ptr<world> _world) {
         this->m_world = _world;
@@ -88,25 +137,42 @@ namespace bve {
         return clusters;
     }
     void mesh_factory::create_mesh(std::vector<processed_voxel> voxels, GLuint& vertex_buffer, GLuint& index_buffer, size_t& index_count) {
-        std::vector<full_vertex> vertices;
+        auto faces = get_faces();
+        std::vector<vertex> vertices;
         std::vector<uint32_t> indices;
-        // todo: populate vertex and index vectors
+        std::vector<uint32_t> face_indices = {
+            0, 1, 3,
+            1, 2, 3
+        };
+        for (const auto& voxel : voxels) {
+            for (const std::pair<glm::ivec3, std::vector<vertex>>& pair : faces) {
+                if (contains(voxel.surroundings, pair.first)) {
+                    continue;
+                }
+                size_t index_offset = vertices.size();
+                vertices.insert(vertices.end(), pair.second.begin(), pair.second.end());
+                std::vector<uint32_t> current_indices(face_indices.size());
+                std::copy(face_indices.begin(), face_indices.end(), current_indices.begin());
+                for (uint32_t& index : current_indices) {
+                    index += (uint32_t)index_offset;
+                }
+                indices.insert(indices.end(), current_indices.begin(), current_indices.end());
+            }
+        }
         glGenBuffers(1, &vertex_buffer);
         glGenBuffers(1, &index_buffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vertices.size() * sizeof(full_vertex)), vertices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vertices.size() * sizeof(vertex)), vertices.data(), GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(indices.size() * sizeof(uint32_t)), indices.data(), GL_STATIC_DRAW);
         index_count = indices.size();
     }
     std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
-        size_t stride = sizeof(full_vertex);
-        size_t vertex_offset = offsetof(full_vertex, vertex_data);
         return {
-            { stride, vertex_offset + offsetof(vertex, position), vertex_attribute_type::VEC3, false },
-            { stride, vertex_offset + offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
-            { stride, vertex_offset + offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
-            { stride, offsetof(full_vertex, texture), vertex_attribute_type::INT, false }
+            { sizeof(vertex), offsetof(vertex, position), vertex_attribute_type::VEC3, false },
+            { sizeof(vertex), offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
+            { sizeof(vertex), offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
+            { sizeof(vertex), offsetof(vertex, texture_offset), vertex_attribute_type::VEC2, false }
         };
     }
 }
