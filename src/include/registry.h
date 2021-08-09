@@ -2,6 +2,7 @@
 namespace bve {
     struct namespaced_name {
     public:
+        namespaced_name() = default;
         namespaced_name(const char* full_name) {
             this->convert(full_name);
         }
@@ -97,6 +98,14 @@ namespace bve {
             auto it = this->m_objects.begin();
             std::advance(it, index);
             return *it;
+        }
+        std::optional<namespaced_name> get_name(size_type index) {
+            for (const auto& pair : this->m_name_map) {
+                if (pair.second == index) {
+                    return pair.first;
+                }
+            }
+            return nullptr;
         }
         typename std::list<element_type>::iterator begin() {
             return this->m_objects.begin();

@@ -1,4 +1,5 @@
 #pragma once
+#include "registry.h"
 namespace bve {
     template<glm::length_t L, typename T> struct hash_vector {
         using vector = glm::vec<L, T>;
@@ -33,6 +34,9 @@ namespace bve {
         world& operator=(const world&) = delete;
         void update();
         entity create();
+        glm::ivec3 get_size();
+        void get_block(glm::ivec3 position, namespaced_name& block_type);
+        void get_block(glm::ivec3 position, size_t& block_type);
     private:
         glm::ivec3 m_size;
         std::unordered_map<glm::ivec3, uint8_t, hash_vector<3, int32_t>> m_voxel_types;

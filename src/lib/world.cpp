@@ -1,6 +1,6 @@
 #include "bve_pch.h"
 #include "world.h"
-#include "registry.h"
+#include "block.h"
 namespace bve {
     entity::entity(const entity& other) {
         this->m_handle = other.m_handle;
@@ -32,5 +32,29 @@ namespace bve {
         entity ent = entity(this->m_registry.create(), this);
         // todo: add transform component
         return ent;
+    }
+    glm::ivec3 world::get_size() {
+        return this->m_size;
+    }
+    void world::get_block(glm::ivec3 position, namespaced_name& block_type) {
+        if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
+            throw std::runtime_error("[world] could not find a block at the specified position!");
+        }
+        auto& block_register = registry::get().get_register<block>();
+        uint8_t index = this->m_voxel_types[position];
+        auto name = block_register.get_name((size_t)index);
+        if (name) {
+            block_type = *name;
+        } else {
+            throw std::runtime_error("[world] could not find the namespaced id of the specified block");
+        }
+    }
+    void world::get_block(glm::ivec3 position, size_t& block_type) {
+        if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
+            throw std::runtime_error("[world] could not find a block at the specified position!");
+        }
+        auto& block_register = registry::get().get_register<block>();
+        uint8_t index = this->m_voxel_types[position];
+        block_type = (size_t)index;        
     }
 }
