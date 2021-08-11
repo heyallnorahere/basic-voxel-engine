@@ -1,16 +1,8 @@
 #include "bve_pch.h"
 #include "world.h"
 #include "block.h"
+#include "components.h"
 namespace bve {
-    entity::entity(const entity& other) {
-        this->m_handle = other.m_handle;
-        this->m_world = other.m_world;
-    }
-    entity& entity::operator=(const entity& other) {
-        this->m_handle = other.m_handle;
-        this->m_world = other.m_world;
-        return *this;
-    }
     entity::entity(entt::entity handle, world* world_) {
         this->m_handle = handle;
         this->m_world = world_;
@@ -34,7 +26,7 @@ namespace bve {
     }
     entity world::create() {
         entity ent = entity(this->m_registry.create(), this);
-        // todo: add transform component
+        ent.add_component<components::transform_component>();
         return ent;
     }
     glm::ivec3 world::get_size() {

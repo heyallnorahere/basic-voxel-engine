@@ -5,8 +5,15 @@
 #include "shader.h"
 #include "mesh_factory.h"
 #include "renderer.h"
+#include "components.h"
 namespace bve {
     using callback = std::function<void()>;
+    static entity player;
+    static void create_player(std::shared_ptr<world> world_) {
+        player = world_->create();
+        player.get_component<components::transform_component>().translation = glm::vec3(5.f);
+        player.add_component<components::camera_component>().direction = glm::vec3(-1.f);
+    }
     static void update(std::shared_ptr<world> world_) {
         // todo: update
     }
@@ -22,9 +29,29 @@ namespace bve {
             renderer_->add_mesh(cmdlist, vertex_buffer, index_buffer, index_count);
         }
         renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
-        renderer_->set_camera_data(glm::vec3(0.f, 0.f, 2.f), glm::vec3(0.f, 0.f, -2.f), aspect_ratio);
+        renderer_->set_camera_data(player, aspect_ratio);
         renderer_->render(cmdlist, shader_);
         renderer_->destroy_command_list(cmdlist);
+        {
+            auto& transform = player.get_component<components::transform_component>();
+            auto& camera = player.get_component<components::camera_component>();
+            static bool lock_camera = false;
+            static std::shared_ptr<glm::vec3> original_direction;
+            if (lock_camera) {
+                if (!original_direction) {
+                    original_direction = std::make_shared<glm::vec3>(camera.direction);
+                }
+                camera.direction = glm::normalize(-transform.translation);
+            } else if (original_direction) {
+                camera.direction = *original_direction;
+                original_direction.reset();
+            }
+            ImGui::Begin("Player control");
+            ImGui::DragFloat3("Position", &transform.translation.x);
+            ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
+            ImGui::Checkbox("Lock camera", &lock_camera);
+            ImGui::End();
+        }
         swap_buffers();
     }
     static void main_loop(std::shared_ptr<window> window_, std::shared_ptr<world> world_) {
@@ -32,6 +59,7 @@ namespace bve {
         callback swap_buffers = [window_]() { window_->swap_buffers(); };
         auto shader_ = shader::create({ { "assets/shaders/vertex.glsl", GL_VERTEX_SHADER }, { "assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER } });
         auto renderer_ = std::make_shared<renderer>();
+        create_player(world_);
         while (!window_->should_close()) {
             window_->new_frame();
             update(world_);

@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "shader.h"
 #include "renderer.h"
+#include "components.h"
 namespace bve {
     struct command_list {
         GLuint vertex_array_object;
@@ -105,8 +106,16 @@ namespace bve {
         glBindVertexArray(0);
         shader_->unbind();
     }
-    void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up) {
-        this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, 0.1f, 100.f); // todo: add more arguments to function argument list
+    void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
+        this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane); // todo: add more arguments to function argument list
         this->m_view = glm::lookAt(position, position + direction, up);
+    }
+    void renderer::set_camera_data(entity camera_entity, float aspect_ratio) {
+        if (!camera_entity.has_component<components::camera_component>()) {
+            throw std::runtime_error("[renderer] the given entity does not have a camera component");
+        }
+        const auto& transform = camera_entity.get_component<components::transform_component>();
+        const auto& camera = camera_entity.get_component<components::camera_component>();
+        this->set_camera_data(transform.translation, camera.direction, aspect_ratio, camera.up, camera.near_plane, camera.far_plane);
     }
 }

@@ -49,17 +49,19 @@ namespace bve {
     }
     static glm::vec2 get_euler_angles(glm::vec3 direction) {
         glm::vec2 angle;
-        angle.x = asin(direction.y);
+        angle.x = -asin(direction.y);
         float factor = cos(angle.x);
-        angle.y = atan2(direction.z / factor, direction.x / factor);
-        return glm::degrees(angle);
+        angle.y = atan2(direction.x / factor, direction.z / factor);
+        return angle;
     }
     static std::vector<vertex> convert_face(const face& f, glm::vec3 new_normal) {
         glm::vec2 offset = get_euler_angles(new_normal) - get_euler_angles(f.normal);
-        glm::mat4 rotation_matrix = glm::rotate(glm::mat4(1.f), glm::radians(1.f), glm::vec3(offset, 0.f));
+        glm::mat4 rotation_matrix = glm::toMat4(glm::quat(glm::vec3(offset, 0.f)));
         std::vector<vertex> vertices;
-        for (const auto& v : f.vertices) {
-            vertices.push_back({ glm::vec3(rotation_matrix * glm::vec4(v.position, 1.f)), new_normal, v.uv });
+        for (vertex v : f.vertices) {
+            v.position = rotation_matrix * glm::vec4(v.position, 1.f);
+            v.normal = new_normal;
+            vertices.push_back(v);
         }
         return vertices;
     }
@@ -71,12 +73,12 @@ namespace bve {
         };
         face f = {
             {
-                { glm::vec3(0.5f, -0.5f,  0.5f), glm::vec3(0.f), glm::vec2(0.f, 0.f) },
-                { glm::vec3(0.5f, -0.5f, -0.5f), glm::vec3(0.f), glm::vec2(1.f, 0.f) },
-                { glm::vec3(0.5f,  0.5f, -0.5f), glm::vec3(0.f), glm::vec2(1.f, 1.f) },
-                { glm::vec3(0.5f,  0.5f,  0.5f), glm::vec3(0.f), glm::vec2(0.f, 1.f) }
+                { glm::vec3(-0.5f, -0.5f, 0.5f), glm::vec3(0.f), glm::vec2(0.f, 0.f) },
+                { glm::vec3( 0.5f, -0.5f, 0.5f), glm::vec3(0.f), glm::vec2(1.f, 0.f) },
+                { glm::vec3( 0.5f,  0.5f, 0.5f), glm::vec3(0.f), glm::vec2(1.f, 1.f) },
+                { glm::vec3(-0.5f,  0.5f, 0.5f), glm::vec3(0.f), glm::vec2(0.f, 1.f) }
             },
-            glm::vec3(1.f, 0.f, 0.f)
+            glm::vec3(0.f, 0.f, 1.f)
         };
         std::unordered_map<glm::ivec3, std::vector<vertex>, hash_vector<3, int32_t>> faces;
         for (const auto& offset : offsets) {
