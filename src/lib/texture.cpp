@@ -4,6 +4,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 namespace bve {
+    std::vector<uint8_t> texture::load_image(const std::filesystem::path& path, int32_t& width, int32_t& height, int32_t& channels) {
+        std::string string_path = path.string();
+        uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 0);
+        if (!data_pointer) {
+            throw std::runtime_error("[texture] could not open file: " + string_path);
+        }
+        size_t buffer_size = (size_t)width * height * channels;
+        std::vector<uint8_t> data(buffer_size);
+        std::copy(data_pointer, data_pointer + buffer_size, data.begin());
+        stbi_image_free(data_pointer);
+        return data;
+    }
     texture::texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, const texture_settings& settings) {
         this->create(data, width, height, channels, settings);
     }
@@ -21,6 +33,12 @@ namespace bve {
         }
         glActiveTexture(GL_TEXTURE0 + (GLenum)slot);
         glBindTexture(this->m_target, this->m_id);
+    }
+    glm::ivec2 texture::get_size() const {
+        return this->m_size;
+    }
+    int32_t texture::get_channels() const {
+        return this->m_channels;
     }
     void texture::create(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, const texture_settings& settings) {
         this->m_target = settings.target != 0 ? settings.target : GL_TEXTURE_2D;
@@ -53,17 +71,12 @@ namespace bve {
         GLenum format = settings.format != 0 ? settings.format : (GLenum)internal_format;
         glTexImage2D(this->m_target, 0, internal_format, (GLsizei)width, (GLsizei)height, 0, format, GL_UNSIGNED_BYTE, data.data());
         glGenerateMipmap(this->m_target);
+        this->m_size = glm::ivec2(width, height);
+        this->m_channels = channels;
     }
     void texture::create(const std::string& path, const texture_settings& settings) {
         int32_t width, height, channels;
-        uint8_t* data_pointer = stbi_load(path.c_str(), &width, &height, &channels, 0);
-        if (!data_pointer) {
-            throw std::runtime_error("[texture] could not open file: " + path);
-        }
-        size_t buffer_size = (size_t)width * height * channels;
-        std::vector<uint8_t> data(buffer_size);
-        std::copy(data_pointer, data_pointer + buffer_size, data.begin());
-        stbi_image_free(data_pointer);
+        std::vector<uint8_t> data = load_image(path, width, height, channels);
         this->create(data, width, height, channels, settings);
     }
 }

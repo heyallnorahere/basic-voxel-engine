@@ -2,6 +2,12 @@
 namespace bve {
     struct namespaced_name {
     public:
+        struct hash_function {
+            size_t operator()(const namespaced_name& key) const {
+                std::hash<std::string> hasher;
+                return hasher(key.get_full_name());
+            }
+        };
         namespaced_name() = default;
         namespaced_name(const char* full_name) {
             this->convert(full_name);
@@ -88,11 +94,11 @@ namespace bve {
             return *it;
         }
         element_type& operator[](const namespaced_name& name) {
-            if (this->m_name_map.find(name) == this->m_name_map.end()) {
-                throw std::runtime_error("Could not find specified register entry!");
+            auto index = this->get_index(name);
+            if (!index) {
+                throw std::runtime_error("[register] could not find specified register entry!");
             }
-            size_type index = this->m_name_map[name];
-            return (*this)[index];
+            return (*this)[*index];
         }
         const element_type& operator[](size_type index) const {
             auto it = this->m_objects.begin();
@@ -105,7 +111,20 @@ namespace bve {
                     return pair.first;
                 }
             }
-            return nullptr;
+            return std::optional<namespaced_name>();
+        }
+        std::optional<size_type> get_index(const namespaced_name& name) {
+            if (this->m_name_map.find(name) == this->m_name_map.end()) {
+                return std::optional<size_type>();
+            }
+            return this->m_name_map[name];
+        }
+        std::vector<namespaced_name> get_names() {
+            std::vector<namespaced_name> names;
+            for (const auto& pair : this->m_name_map) {
+                names.push_back(pair.first);
+            }
+            return names;
         }
         typename std::list<element_type>::iterator begin() {
             return this->m_objects.begin();
@@ -120,15 +139,9 @@ namespace bve {
             return this->m_objects.end();
         }
     private:
-        struct hash_function {
-            size_t operator()(const namespaced_name& key) const {
-                std::hash<std::string> hasher;
-                return hasher(key.get_full_name());
-            }
-        };
         object_register() { }
         std::list<element_type> m_objects;
-        std::unordered_map<namespaced_name, size_type, hash_function> m_name_map;
+        std::unordered_map<namespaced_name, size_type, namespaced_name::hash_function> m_name_map;
         friend class registry;
     };
     class registry {
