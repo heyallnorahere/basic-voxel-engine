@@ -19,7 +19,7 @@ namespace bve {
     }
     void shader::reload() {
         this->destroy();
-        this->reload();
+        this->create();
     }
     void shader::bind() {
         glUseProgram(this->m_program);
