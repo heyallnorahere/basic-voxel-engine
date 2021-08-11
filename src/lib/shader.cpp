@@ -50,9 +50,10 @@ namespace bve {
         if (!status) {
             GLchar info_log[512];
             glGetProgramInfoLog(this->m_program, 512, nullptr, info_log);
-            spdlog::error("[shader] error linking shader program: " + std::string(info_log));
+            spdlog::warn("[shader] error linking shader program: " + std::string(info_log));
+        } else {
+            spdlog::info("[shader] successfully linked shader program");
         }
-        spdlog::info("[shader] successfully linked shader program");
     }
     void shader::destroy() {
         glDeleteProgram(this->m_program);
@@ -81,7 +82,7 @@ namespace bve {
         if (!status) {
             GLchar info_log[512];
             glGetShaderInfoLog(id, 512, nullptr, info_log);
-            spdlog::error("[shader] error compiling " + shader_type + " shader: " + info_log);
+            spdlog::warn("[shader] error compiling " + shader_type + " shader: " + info_log);
         } else {
             spdlog::info("[shader] successfully compiled " + shader_type + " shader");
         }

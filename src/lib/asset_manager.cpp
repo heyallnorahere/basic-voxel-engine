@@ -55,7 +55,7 @@ namespace bve {
             fs::copy_options::update_existing |
             fs::copy_options::recursive;
         for (const auto& path : resource_packs) {
-            fs::copy(path, this->m_asset_directory);
+            fs::copy(path, this->m_asset_directory, options);
         }
     }
     std::filesystem::path asset_manager::get_asset_path(const std::string& asset_name) {
@@ -64,10 +64,8 @@ namespace bve {
         if (asset_name.find(separator) == std::string::npos) {
             this->m_asset_directory /= asset_name;
         } else {
-            size_t last_position = 0;
-            for (size_t position = asset_name.find(separator); position != std::string::npos; position = asset_name.find(separator, position + 1)) {
-                asset_path /= asset_name.substr(last_position, position - last_position);
-                last_position = position;
+            for (size_t position = asset_name.find(separator), last_position = 0, substring_position = 0; last_position != std::string::npos; last_position = position, substring_position = last_position + 1, position = asset_name.find(separator, position + 1)) {
+                asset_path /= asset_name.substr(substring_position, position - substring_position);
             }
         }
         return asset_path;

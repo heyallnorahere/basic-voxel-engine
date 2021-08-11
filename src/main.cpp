@@ -6,6 +6,7 @@
 #include "mesh_factory.h"
 #include "renderer.h"
 #include "components.h"
+#include "asset_manager.h"
 namespace bve {
     using callback = std::function<void()>;
     static entity player;
@@ -57,7 +58,9 @@ namespace bve {
     static void main_loop(std::shared_ptr<window> window_, std::shared_ptr<world> world_) {
         callback clear = [window_]() { window_->clear(); };
         callback swap_buffers = [window_]() { window_->swap_buffers(); };
-        auto shader_ = shader::create({ { "assets/shaders/vertex.glsl", GL_VERTEX_SHADER }, { "assets/shaders/fragment.glsl", GL_FRAGMENT_SHADER } });
+        asset_manager& asset_manager_ = asset_manager::get();
+        asset_manager_.reload({ std::filesystem::current_path() / "assets" });
+        auto shader_ = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
         auto renderer_ = std::make_shared<renderer>();
         create_player(world_);
         while (!window_->should_close()) {
