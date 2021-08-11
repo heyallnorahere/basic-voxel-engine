@@ -19,6 +19,7 @@ namespace bve {
         // todo: update
     }
     static void render(callback clear, callback swap_buffers, std::shared_ptr<world> world_, std::shared_ptr<renderer> renderer_, std::shared_ptr<shader> shader_, float aspect_ratio) {
+        auto atlas = asset_manager::get().create_texture_atlas();
         clear();
         auto cmdlist = renderer_->create_command_list();
         mesh_factory factory(world_);
@@ -31,7 +32,7 @@ namespace bve {
         }
         renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
         renderer_->set_camera_data(player, aspect_ratio);
-        renderer_->render(cmdlist, shader_);
+        renderer_->render(cmdlist, shader_, atlas);
         renderer_->destroy_command_list(cmdlist);
         {
             auto& transform = player.get_component<components::transform_component>();
@@ -51,6 +52,7 @@ namespace bve {
             ImGui::DragFloat3("Position", &transform.translation.x);
             ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
             ImGui::Checkbox("Lock camera", &lock_camera);
+            ImGui::Image((ImTextureID)(size_t)atlas->get_texture()->get_id(), { 100, 100 });
             ImGui::End();
         }
         swap_buffers();
@@ -76,8 +78,8 @@ int main(int argc, const char** argv) {
     try {
         using namespace bve;
         auto window_ = std::make_shared<window>(800, 600);
-        auto world_ = std::make_shared<world>(glm::ivec3(16, 256, 16));
         block::register_all();
+        auto world_ = std::make_shared<world>(glm::ivec3(16, 256, 16));
         main_loop(window_, world_);
         return EXIT_SUCCESS;
     } catch (const std::runtime_error& exc) {

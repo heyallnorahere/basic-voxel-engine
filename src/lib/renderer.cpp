@@ -2,6 +2,7 @@
 #include "shader.h"
 #include "renderer.h"
 #include "components.h"
+#include "asset_manager.h"
 namespace bve {
     struct command_list {
         GLuint vertex_array_object;
@@ -97,10 +98,13 @@ namespace bve {
         }
         glBindVertexArray(0);
     }
-    void renderer::render(command_list* cmdlist, std::shared_ptr<shader> shader_) {
+    void renderer::render(command_list* cmdlist, std::shared_ptr<shader> shader_, std::shared_ptr<texture_atlas> atlas) {
         shader_->bind();
         shader_->set_uniform("projection", this->m_projection);
         shader_->set_uniform("view", this->m_view);
+        if (atlas) {
+            atlas->set_uniform(shader_, "atlas");
+        }
         glBindVertexArray(cmdlist->vertex_array_object);
         glDrawElements(GL_TRIANGLES, (GLsizei)cmdlist->index_count, GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(0);

@@ -9,10 +9,15 @@ namespace bve {
         public:
             virtual float opacity() override { return 0.f; }
             virtual bool solid() override { return false; }
+            virtual std::string friendly_name() override { return "Air"; }
         };
         class test_block : public block {
         public:
-            // todo: override stuff i guess
+            virtual std::string friendly_name() override { return "Test Block 1"; }
+        };
+        class test_block_2 : public block {
+        public:
+            virtual std::string friendly_name() override { return "Test Block 2"; }
         };
     }
 
@@ -24,6 +29,7 @@ namespace bve {
 #define register(block_type) block_register.add(std::shared_ptr<block>(new blocks::block_type), "bve:" + std::string(#block_type))
         register(air);
         register(test_block);
+        register(test_block_2);
 #undef register
     }
 }

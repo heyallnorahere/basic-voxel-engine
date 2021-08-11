@@ -5,7 +5,8 @@
 namespace bve {
     struct vertex {
         glm::vec3 position, normal;
-        glm::vec2 uv, texture_offset;
+        glm::vec2 uv;
+        int32_t block_id;
     };
     struct cluster_member {
         std::vector<glm::ivec3> surroundings;
@@ -155,7 +156,9 @@ namespace bve {
                 std::copy(pair.second.begin(), pair.second.end(), current_vertices.begin());
                 for (vertex& v : current_vertices) {
                     v.position += glm::vec3(voxel.position);
-                    // todo: add texture atlas offset
+                    size_t block_id;
+                    this->m_world->get_block(voxel.position, block_id);
+                    v.block_id = (int32_t)block_id;
                 }
                 size_t index_offset = vertices.size();
                 vertices.insert(vertices.end(), current_vertices.begin(), current_vertices.end());
@@ -180,7 +183,7 @@ namespace bve {
             { sizeof(vertex), offsetof(vertex, position), vertex_attribute_type::VEC3, false },
             { sizeof(vertex), offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
             { sizeof(vertex), offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
-            { sizeof(vertex), offsetof(vertex, texture_offset), vertex_attribute_type::VEC2, false }
+            { sizeof(vertex), offsetof(vertex, block_id), vertex_attribute_type::INT, false }
         };
     }
 }

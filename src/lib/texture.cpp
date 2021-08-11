@@ -40,6 +40,9 @@ namespace bve {
     int32_t texture::get_channels() const {
         return this->m_channels;
     }
+    GLuint texture::get_id() const {
+        return this->m_id;
+    }
     void texture::create(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, const texture_settings& settings) {
         this->m_target = settings.target != 0 ? settings.target : GL_TEXTURE_2D;
         glGenTextures(1, &this->m_id);

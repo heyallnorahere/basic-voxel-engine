@@ -19,6 +19,7 @@ namespace bve {
         void bind(GLint slot = 0) const;
         glm::ivec2 get_size() const;
         int32_t get_channels() const;
+        GLuint get_id() const;
     private:
         void create(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, const texture_settings& settings);
         void create(const std::string& path, const texture_settings& settings);

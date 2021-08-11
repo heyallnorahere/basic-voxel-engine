@@ -21,11 +21,23 @@ namespace bve {
         GLuint m_program;
         std::vector<intermediate_shader_source> m_sources;
     };
-    template<> inline void shader::set_uniform<GLint>(const std::string& name, const GLint& value) {
+    template<> inline void shader::set_uniform<int32_t>(const std::string& name, const int32_t& value) {
         glUniform1i(this->get_location(name), value);
     }
-    template<> inline void shader::set_uniform<GLfloat>(const std::string& name, const GLfloat& value) {
+    template<> inline void shader::set_uniform<float>(const std::string& name, const float& value) {
         glUniform1f(this->get_location(name), value);
+    }
+    template<> inline void shader::set_uniform<glm::ivec2>(const std::string& name, const glm::ivec2& value) {
+        glUniform2i(this->get_location(name), value.x, value.y);
+    }
+    template<> inline void shader::set_uniform<glm::ivec3>(const std::string& name, const glm::ivec3& value) {
+        glUniform3i(this->get_location(name), value.x, value.y, value.z);
+    }
+    template<> inline void shader::set_uniform<glm::ivec4>(const std::string& name, const glm::ivec4& value) {
+        glUniform4i(this->get_location(name), value.x, value.y, value.z, value.w);
+    }
+    template<> inline void shader::set_uniform<glm::vec2>(const std::string& name, const glm::vec2& value) {
+        glUniform2f(this->get_location(name), value.x, value.y);
     }
     template<> inline void shader::set_uniform<glm::vec3>(const std::string& name, const glm::vec3& value) {
         glUniform3f(this->get_location(name), value.x, value.y, value.z);

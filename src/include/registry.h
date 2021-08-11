@@ -42,7 +42,7 @@ namespace bve {
             size_t pos = full_name.find(':');
             if (pos != std::string::npos) {
                 this->namespace_name = full_name.substr(0, pos);
-                this->local_name = full_name.substr(pos);
+                this->local_name = full_name.substr(pos + 1);
             } else {
                 this->local_name = full_name;
             }

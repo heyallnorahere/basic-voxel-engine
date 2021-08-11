@@ -17,9 +17,12 @@ namespace bve {
             }
         }
         // temporary
-        this->m_voxel_types[glm::ivec3(0)] = 1;
-        this->m_voxel_types[glm::ivec3(1, 1, 0)] = 1;
-        this->m_voxel_types[glm::ivec3(1, 0, 0)] = 1;
+        auto& block_register = registry::get().get_register<block>();
+        uint8_t test_block = (uint8_t)*block_register.get_index("bve:test_block");
+        uint8_t test_block_2 = (uint8_t)*block_register.get_index("bve:test_block_2");
+        this->m_voxel_types[glm::ivec3(0)] = test_block;
+        this->m_voxel_types[glm::ivec3(1, 1, 0)] = test_block;
+        this->m_voxel_types[glm::ivec3(1, 0, 0)] = test_block_2;
     }
     void world::update() {
         // todo: update
