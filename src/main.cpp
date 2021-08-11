@@ -63,7 +63,7 @@ namespace bve {
         while (!window_->should_close()) {
             window_->new_frame();
             update(world_);
-            glm::vec2 size = glm::vec2(window_->get_size());
+            glm::vec2 size = glm::vec2(window_->get_framebuffer_size());
             render(clear, swap_buffers, world_, renderer_, shader_, size.x / size.y);
             bve::window::poll_events();
         }

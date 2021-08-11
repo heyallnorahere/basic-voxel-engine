@@ -70,8 +70,8 @@ namespace bve {
         if (this->m_window == nullptr) {
             throw_glfw_error();
         }
-        this->m_sizes.push_back(glm::ivec2(width, height));
         window_map.insert({ this->m_window, this });
+        glfwGetFramebufferSize(this->m_window, &this->m_framebuffer_size.x, &this->m_framebuffer_size.y);
         glfwSetFramebufferSizeCallback(this->m_window, framebuffer_size_callback);
         glfwMakeContextCurrent(this->m_window);
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -112,23 +112,18 @@ namespace bve {
         }
         glfwSwapBuffers(this->m_window);
     }
-    glm::ivec2 window::get_size() const {
-        glm::ivec2 size;
-        glfwGetFramebufferSize(this->m_window, &size.x, &size.y);
-        return size;
+    glm::ivec2 window::get_framebuffer_size() const {
+        return this->m_framebuffer_size;
     }
     void window::poll_events() {
         glfwPollEvents();
     }
     void window::framebuffer_size_callback(GLFWwindow* glfw_window, int32_t width, int32_t height) {
         window* window_ = window_map[glfw_window];
-        glm::ivec2 last_size = window_->m_sizes[window_->m_sizes.size() - 1];
-        glm::ivec2 new_size;
-        new_size.y = height;
-        float scale = (float)new_size.y / (float)last_size.y;
-        new_size.x = (int32_t)(scale * (float)last_size.x);
-        window_->m_sizes.push_back(new_size);
+        float scale = (float)height / (float)window_->m_framebuffer_size.y;
+        int32_t new_width = (int32_t)(scale * (float)window_->m_framebuffer_size.x);
         glfwMakeContextCurrent(glfw_window);
-        glViewport(static_cast<GLint>(width - new_size.x) / 2, 0, (GLsizei)new_size.x, (GLsizei)new_size.y);
+        glViewport(abs(width - new_width) / 2, 0, new_width, height);
+        window_->m_framebuffer_size = glm::ivec2(new_width, height);
     }
 }
