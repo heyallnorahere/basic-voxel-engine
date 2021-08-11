@@ -34,7 +34,7 @@ namespace bve {
             return !(*this == other);
         }
         std::string get_full_name() const {
-            return this->namespace_name + this->local_name;
+            return this->namespace_name + ":" + this->local_name;
         }
         std::string namespace_name, local_name;
     private:
