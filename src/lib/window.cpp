@@ -3,6 +3,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>
 namespace bve {
+    std::unordered_map<GLFWwindow*, window*> window_map;
     static uint32_t window_count = 0;
     static bool imgui_initialized = false;
     static void throw_glfw_error() {
@@ -69,6 +70,9 @@ namespace bve {
         if (this->m_window == nullptr) {
             throw_glfw_error();
         }
+        this->m_sizes.push_back(glm::ivec2(width, height));
+        window_map.insert({ this->m_window, this });
+        glfwSetFramebufferSizeCallback(this->m_window, framebuffer_size_callback);
         glfwMakeContextCurrent(this->m_window);
         gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
         setup_context();
@@ -79,6 +83,7 @@ namespace bve {
         shutdown_imgui();
         spdlog::info("[window] destroying window...");
         glfwDestroyWindow(this->m_window);
+        window_map.erase(this->m_window);
         decrease_window_count();
     }
     bool window::should_close() const {
@@ -107,7 +112,23 @@ namespace bve {
         }
         glfwSwapBuffers(this->m_window);
     }
+    glm::ivec2 window::get_size() const {
+        glm::ivec2 size;
+        glfwGetFramebufferSize(this->m_window, &size.x, &size.y);
+        return size;
+    }
     void window::poll_events() {
         glfwPollEvents();
+    }
+    void window::framebuffer_size_callback(GLFWwindow* glfw_window, int32_t width, int32_t height) {
+        window* window_ = window_map[glfw_window];
+        glm::ivec2 last_size = window_->m_sizes[window_->m_sizes.size() - 1];
+        glm::ivec2 new_size;
+        new_size.y = height;
+        float scale = (float)new_size.y / (float)last_size.y;
+        new_size.x = (int32_t)(scale * (float)last_size.x);
+        window_->m_sizes.push_back(new_size);
+        glfwMakeContextCurrent(glfw_window);
+        glViewport(static_cast<GLint>(width - new_size.x) / 2, 0, (GLsizei)new_size.x, (GLsizei)new_size.y);
     }
 }

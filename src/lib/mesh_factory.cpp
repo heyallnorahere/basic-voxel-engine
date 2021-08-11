@@ -149,8 +149,14 @@ namespace bve {
                 if (contains(voxel.surroundings, pair.first)) {
                     continue;
                 }
+                std::vector<vertex> current_vertices(pair.second.size());
+                std::copy(pair.second.begin(), pair.second.end(), current_vertices.begin());
+                for (vertex& v : current_vertices) {
+                    v.position += glm::vec3(voxel.position);
+                    // todo: add texture atlas offset
+                }
                 size_t index_offset = vertices.size();
-                vertices.insert(vertices.end(), pair.second.begin(), pair.second.end());
+                vertices.insert(vertices.end(), current_vertices.begin(), current_vertices.end());
                 std::vector<uint32_t> current_indices(face_indices.size());
                 std::copy(face_indices.begin(), face_indices.end(), current_indices.begin());
                 for (uint32_t& index : current_indices) {

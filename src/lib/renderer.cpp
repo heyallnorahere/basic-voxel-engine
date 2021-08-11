@@ -83,6 +83,9 @@ namespace bve {
                 integer = false;
                 element_count = 16;
                 break;
+            default:
+                throw std::runtime_error("[renderer] invalid vertex_attribute_type value");
+                break;
             }
             if (integer) {
                 glVertexAttribIPointer((GLuint)i, element_count, GL_INT, (GLsizei)attrib.stride, (void*)attrib.offset);
@@ -97,6 +100,13 @@ namespace bve {
         shader_->bind();
         shader_->set_uniform("projection", this->m_projection);
         shader_->set_uniform("view", this->m_view);
-        
+        glBindVertexArray(cmdlist->vertex_array_object);
+        glDrawElements(GL_TRIANGLES, (GLsizei)cmdlist->index_count, GL_UNSIGNED_INT, nullptr);
+        glBindVertexArray(0);
+        shader_->unbind();
+    }
+    void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up) {
+        this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, 0.1f, 100.f); // todo: add more arguments to function argument list
+        this->m_view = glm::lookAt(position, position + direction, up);
     }
 }

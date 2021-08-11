@@ -10,7 +10,7 @@ namespace bve {
     static void update(std::shared_ptr<world> world_) {
         // todo: update
     }
-    static void render(callback clear, callback swap_buffers, std::shared_ptr<world> world_, std::shared_ptr<renderer> renderer_, std::shared_ptr<shader> shader_) {
+    static void render(callback clear, callback swap_buffers, std::shared_ptr<world> world_, std::shared_ptr<renderer> renderer_, std::shared_ptr<shader> shader_, float aspect_ratio) {
         clear();
         auto cmdlist = renderer_->create_command_list();
         mesh_factory factory(world_);
@@ -22,7 +22,7 @@ namespace bve {
             renderer_->add_mesh(cmdlist, vertex_buffer, index_buffer, index_count);
         }
         renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
-        // todo: set camera data
+        renderer_->set_camera_data(glm::vec3(0.f, 0.f, 2.f), glm::vec3(0.f, 0.f, -2.f), aspect_ratio);
         renderer_->render(cmdlist, shader_);
         renderer_->destroy_command_list(cmdlist);
         swap_buffers();
@@ -35,7 +35,8 @@ namespace bve {
         while (!window_->should_close()) {
             window_->new_frame();
             update(world_);
-            render(clear, swap_buffers, world_, renderer_, shader_);
+            glm::vec2 size = glm::vec2(window_->get_size());
+            render(clear, swap_buffers, world_, renderer_, shader_, size.x / size.y);
             bve::window::poll_events();
         }
     }
