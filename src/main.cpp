@@ -18,8 +18,7 @@ namespace bve {
     static void update(std::shared_ptr<world> world_) {
         // todo: update
     }
-    static void render(callback clear, callback swap_buffers, std::shared_ptr<world> world_, std::shared_ptr<renderer> renderer_, std::shared_ptr<shader> shader_, float aspect_ratio) {
-        auto atlas = asset_manager::get().create_texture_atlas();
+    static void render(callback clear, callback swap_buffers, std::shared_ptr<world> world_, std::shared_ptr<renderer> renderer_, std::shared_ptr<shader> shader_, float aspect_ratio, std::shared_ptr<texture_atlas> atlas) {
         clear();
         auto cmdlist = renderer_->create_command_list();
         mesh_factory factory(world_);
@@ -62,6 +61,7 @@ namespace bve {
         callback swap_buffers = [window_]() { window_->swap_buffers(); };
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
+        auto atlas = asset_manager::get().create_texture_atlas();
         auto shader_ = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
         auto renderer_ = std::make_shared<renderer>();
         create_player(world_);
@@ -69,7 +69,7 @@ namespace bve {
             window_->new_frame();
             update(world_);
             glm::vec2 size = glm::vec2(window_->get_framebuffer_size());
-            render(clear, swap_buffers, world_, renderer_, shader_, size.x / size.y);
+            render(clear, swap_buffers, world_, renderer_, shader_, size.x / size.y, atlas);
             bve::window::poll_events();
         }
     }

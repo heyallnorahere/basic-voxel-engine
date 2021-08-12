@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "texture.h"
 // todo: add check to see if stb_image was already implemented
+#define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 namespace bve {
