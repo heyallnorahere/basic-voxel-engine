@@ -47,10 +47,12 @@ namespace bve {
                 camera.direction = *original_direction;
                 original_direction.reset();
             }
+            ImGuiIO& io = ImGui::GetIO();
             ImGui::Begin("Player control");
             ImGui::DragFloat3("Position", &transform.translation.x);
             ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
             ImGui::Checkbox("Lock camera", &lock_camera);
+            ImGui::Text("FPS: %f", io.Framerate);
             ImGui::Image((ImTextureID)(size_t)atlas->get_texture()->get_id(), { 100, 100 });
             ImGui::End();
         }

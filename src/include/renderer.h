@@ -1,6 +1,6 @@
 #pragma once
 #include "world.h"
-#include "asset_manager.h"
+#include "texture_atlas.h"
 namespace bve {
     enum class vertex_attribute_type {
         FLOAT,

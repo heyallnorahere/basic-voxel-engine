@@ -2,7 +2,6 @@
 #include "shader.h"
 #include "renderer.h"
 #include "components.h"
-#include "asset_manager.h"
 namespace bve {
     struct command_list {
         GLuint vertex_array_object;
