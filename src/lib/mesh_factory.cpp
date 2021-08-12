@@ -16,6 +16,28 @@ namespace bve {
         std::vector<vertex> vertices;
         glm::vec3 normal;
     };
+    class mesh_factory_mesh : public mesh {
+    public:
+        mesh_factory_mesh(const std::vector<vertex>& vertices, const std::vector<uint32_t>& indices) {
+            this->m_vertices = vertices;
+            this->m_indices = indices;
+        }
+        virtual const void* vertex_buffer_data() const override {
+            return this->m_vertices.data();
+        }
+        virtual size_t vertex_buffer_data_size() const override {
+            return this->m_vertices.size() * sizeof(vertex);
+        }
+        virtual size_t vertex_count() const override {
+            return this->m_vertices.size();
+        }
+        virtual std::vector<uint32_t> index_buffer_data() const override {
+            return this->m_indices;
+        }
+    private:
+        std::vector<vertex> m_vertices;
+        std::vector<uint32_t> m_indices;
+    };
     using cluster_member_map = std::unordered_map<glm::ivec3, cluster_member, hash_vector<3, int32_t>>;
     static void walk(cluster_member_map& map, glm::ivec3 position, uint32_t& cluster_count) {
         cluster_member& member = map[position];
@@ -139,7 +161,7 @@ namespace bve {
         }
         return clusters;
     }
-    void mesh_factory::create_mesh(std::vector<processed_voxel> voxels, GLuint& vertex_buffer, GLuint& index_buffer, size_t& index_count) {
+    std::shared_ptr<mesh> mesh_factory::create_mesh(std::vector<processed_voxel> voxels) {
         auto faces = get_faces();
         std::vector<vertex> vertices;
         std::vector<uint32_t> indices;
@@ -170,13 +192,7 @@ namespace bve {
                 indices.insert(indices.end(), current_indices.begin(), current_indices.end());
             }
         }
-        glGenBuffers(1, &vertex_buffer);
-        glGenBuffers(1, &index_buffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)(vertices.size() * sizeof(vertex)), vertices.data(), GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(indices.size() * sizeof(uint32_t)), indices.data(), GL_STATIC_DRAW);
-        index_count = indices.size();
+        return std::shared_ptr<mesh>(new mesh_factory_mesh(vertices, indices));
     }
     std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
         return {

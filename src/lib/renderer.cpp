@@ -4,8 +4,8 @@
 #include "components.h"
 namespace bve {
     struct command_list {
-        GLuint vertex_array_object;
-        std::vector<std::tuple<GLuint, GLuint>> meshes;
+        GLuint vao, vbo, ebo;
+        std::vector<std::shared_ptr<mesh>> meshes;
         size_t index_count;
         bool open;
     };
@@ -13,36 +13,59 @@ namespace bve {
         auto cmdlist = new command_list;
         cmdlist->open = true;
         cmdlist->index_count = 0;
-        glGenVertexArrays(1, &cmdlist->vertex_array_object);
         return cmdlist;
     }
     void renderer::destroy_command_list(command_list* cmdlist) {
-        for (auto& mesh : cmdlist->meshes) {
-            GLuint buffer = std::get<0>(mesh);
-            glDeleteBuffers(1, &buffer);
-            buffer = std::get<1>(mesh);
-            glDeleteBuffers(1, &buffer);
-        }
-        glDeleteVertexArrays(1, &cmdlist->vertex_array_object);
+        glDeleteBuffers(1, &cmdlist->vbo);
+        glDeleteBuffers(1, &cmdlist->ebo);
+        glDeleteVertexArrays(1, &cmdlist->vao);
         delete cmdlist;
     }
-    void renderer::add_mesh(command_list* cmdlist, GLuint vertex_buffer, GLuint index_buffer, size_t index_count) {
+    void renderer::add_mesh(command_list* cmdlist, std::shared_ptr<mesh> mesh_) {
         if (!cmdlist->open) {
             throw std::runtime_error("[renderer] attempted to add a mesh to a closed command list");
         }
-        glBindVertexArray(cmdlist->vertex_array_object);
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
-        glBindVertexArray(0);
-        cmdlist->index_count += index_count;
-        cmdlist->meshes.push_back({ vertex_buffer, index_buffer });
+        cmdlist->meshes.push_back({ mesh_ });
     }
     void renderer::close_command_list(command_list* cmdlist, const std::vector<vertex_attribute>& attributes) {
         if (!cmdlist->open) {
             return;
         }
         cmdlist->open = false;
-        glBindVertexArray(cmdlist->vertex_array_object);
+        glGenVertexArrays(1, &cmdlist->vao);
+        glBindVertexArray(cmdlist->vao);
+        std::vector<uint32_t> indices;
+        size_t vertex_buffer_size = 0;
+        size_t vertex_count = 0;
+        for (const auto& mesh : cmdlist->meshes) {
+            std::vector<uint32_t> mesh_indices = mesh->index_buffer_data();
+            for (uint32_t& index : mesh_indices) {
+                index += (uint32_t)vertex_count;
+            }
+            indices.insert(indices.end(), mesh_indices.begin(), mesh_indices.end());
+            vertex_buffer_size += mesh->vertex_buffer_data_size();
+            vertex_count += mesh->vertex_count();
+        }
+        cmdlist->index_count = indices.size();
+        void* vertex_buffer_data = malloc(vertex_buffer_size);
+        if (!vertex_buffer_data) {
+            throw std::runtime_error("[renderer] ran out of memory on the heap");
+        }
+        size_t current_offset = 0;
+        for (const auto& mesh : cmdlist->meshes) {
+            size_t size = mesh->vertex_buffer_data_size();
+            const void* data = mesh->vertex_buffer_data();
+            size_t destination = (size_t)vertex_buffer_data + current_offset;
+            memcpy((void*)destination, data, size);
+            current_offset += size;
+        }
+        glGenBuffers(1, &cmdlist->vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, cmdlist->vbo);
+        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)vertex_buffer_size, vertex_buffer_data, GL_STATIC_DRAW);
+        glGenBuffers(1, &cmdlist->ebo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmdlist->ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(indices.size() * sizeof(uint32_t)), indices.data(), GL_STATIC_DRAW);
+        free(vertex_buffer_data);
         for (size_t i = 0; i < attributes.size(); i++) {
             const auto& attrib = attributes[i];
             bool integer;
@@ -104,7 +127,7 @@ namespace bve {
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }
-        glBindVertexArray(cmdlist->vertex_array_object);
+        glBindVertexArray(cmdlist->vao);
         glDrawElements(GL_TRIANGLES, (GLsizei)cmdlist->index_count, GL_UNSIGNED_INT, nullptr);
         glBindVertexArray(0);
         shader_->unbind();

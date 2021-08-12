@@ -35,10 +35,8 @@ namespace bve {
         auto cmdlist = data.renderer_->create_command_list();
         mesh_factory factory(data.world_);
         for (auto& cluster : data.clusters) {
-            GLuint vertex_buffer, index_buffer;
-            size_t index_count;
-            factory.create_mesh(cluster, vertex_buffer, index_buffer, index_count);
-            data.renderer_->add_mesh(cmdlist, vertex_buffer, index_buffer, index_count);
+            auto mesh_ = factory.create_mesh(cluster);
+            data.renderer_->add_mesh(cmdlist, mesh_);
         }
         data.renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
         data.renderer_->set_camera_data(player, data.aspect_ratio);
