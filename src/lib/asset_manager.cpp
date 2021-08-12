@@ -40,7 +40,7 @@ namespace bve {
             texture_data data;
             try {
                 data.data = texture::load_image(path, data.width, data.height, data.channels);
-            } catch (std::runtime_error error) {
+            } catch (const std::runtime_error&) {
                 continue; // we dont know if the block will even be rendered - so we pass
             }
             textures.push_back({ name, data });
