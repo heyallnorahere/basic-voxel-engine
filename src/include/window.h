@@ -1,5 +1,6 @@
 #pragma once
 namespace bve {
+    class input_manager;
     class window {
     public:
         window(int32_t width, int32_t height);
@@ -14,5 +15,6 @@ namespace bve {
         GLFWwindow* m_window;
         glm::ivec2 m_framebuffer_size;
         static void framebuffer_size_callback(GLFWwindow* window, int32_t width, int32_t height);
+        friend class input_manager;
     };
 }

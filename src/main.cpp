@@ -7,38 +7,44 @@
 #include "renderer.h"
 #include "components.h"
 #include "asset_manager.h"
+#include "input_manager.h"
 namespace bve {
     using callback = std::function<void()>;
+    struct render_data {
+        callback clear;
+        callback swap_buffers;
+        std::shared_ptr<world> world_;
+        std::shared_ptr<renderer> renderer_;
+        std::shared_ptr<shader> shader_;
+        float aspect_ratio;
+        std::shared_ptr<texture_atlas> atlas;
+        std::vector<std::vector<mesh_factory::processed_voxel>> clusters;
+        std::shared_ptr<input_manager> input_manager_;
+    };
     static entity player;
     static void create_player(std::shared_ptr<world> world_) {
         player = world_->create();
         player.get_component<components::transform_component>().translation = glm::vec3(5.f);
         player.add_component<components::camera_component>().direction = glm::vec3(-1.f);
     }
-    static void update(std::shared_ptr<world> world_) {
-        // todo: update
+    static void update(std::shared_ptr<world> world_, std::shared_ptr<input_manager> input_manager_) {
+        input_manager_->update();
     }
-    static void render(callback clear,
-        callback swap_buffers,
-        std::shared_ptr<world> world_,
-        std::shared_ptr<renderer> renderer_,
-        std::shared_ptr<shader> shader_,
-        float aspect_ratio,
-        std::shared_ptr<texture_atlas> atlas,
-        std::vector<std::vector<mesh_factory::processed_voxel>> clusters) {
-        clear();
-        auto cmdlist = renderer_->create_command_list();
-        mesh_factory factory(world_);
-        for (auto& cluster : clusters) {
+    static void render(const render_data& data) {
+        data.clear();
+        auto cmdlist = data.renderer_->create_command_list();
+        mesh_factory factory(data.world_);
+        for (auto& cluster : data.clusters) {
             GLuint vertex_buffer, index_buffer;
             size_t index_count;
             factory.create_mesh(cluster, vertex_buffer, index_buffer, index_count);
-            renderer_->add_mesh(cmdlist, vertex_buffer, index_buffer, index_count);
+            data.renderer_->add_mesh(cmdlist, vertex_buffer, index_buffer, index_count);
         }
-        renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
-        renderer_->set_camera_data(player, aspect_ratio);
-        renderer_->render(cmdlist, shader_, atlas);
-        renderer_->destroy_command_list(cmdlist);
+        data.renderer_->close_command_list(cmdlist, factory.get_vertex_attributes());
+        data.renderer_->set_camera_data(player, data.aspect_ratio);
+        data.renderer_->render(cmdlist, data.shader_, data.atlas);
+        data.renderer_->destroy_command_list(cmdlist);
+#ifndef NDEBUG
         {
             auto& transform = player.get_component<components::transform_component>();
             auto& camera = player.get_component<components::camera_component>();
@@ -58,11 +64,13 @@ namespace bve {
             ImGui::DragFloat3("Position", &transform.translation.x);
             ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
             ImGui::Checkbox("Lock camera", &lock_camera);
+            ImGui::Checkbox("Mouse enabled", &data.input_manager_->mouse_enabled());
             ImGui::Text("FPS: %f", io.Framerate);
-            ImGui::Image((ImTextureID)(size_t)atlas->get_texture()->get_id(), { 100, 100 });
+            ImGui::Image((ImTextureID)(size_t)data.atlas->get_texture()->get_id(), { 100, 100 });
             ImGui::End();
         }
-        swap_buffers();
+#endif
+        data.swap_buffers();
     }
     static void main_loop(std::shared_ptr<window> window_, std::shared_ptr<world> world_) {
         callback clear = [window_]() { window_->clear(); };
@@ -72,14 +80,15 @@ namespace bve {
         auto atlas = asset_manager::get().create_texture_atlas();
         auto shader_ = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
         auto renderer_ = std::make_shared<renderer>();
+        auto input_manager_ = std::make_shared<input_manager>(window_);
         create_player(world_);
         auto clusters = mesh_factory(world_).get_clusters();
         world_->on_block_changed([&](glm::ivec3, std::shared_ptr<world>) { clusters = mesh_factory(world_).get_clusters(); });
         while (!window_->should_close()) {
             window_->new_frame();
-            update(world_);
+            update(world_, input_manager_);
             glm::vec2 size = glm::vec2(window_->get_framebuffer_size());
-            render(clear, swap_buffers, world_, renderer_, shader_, size.x / size.y, atlas, clusters);
+            render({ clear, swap_buffers, world_, renderer_, shader_, size.x / size.y, atlas, clusters, input_manager_ });
             bve::window::poll_events();
         }
     }
