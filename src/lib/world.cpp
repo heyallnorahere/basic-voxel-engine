@@ -35,6 +35,9 @@ namespace bve {
     glm::ivec3 world::get_size() {
         return this->m_size;
     }
+    void world::on_block_changed(on_block_changed_callback callback) {
+        this->m_on_block_changed.push_back(callback);
+    }
     void world::get_block(glm::ivec3 position, namespaced_name& block_type) {
         if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
             throw std::runtime_error("[world] could not find a block at the specified position!");
@@ -55,5 +58,23 @@ namespace bve {
         auto& block_register = registry::get().get_register<block>();
         uint8_t index = this->m_voxel_types[position];
         block_type = (size_t)index;        
+    }
+    void world::set_block(glm::ivec3 position, const namespaced_name& block_type) {
+        auto& block_register = registry::get().get_register<block>();
+        std::optional<size_t> index = block_register.get_index(block_type);
+        if (!index) {
+            throw std::runtime_error("[world] attempted to access a block that did not exist");
+        }
+        this->set_block(position, *index);
+    }
+    void world::set_block(glm::ivec3 position, size_t block_type) {
+        auto& block_register = registry::get().get_register<block>();
+        if (block_type >= block_register.size()) {
+            throw std::runtime_error("[world] attempted to access an unregistered block");
+        }
+        this->m_voxel_types[position] = (uint8_t)block_type;
+        for (const auto& callback : this->m_on_block_changed) {
+            callback(position, this->shared_from_this());
+        }
     }
 }
