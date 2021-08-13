@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "texture_atlas.h"
 #include "mesh_factory.h"
+#include "graphics/object_factory.h"
 namespace bve {
     class application {
     public:
@@ -21,6 +22,7 @@ namespace bve {
         ref<input_manager> get_input_manager() { return this->m_input_manager; }
         ref<window> get_window() { return this->m_window; }
         ref<texture_atlas> get_texture_atlas() { return this->m_atlas; }
+        ref<graphics::object_factory> get_object_factory() { return this->m_object_factory; }
     private:
         application();
         void update();
@@ -30,6 +32,7 @@ namespace bve {
         ref<input_manager> m_input_manager;
         ref<window> m_window;
         ref<texture_atlas> m_atlas;
+        ref<graphics::object_factory> m_object_factory;
         std::unordered_map<std::string, ref<shader>> m_shaders;
         std::vector<std::vector<mesh_factory::processed_voxel>> m_clusters;
         bool m_running;

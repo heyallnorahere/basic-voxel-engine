@@ -4,7 +4,7 @@
 #include "components.h"
 namespace bve {
     struct command_list {
-        GLuint vao, vbo, ebo;
+        ref<graphics::buffer> vao, vbo, ebo;
         std::vector<ref<mesh>> meshes;
         size_t index_count;
         bool open;
@@ -16,9 +16,6 @@ namespace bve {
         return cmdlist;
     }
     void renderer::destroy_command_list(command_list* cmdlist) {
-        glDeleteBuffers(1, &cmdlist->vbo);
-        glDeleteBuffers(1, &cmdlist->ebo);
-        glDeleteVertexArrays(1, &cmdlist->vao);
         delete cmdlist;
     }
     void renderer::add_mesh(command_list* cmdlist, ref<mesh> mesh_) {
@@ -27,13 +24,14 @@ namespace bve {
         }
         cmdlist->meshes.push_back({ mesh_ });
     }
-    void renderer::close_command_list(command_list* cmdlist, const std::vector<vertex_attribute>& attributes) {
+    void renderer::close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes, ref<graphics::object_factory> object_factory) {
         if (!cmdlist->open) {
             return;
         }
         cmdlist->open = false;
-        glGenVertexArrays(1, &cmdlist->vao);
-        glBindVertexArray(cmdlist->vao);
+        ref<graphics::vao> vao = object_factory->create_vao();
+        vao->bind();
+        cmdlist->vao = vao;
         std::vector<uint32_t> indices;
         size_t vertex_buffer_size = 0;
         size_t vertex_count = 0;
@@ -59,77 +57,21 @@ namespace bve {
             memcpy((void*)destination, data, size);
             current_offset += size;
         }
-        glGenBuffers(1, &cmdlist->vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, cmdlist->vbo);
-        glBufferData(GL_ARRAY_BUFFER, (GLsizeiptr)vertex_buffer_size, vertex_buffer_data, GL_STATIC_DRAW);
-        glGenBuffers(1, &cmdlist->ebo);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmdlist->ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)(indices.size() * sizeof(uint32_t)), indices.data(), GL_STATIC_DRAW);
+        cmdlist->vbo = object_factory->create_vbo(vertex_buffer_data, vertex_buffer_size);
+        cmdlist->ebo = object_factory->create_ebo(indices);
         free(vertex_buffer_data);
-        for (size_t i = 0; i < attributes.size(); i++) {
-            const auto& attrib = attributes[i];
-            bool integer;
-            GLint element_count;
-            switch (attrib.type) {
-            case vertex_attribute_type::FLOAT:
-                integer = false;
-                element_count = 1;
-                break;
-            case vertex_attribute_type::INT:
-                integer = true;
-                element_count = 1;
-                break;
-            case vertex_attribute_type::VEC2:
-                integer = false;
-                element_count = 2;
-                break;
-            case vertex_attribute_type::IVEC2:
-                integer = true;
-                element_count = 2;
-                break;
-            case vertex_attribute_type::VEC3:
-                integer = false;
-                element_count = 3;
-                break;
-            case vertex_attribute_type::IVEC3:
-                integer = true;
-                element_count = 3;
-                break;
-            case vertex_attribute_type::VEC4:
-                integer = false;
-                element_count = 4;
-                break;
-            case vertex_attribute_type::IVEC4:
-                integer = true;
-                element_count = 4;
-                break;
-            case vertex_attribute_type::MAT4:
-                integer = false;
-                element_count = 16;
-                break;
-            default:
-                throw std::runtime_error("[renderer] invalid vertex_attribute_type value");
-                break;
-            }
-            if (integer) {
-                glVertexAttribIPointer((GLuint)i, element_count, GL_INT, (GLsizei)attrib.stride, (void*)attrib.offset);
-            } else {
-                glVertexAttribPointer((GLuint)i, element_count, GL_FLOAT, attrib.normalize, (GLsizei)attrib.stride, (void*)attrib.offset);
-            }
-            glEnableVertexAttribArray((GLuint)i);
-        }
-        glBindVertexArray(0);
+        vao->set_vertex_attributes(attributes);
     }
-    void renderer::render(command_list* cmdlist, ref<shader> shader_, ref<texture_atlas> atlas) {
+    void renderer::render(command_list* cmdlist, ref<shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas) {
         shader_->bind();
         shader_->set_uniform("projection", this->m_projection);
         shader_->set_uniform("view", this->m_view);
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }
-        glBindVertexArray(cmdlist->vao);
-        glDrawElements(GL_TRIANGLES, (GLsizei)cmdlist->index_count, GL_UNSIGNED_INT, nullptr);
-        glBindVertexArray(0);
+        cmdlist->vao->bind();
+        context->draw_indexed(cmdlist->index_count);
+        cmdlist->vao->unbind();
         shader_->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {

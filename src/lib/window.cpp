@@ -25,15 +25,7 @@ namespace bve {
             glfwTerminate();
         }
     }
-    static void setup_context() {
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_BACK);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // todo: enable more features as they are needed
-    }
-    static void init_imgui(GLFWwindow* glfw_window) {
+    static void init_imgui(std::function<void()> init_backends) {
         spdlog::info("[window] initializing imgui...");
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
@@ -47,40 +39,38 @@ namespace bve {
             style.Colors[ImGuiCol_WindowBg].w = 1.f;
         }
         // todo: write custom style
-        ImGui_ImplGlfw_InitForOpenGL(glfw_window, true);
-        ImGui_ImplOpenGL3_Init("#version 330 core");
+        init_backends();
         spdlog::info("[window] successfully initialized imgui");
         imgui_initialized = true;
     }
-    static void shutdown_imgui() {
+    static void shutdown_imgui(std::function<void()> shutdown_backends) {
         if (!imgui_initialized) {
             return;
         }
-        ImGui_ImplOpenGL3_Shutdown();
-        ImGui_ImplGlfw_Shutdown();
+        shutdown_backends();
         ImGui::DestroyContext();
         imgui_initialized = false;
     }
-    window::window(int32_t width, int32_t height) {
+    window::window(int32_t width, int32_t height, ref<graphics::context> context) {
         increase_window_count();
+        this->m_context = context;
         spdlog::info("[window] creating window...");
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        this->m_context->setup_glfw();
         this->m_window = glfwCreateWindow(width, height, "basic voxel engine", nullptr, nullptr);
         if (this->m_window == nullptr) {
             throw_glfw_error();
         }
+        this->m_context->m_window = this->m_window;
         window_map.insert({ this->m_window, this });
         glfwGetFramebufferSize(this->m_window, &this->m_framebuffer_size.x, &this->m_framebuffer_size.y);
         glfwSetFramebufferSizeCallback(this->m_window, framebuffer_size_callback);
-        glfwMakeContextCurrent(this->m_window);
-        gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
-        setup_context();
+        this->m_context->make_current();
+        this->m_context->setup_context();
         spdlog::info("[window] successfully created window!");
-        init_imgui(this->m_window);
+        init_imgui([this]() { this->m_context->init_imgui_backends(); });
     }
     window::~window() {
-        shutdown_imgui();
+        shutdown_imgui([this]() { this->m_context->shutdown_imgui_backends(); });
         spdlog::info("[window] destroying window...");
         glfwDestroyWindow(this->m_window);
         window_map.erase(this->m_window);
@@ -90,14 +80,10 @@ namespace bve {
         return (bool)glfwWindowShouldClose(this->m_window);
     }
     void window::new_frame() {
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
+        this->m_context->call_imgui_backend_newframe();
         ImGui::NewFrame();
     }
-    void window::clear() const {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-    void window::swap_buffers() const {
+    void window::swap_buffers() {
         ImGuiIO& io = ImGui::GetIO();
         int32_t width, height;
         glfwGetFramebufferSize(this->m_window, &width, &height);
@@ -110,7 +96,10 @@ namespace bve {
             ImGui::RenderPlatformWindowsDefault();
             glfwMakeContextCurrent(this->m_window);
         }
-        glfwSwapBuffers(this->m_window);
+        this->m_context->swap_buffers();
+    }
+    ref<graphics::context> window::get_context() {
+        return this->m_context;
     }
     glm::ivec2 window::get_framebuffer_size() const {
         return this->m_framebuffer_size;

@@ -10,8 +10,6 @@ namespace bve {
         return instance;
     }
     void application::run() {
-        callback clear = [this]() { this->m_window->clear(); };
-        callback swap_buffers = [this]() { this->m_window->swap_buffers(); };
         this->m_clusters = mesh_factory(this->m_world).get_clusters();
         this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(); });
         this->m_running = true;
@@ -36,10 +34,11 @@ namespace bve {
     }
     application::application() {
         block::register_all();
+        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
         this->m_world = ref<world>::create(glm::ivec3(16, 16, 256));
-        this->m_window = ref<window>::create(800, 600);
+        this->m_window = ref<window>::create(800, 600, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas();
         this->m_shaders["block"] = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
         this->m_renderer = ref<renderer>::create();
@@ -56,14 +55,14 @@ namespace bve {
         this->m_world->update();
     }
     void application::render() {
-        this->m_window->clear();
+        this->m_window->get_context()->clear();
         auto cmdlist = this->m_renderer->create_command_list();
         mesh_factory factory(this->m_world);
         for (auto& cluster : this->m_clusters) {
             auto mesh_ = factory.create_mesh(cluster);
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
-        this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes());
+        this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes(), this->m_object_factory);
         std::vector<entity> cameras = this->m_world->get_cameras();
         std::optional<entity> main_camera;
         for (entity camera : cameras) {
@@ -80,7 +79,7 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
-        this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_atlas);
+        this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_window->get_context(), this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
     }

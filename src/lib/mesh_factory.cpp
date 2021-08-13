@@ -194,12 +194,12 @@ namespace bve {
         }
         return ref<mesh_factory_mesh>::create(vertices, indices);
     }
-    std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
+    std::vector<graphics::vertex_attribute> mesh_factory::get_vertex_attributes() {
         return {
-            { sizeof(vertex), offsetof(vertex, position), vertex_attribute_type::VEC3, false },
-            { sizeof(vertex), offsetof(vertex, normal), vertex_attribute_type::VEC3, false },
-            { sizeof(vertex), offsetof(vertex, uv), vertex_attribute_type::VEC2, false },
-            { sizeof(vertex), offsetof(vertex, block_id), vertex_attribute_type::INT, false }
+            { sizeof(vertex), offsetof(vertex, position), graphics::vertex_attribute_type::VEC3, false },
+            { sizeof(vertex), offsetof(vertex, normal), graphics::vertex_attribute_type::VEC3, false },
+            { sizeof(vertex), offsetof(vertex, uv), graphics::vertex_attribute_type::VEC2, false },
+            { sizeof(vertex), offsetof(vertex, block_id), graphics::vertex_attribute_type::INT, false }
         };
     }
 }
