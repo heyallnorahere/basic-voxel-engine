@@ -151,11 +151,11 @@ namespace bve {
         template<typename T> object_register<T>& get_register() {
             size_t hash_code = typeid(T).hash_code();
             if (this->m_registers.find(hash_code) == this->m_registers.end()) {
-                auto register_ = ref<ref_counted>(new object_register<T>);
+                auto register_ = ref<object_register<T>>(new object_register<T>);
                 this->m_registers.insert({ hash_code, register_ });
-                return (object_register<T>&)*register_;
+                return *register_;
             } else {
-                return (object_register<T>&)*this->m_registers[hash_code];
+                return *(ref<object_register<T>>)this->m_registers[hash_code];
             }
         }
     private:

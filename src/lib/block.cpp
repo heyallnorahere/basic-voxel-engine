@@ -26,7 +26,7 @@ namespace bve {
     bool block::solid() { return true; }
     void block::register_all() {
         auto& block_register = registry::get().get_register<block>();
-#define register(block_type) block_register.add(ref<block>(new blocks::block_type), "bve:" + std::string(#block_type))
+#define register(block_type) block_register.add(ref<blocks::block_type>::create(), "bve:" + std::string(#block_type))
         register(air);
         register(test_block);
         register(test_block_2);

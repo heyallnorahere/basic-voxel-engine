@@ -192,7 +192,7 @@ namespace bve {
                 indices.insert(indices.end(), current_indices.begin(), current_indices.end());
             }
         }
-        return ref<mesh>(new mesh_factory_mesh(vertices, indices));
+        return ref<mesh_factory_mesh>::create(vertices, indices);
     }
     std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
         return {
