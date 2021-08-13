@@ -24,7 +24,7 @@ namespace bve {
             virtual void shutdown_imgui_backends() = 0;
             virtual void call_imgui_backend_newframe() = 0;
             GLFWwindow* m_window = nullptr;
-            friend class window;
+            friend class ::bve::window;
         };
     }
 }
