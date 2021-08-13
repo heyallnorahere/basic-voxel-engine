@@ -28,10 +28,10 @@ namespace bve {
     glm::ivec2 texture_atlas::get_atlas_size() {
         return this->m_atlas_size;
     }
-    ref<texture> texture_atlas::get_texture() {
+    ref<graphics::texture> texture_atlas::get_texture() {
         return this->m_texture;
     }
-    texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures) {
+    texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures, ref<graphics::object_factory> object_factory) {
         std::vector<std::pair<namespaced_name, texture_data>> textures_copy(textures.size());
         std::copy(textures.begin(), textures.end(), textures_copy.begin());
         // i know this code is dubious but its the best i could think of
@@ -97,8 +97,6 @@ namespace bve {
                 }
             }
         }
-        texture_settings settings;
-        // todo: texture settings
-        this->m_texture = ref<texture>::create(atlas_texture_data, this->m_texture_size.x, this->m_texture_size.y, channels, settings);
+        this->m_texture = object_factory->create_texture(atlas_texture_data, this->m_texture_size.x, this->m_texture_size.y, channels);
     }
 }

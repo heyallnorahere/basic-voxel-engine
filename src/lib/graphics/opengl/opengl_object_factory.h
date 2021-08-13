@@ -10,6 +10,7 @@ namespace bve {
                 virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) override;
                 virtual ref<context> create_context() override;
                 virtual ref<shader> create_shader(const std::vector<shader_source>& sources) override;
+                virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) override;
             };
         }
     }

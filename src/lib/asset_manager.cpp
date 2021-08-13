@@ -29,7 +29,7 @@ namespace bve {
         }
         return asset_path;
     }
-    ref<texture_atlas> asset_manager::create_texture_atlas() {
+    ref<texture_atlas> asset_manager::create_texture_atlas(ref<graphics::object_factory> object_factory) {
         object_register<block>& block_register = registry::get().get_register<block>();
         std::vector<namespaced_name> register_names = block_register.get_names();
         using texture_data = texture_atlas::texture_data;
@@ -39,12 +39,12 @@ namespace bve {
             auto path = this->get_asset_path("block:" + name.get_full_name() + ".png"); // single texture per block, for now
             texture_data data;
             try {
-                data.data = texture::load_image(path, data.width, data.height, data.channels);
+                data.data = graphics::texture::load_image(path, data.width, data.height, data.channels);
             } catch (const std::runtime_error&) {
                 continue; // we dont know if the block will even be rendered - so we pass
             }
             textures.push_back({ name, data });
         }
-        return ref<texture_atlas>(new texture_atlas(textures));
+        return ref<texture_atlas>(new texture_atlas(textures, object_factory));
     }
 }

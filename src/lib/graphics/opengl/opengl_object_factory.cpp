@@ -4,6 +4,7 @@
 #include "opengl_buffer.h"
 #include "opengl_context.h"
 #include "opengl_shader.h"
+#include "opengl_texture.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
@@ -40,6 +41,9 @@ namespace bve {
                     opengl_sources.push_back({ source.path, type });
                 }
                 return ref<opengl_shader>::create(opengl_sources);
+            }
+            ref<texture> opengl_object_factory::create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) {
+                return ref<opengl_texture>::create(data, width, height, channels, opengl_texture_settings{ });
             }
         }
     }

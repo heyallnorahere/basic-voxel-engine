@@ -3,6 +3,7 @@
 #include "context.h"
 #include "vao.h"
 #include "shader.h"
+#include "texture.h"
 namespace bve {
     namespace graphics {
         enum class graphics_api {
@@ -23,6 +24,12 @@ namespace bve {
             virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) = 0;
             virtual ref<context> create_context() = 0;
             virtual ref<shader> create_shader(const std::vector<shader_source>& sources) = 0;
+            ref<texture> create_texture(std::filesystem::path path) {
+                int32_t width, height, channels;
+                std::vector<uint8_t> data = texture::load_image(path, width, height, channels);
+                this->create_texture(data, width, height, channels);
+            }
+            virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) = 0;
         };
     }
 }
