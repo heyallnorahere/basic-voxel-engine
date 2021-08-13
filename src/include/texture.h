@@ -8,7 +8,7 @@ namespace bve {
         GLenum target = 0;
         GLenum format = 0;
     };
-    class texture {
+    class texture : public ref_counted {
     public:
         static std::vector<uint8_t> load_image(const std::filesystem::path& path, int32_t& width, int32_t& height, int32_t& channels);
         texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, const texture_settings& settings);

@@ -20,7 +20,7 @@ namespace bve {
     };
     struct command_list;
     class shader;
-    class mesh {
+    class mesh : public ref_counted {
     public:
         virtual ~mesh() { }
         virtual const void* vertex_buffer_data() const = 0;
@@ -28,7 +28,7 @@ namespace bve {
         virtual size_t vertex_count() const = 0;
         virtual std::vector<uint32_t> index_buffer_data() const = 0;
     };
-    class renderer {
+    class renderer : public ref_counted {
     public:
         struct stats {
             uint32_t rendercalls;

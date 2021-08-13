@@ -1,6 +1,6 @@
 #pragma once
 namespace bve {
-    class block {
+    class block : public ref_counted {
     public:
         virtual ~block();
         virtual float opacity();

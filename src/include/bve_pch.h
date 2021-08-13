@@ -29,6 +29,8 @@
 #include <utility>
 #include <tuple>
 #include <optional>
+// everything should include ref
+#include "ref.h"
 // saving this for later
 /*
 #ifdef BVE_PLATFORM_WINDOWS

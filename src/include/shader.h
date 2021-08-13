@@ -1,6 +1,6 @@
 #pragma once
 namespace bve {
-    class shader {
+    class shader : public ref_counted {
     public:
         struct intermediate_shader_source {
             std::string path;

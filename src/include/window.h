@@ -1,7 +1,7 @@
 #pragma once
 namespace bve {
     class input_manager;
-    class window {
+    class window : public ref_counted {
     public:
         window(int32_t width, int32_t height);
         ~window();

@@ -1,7 +1,7 @@
 #pragma once
 #include "window.h"
 namespace bve {
-    class input_manager {
+    class input_manager : public ref_counted {
     public:
         struct key_state {
             bool up, down, held;

@@ -4,7 +4,7 @@
 #include "texture.h"
 namespace bve {
     class asset_manager;
-    class texture_atlas {
+    class texture_atlas : public ref_counted {
     public:
         texture_atlas(const texture_atlas&) = delete;
         texture_atlas& operator=(const texture_atlas&) = delete;
