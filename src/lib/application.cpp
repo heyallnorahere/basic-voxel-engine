@@ -2,6 +2,7 @@
 #include "application.h"
 #include "block.h"
 #include "asset_manager.h"
+#include "components.h"
 namespace bve {
     using callback = std::function<void()>;
     application& application::get() {
@@ -52,6 +53,7 @@ namespace bve {
         this->m_delta_time = current_frame - this->m_last_frame;
         this->m_last_frame = current_frame;
         this->m_input_manager->update();
+        this->m_world->update();
     }
     void application::render() {
         this->m_window->clear();
@@ -62,7 +64,22 @@ namespace bve {
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
         this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes());
-        //data.renderer_->set_camera_data(player, data.aspect_ratio);
+        std::vector<entity> cameras = this->m_world->get_cameras();
+        std::optional<entity> main_camera;
+        for (entity camera : cameras) {
+            const auto& camera_component = camera.get_component<components::camera_component>();
+            if (camera_component.primary) {
+                main_camera = camera;
+                break;
+            }
+        }
+        if (!main_camera && cameras.size() > 0) {
+            main_camera = cameras[0];
+        }
+        if (main_camera) {
+            glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
+            this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
+        }
         this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
 /*#ifndef NDEBUG

@@ -42,7 +42,9 @@ namespace bve {
         void get_block(glm::ivec3 position, size_t& block_type);
         void set_block(glm::ivec3 position, const namespaced_name& block_type);
         void set_block(glm::ivec3 position, size_t block_type);
+        std::vector<entity> get_cameras();
     private:
+        template<typename T> void on_component_added(T& component, entity ent);
         glm::ivec3 m_size;
         std::unordered_map<glm::ivec3, uint8_t, hash_vector<3, int32_t>> m_voxel_types;
         entt::registry m_registry;
@@ -54,7 +56,7 @@ namespace bve {
             throw std::runtime_error("[entity] a component of the specified type already exists on this entity!");
         }
         T& component = this->m_world->m_registry.emplace<T>(this->m_handle, std::forward<Args>(args)...);
-        // todo: call on_component_added or something
+        this->m_world->on_component_added(component, *this);
         return component;
     }
     template<typename T> inline T& entity::get_component() {
@@ -71,5 +73,8 @@ namespace bve {
     }
     template<typename T> inline bool entity::has_component() {
         return this->m_world->m_registry.all_of<T>(this->m_handle);
+    }
+    template<typename T> inline void world::on_component_added(T& component, entity ent) {
+        // no specific implementation so let's just return
     }
 }

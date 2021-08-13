@@ -25,7 +25,12 @@ namespace bve {
         this->m_voxel_types[glm::ivec3(1, 0, 0)] = test_block_2;
     }
     void world::update() {
-        // todo: update
+        auto script_view = this->m_registry.view<components::script_component>();
+        script_view.each([](components::script_component& sc) {
+            for (ref<script> script_ : sc.scripts) {
+                script_->update();
+            }
+        });
     }
     entity world::create() {
         entity ent = entity(this->m_registry.create(), this);
@@ -76,5 +81,13 @@ namespace bve {
         for (const auto& callback : this->m_on_block_changed) {
             callback(position, ref<world>(this));
         }
+    }
+    std::vector<entity> world::get_cameras() {
+        auto camera_view = this->m_registry.view<components::camera_component>();
+        std::vector<entity> entities;
+        for (entt::entity ent : camera_view) {
+            entities.push_back(entity(ent, this));
+        }
+        return entities;
     }
 }

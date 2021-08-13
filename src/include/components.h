@@ -1,4 +1,6 @@
 #pragma once
+#include "script.h"
+#include "world.h"
 namespace bve {
     namespace components {
         struct transform_component {
@@ -19,11 +21,26 @@ namespace bve {
         struct camera_component {
             glm::vec3 direction = glm::vec3(0.f, 0.f, -1.f);
             glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+            bool primary = true;
             float near_plane = 0.1f;
             float far_plane = 100.f;
             camera_component() = default;
             camera_component(const camera_component&) = default;
             camera_component& operator=(const camera_component&) = default;
         };
+        struct script_component {
+            std::vector<ref<script>> scripts;
+            entity parent;
+            template<typename T, typename... Args> void bind(Args&&... args) {
+                static_assert(std::is_base_of_v<script, T>, "[script component] the given type is not a script type");
+                ref<script> script_ = ref<T>::create(std::forward<Args>(args)...);
+                script_->m_entity = this->parent;
+                script_->on_attach();
+                this->scripts.push_back(script_);
+            }
+        };
+    }
+    template<> inline void world::on_component_added<components::script_component>(components::script_component& sc, entity ent) {
+        sc.parent = ent;
     }
 }
