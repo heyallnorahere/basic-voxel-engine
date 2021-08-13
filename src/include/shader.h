@@ -6,7 +6,7 @@ namespace bve {
             std::string path;
             GLenum type;
         };
-        static std::shared_ptr<shader> create(const std::initializer_list<intermediate_shader_source>& sources);
+        static ref<shader> create(const std::initializer_list<intermediate_shader_source>& sources);
         ~shader();
         void reload();
         void bind();

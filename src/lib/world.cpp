@@ -74,7 +74,7 @@ namespace bve {
         }
         this->m_voxel_types[position] = (uint8_t)block_type;
         for (const auto& callback : this->m_on_block_changed) {
-            callback(position, this->shared_from_this());
+            callback(position, ref<world>(this));
         }
     }
 }

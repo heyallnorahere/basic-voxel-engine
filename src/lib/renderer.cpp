@@ -5,7 +5,7 @@
 namespace bve {
     struct command_list {
         GLuint vao, vbo, ebo;
-        std::vector<std::shared_ptr<mesh>> meshes;
+        std::vector<ref<mesh>> meshes;
         size_t index_count;
         bool open;
     };
@@ -21,7 +21,7 @@ namespace bve {
         glDeleteVertexArrays(1, &cmdlist->vao);
         delete cmdlist;
     }
-    void renderer::add_mesh(command_list* cmdlist, std::shared_ptr<mesh> mesh_) {
+    void renderer::add_mesh(command_list* cmdlist, ref<mesh> mesh_) {
         if (!cmdlist->open) {
             throw std::runtime_error("[renderer] attempted to add a mesh to a closed command list");
         }
@@ -120,7 +120,7 @@ namespace bve {
         }
         glBindVertexArray(0);
     }
-    void renderer::render(command_list* cmdlist, std::shared_ptr<shader> shader_, std::shared_ptr<texture_atlas> atlas) {
+    void renderer::render(command_list* cmdlist, ref<shader> shader_, ref<texture_atlas> atlas) {
         shader_->bind();
         shader_->set_uniform("projection", this->m_projection);
         shader_->set_uniform("view", this->m_view);

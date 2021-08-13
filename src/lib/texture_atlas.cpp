@@ -2,7 +2,7 @@
 #include "texture_atlas.h"
 #include "block.h"
 namespace bve {
-        void texture_atlas::set_uniform(std::shared_ptr<shader> shader_, const std::string& uniform_name, GLint texture_slot) {
+        void texture_atlas::set_uniform(ref<shader> shader_, const std::string& uniform_name, GLint texture_slot) {
         this->m_texture->bind(texture_slot);
         auto get_uniform_name = [uniform_name](const std::string& field_name) {
             return uniform_name + "." + field_name;
@@ -28,7 +28,7 @@ namespace bve {
     glm::ivec2 texture_atlas::get_atlas_size() {
         return this->m_atlas_size;
     }
-    std::shared_ptr<texture> texture_atlas::get_texture() {
+    ref<texture> texture_atlas::get_texture() {
         return this->m_texture;
     }
     texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures) {
@@ -99,6 +99,6 @@ namespace bve {
         }
         texture_settings settings;
         // todo: texture settings
-        this->m_texture = std::make_shared<texture>(atlas_texture_data, this->m_texture_size.x, this->m_texture_size.y, channels, settings);
+        this->m_texture = ref<texture>::create(atlas_texture_data, this->m_texture_size.x, this->m_texture_size.y, channels, settings);
     }
 }

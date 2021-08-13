@@ -9,7 +9,7 @@ namespace bve {
                 this->up = this->down = this->held = false;
             }
         };
-        input_manager(std::shared_ptr<window> window_);
+        input_manager(ref<window> window_);
         ~input_manager();
         input_manager(const input_manager&) = delete;
         input_manager& operator=(const input_manager&) = delete;
@@ -19,7 +19,7 @@ namespace bve {
         bool& mouse_enabled();
     private:
         static void mouse_callback(GLFWwindow* glfw_window, double x, double y);
-        std::shared_ptr<window> m_window;
+        ref<window> m_window;
         std::map<int32_t, key_state> m_states;
         glm::vec2 m_last_mouse, m_mouse, m_current_offset;
         bool m_mouse_enabled;

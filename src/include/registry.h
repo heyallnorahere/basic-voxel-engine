@@ -51,7 +51,7 @@ namespace bve {
     template<typename T> class object_register : public ref_counted {
     public:
         using stored_type = T;
-        using element_type = std::shared_ptr<stored_type>;
+        using element_type = ref<stored_type>;
         using size_type = typename std::list<element_type>::size_type;
         object_register(const object_register<T>&) = delete;
         object_register<T>& operator=(const object_register<T>&) = delete;
@@ -151,7 +151,7 @@ namespace bve {
         template<typename T> object_register<T>& get_register() {
             size_t hash_code = typeid(T).hash_code();
             if (this->m_registers.find(hash_code) == this->m_registers.end()) {
-                auto register_ = std::shared_ptr<ref_counted>(new object_register<T>);
+                auto register_ = ref<ref_counted>(new object_register<T>);
                 this->m_registers.insert({ hash_code, register_ });
                 return (object_register<T>&)*register_;
             } else {
@@ -160,6 +160,6 @@ namespace bve {
         }
     private:
         registry() { }
-        std::unordered_map<size_t, std::shared_ptr<ref_counted>> m_registers;
+        std::unordered_map<size_t, ref<ref_counted>> m_registers;
     };
 }

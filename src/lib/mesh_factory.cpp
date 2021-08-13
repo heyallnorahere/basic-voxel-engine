@@ -110,7 +110,7 @@ namespace bve {
         }
         return faces;
     }
-    mesh_factory::mesh_factory(std::shared_ptr<world> _world) {
+    mesh_factory::mesh_factory(ref<world> _world) {
         this->m_world = _world;
     }
     std::vector<std::vector<mesh_factory::processed_voxel>> mesh_factory::get_clusters() {
@@ -161,7 +161,7 @@ namespace bve {
         }
         return clusters;
     }
-    std::shared_ptr<mesh> mesh_factory::create_mesh(std::vector<processed_voxel> voxels) {
+    ref<mesh> mesh_factory::create_mesh(std::vector<processed_voxel> voxels) {
         auto faces = get_faces();
         std::vector<vertex> vertices;
         std::vector<uint32_t> indices;
@@ -192,7 +192,7 @@ namespace bve {
                 indices.insert(indices.end(), current_indices.begin(), current_indices.end());
             }
         }
-        return std::shared_ptr<mesh>(new mesh_factory_mesh(vertices, indices));
+        return ref<mesh>(new mesh_factory_mesh(vertices, indices));
     }
     std::vector<vertex_attribute> mesh_factory::get_vertex_attributes() {
         return {

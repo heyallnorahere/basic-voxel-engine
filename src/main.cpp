@@ -4,7 +4,7 @@
 namespace bve {
     static entity player;
     static float camera_sensitivity = 0.1f;
-    static void create_player(std::shared_ptr<world> world_) {
+    static void create_player(ref<world> world_) {
         player = world_->create();
         player.get_component<components::transform_component>().translation = glm::vec3(5.f);
         player.add_component<components::camera_component>().direction = glm::vec3(-1.f);
@@ -31,7 +31,7 @@ namespace bve {
         direction.z = cos(radians.x) * sin(radians.y);
         camera.direction = glm::normalize(direction);
     }
-    static void move_player(std::shared_ptr<input_manager> input_manager_, float delta_time) {
+    static void move_player(ref<input_manager> input_manager_, float delta_time) {
         auto& camera = player.get_component<components::camera_component>();
         auto& transform = player.get_component<components::transform_component>();
         float player_speed = 2.5f * delta_time;

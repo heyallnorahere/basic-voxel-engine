@@ -12,7 +12,7 @@ namespace bve {
     };
 #undef key
     static std::map<GLFWwindow*, input_manager*> window_map;
-    input_manager::input_manager(std::shared_ptr<window> window_) {
+    input_manager::input_manager(ref<window> window_) {
         this->m_mouse = this->m_last_mouse = this->m_current_offset = glm::vec2(0.f);
         this->m_window = window_;
         this->m_mouse_enabled = false;

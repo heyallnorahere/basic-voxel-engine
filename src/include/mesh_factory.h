@@ -9,11 +9,11 @@ namespace bve {
             glm::ivec3 position;
             std::vector<glm::ivec3> surroundings;
         };
-        mesh_factory(std::shared_ptr<world> _world);
+        mesh_factory(ref<world> _world);
         std::vector<std::vector<processed_voxel>> get_clusters();
-        std::shared_ptr<mesh> create_mesh(std::vector<processed_voxel> voxels);
+        ref<mesh> create_mesh(std::vector<processed_voxel> voxels);
         std::vector<vertex_attribute> get_vertex_attributes();
     private:
-        std::shared_ptr<world> m_world;
+        ref<world> m_world;
     };
 }

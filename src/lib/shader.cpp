@@ -11,8 +11,8 @@ namespace bve {
         file.close();
         return contents.str();
     }
-    std::shared_ptr<shader> shader::create(const std::initializer_list<intermediate_shader_source>& sources) {
-        return std::shared_ptr<shader>(new shader(std::vector<intermediate_shader_source>(sources)));
+    ref<shader> shader::create(const std::initializer_list<intermediate_shader_source>& sources) {
+        return ref<shader>(new shader(std::vector<intermediate_shader_source>(sources)));
     }
     shader::~shader() {
         this->destroy();

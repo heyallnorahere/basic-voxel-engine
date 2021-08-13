@@ -29,13 +29,13 @@ namespace bve {
         }
         return asset_path;
     }
-    std::shared_ptr<texture_atlas> asset_manager::create_texture_atlas() {
+    ref<texture_atlas> asset_manager::create_texture_atlas() {
         object_register<block>& block_register = registry::get().get_register<block>();
         std::vector<namespaced_name> register_names = block_register.get_names();
         using texture_data = texture_atlas::texture_data;
         std::vector<std::pair<namespaced_name, texture_data>> textures;
         for (const auto& name : register_names) {
-            std::shared_ptr<block> block_ = block_register[name];
+            ref<block> block_ = block_register[name];
             auto path = this->get_asset_path("block:" + name.get_full_name() + ".png"); // single texture per block, for now
             texture_data data;
             try {
@@ -45,6 +45,6 @@ namespace bve {
             }
             textures.push_back({ name, data });
         }
-        return std::shared_ptr<texture_atlas>(new texture_atlas(textures));
+        return ref<texture_atlas>(new texture_atlas(textures));
     }
 }

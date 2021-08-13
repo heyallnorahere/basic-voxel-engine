@@ -12,7 +12,7 @@ namespace bve {
         callback clear = [this]() { this->m_window->clear(); };
         callback swap_buffers = [this]() { this->m_window->swap_buffers(); };
         this->m_clusters = mesh_factory(this->m_world).get_clusters();
-        this->m_world->on_block_changed([this](glm::ivec3, std::shared_ptr<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(); });
+        this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(); });
         this->m_running = true;
         while (!this->m_window->should_close() && this->m_running) {
             this->m_window->new_frame();
@@ -27,7 +27,7 @@ namespace bve {
     double application::get_delta_time() {
         return this->m_delta_time;
     }
-    std::shared_ptr<shader> application::get_shader(const std::string& name) {
+    ref<shader> application::get_shader(const std::string& name) {
         if (this->m_shaders.find(name) == this->m_shaders.end()) {
             throw std::runtime_error("[application] the specified shader does not exist");
         }
@@ -37,12 +37,12 @@ namespace bve {
         block::register_all();
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
-        this->m_world = std::make_shared<world>(glm::ivec3(16, 16, 256));
-        this->m_window = std::make_shared<window>(800, 600);
+        this->m_world = ref<world>::create(glm::ivec3(16, 16, 256));
+        this->m_window = ref<window>::create(800, 600);
         this->m_atlas = asset_manager_.create_texture_atlas();
         this->m_shaders["block"] = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
-        this->m_renderer = std::make_shared<renderer>();
-        this->m_input_manager = std::make_shared<input_manager>(this->m_window);
+        this->m_renderer = ref<renderer>::create();
+        this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;
         this->m_delta_time = 0.0;
         this->m_last_frame = glfwGetTime();
@@ -70,7 +70,7 @@ namespace bve {
             auto& transform = player.get_component<components::transform_component>();
             auto& camera = player.get_component<components::camera_component>();
             static bool lock_camera = false;
-            static std::shared_ptr<glm::vec3> original_direction;
+            static ref<glm::vec3> original_direction;
             if (lock_camera) {
                 if (!original_direction) {
                     original_direction = std::make_shared<glm::vec3>(camera.direction);

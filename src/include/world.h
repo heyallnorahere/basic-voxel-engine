@@ -28,9 +28,9 @@ namespace bve {
         world* m_world = nullptr;
         friend class world;
     };
-    class world : private std::enable_shared_from_this<world>, public ref_counted {
+    class world : public ref_counted {
     public:
-        using on_block_changed_callback = std::function<void(glm::ivec3, std::shared_ptr<world>)>;
+        using on_block_changed_callback = std::function<void(glm::ivec3, ref<world>)>;
         world(glm::ivec3 size);
         world(const world&) = delete;
         world& operator=(const world&) = delete;

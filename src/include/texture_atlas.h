@@ -8,17 +8,17 @@ namespace bve {
     public:
         texture_atlas(const texture_atlas&) = delete;
         texture_atlas& operator=(const texture_atlas&) = delete;
-        void set_uniform(std::shared_ptr<shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
+        void set_uniform(ref<shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
         glm::ivec2 get_texture_size();
         glm::ivec2 get_atlas_size();
-        std::shared_ptr<texture> get_texture();
+        ref<texture> get_texture();
     private:
         struct texture_data {
             std::vector<uint8_t> data;
             int32_t width, height, channels;
         };
         texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures);
-        std::shared_ptr<texture> m_texture;
+        ref<texture> m_texture;
         glm::ivec2 m_texture_size, m_atlas_size;
         std::unordered_map<namespaced_name, std::pair<glm::ivec2, glm::ivec2>, namespaced_name::hash_function> m_texture_dimensions;
         friend class asset_manager;
