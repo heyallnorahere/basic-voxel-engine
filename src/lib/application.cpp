@@ -82,34 +82,6 @@ namespace bve {
         }
         this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
-/*#ifndef NDEBUG
-        {
-            auto& transform = player.get_component<components::transform_component>();
-            auto& camera = player.get_component<components::camera_component>();
-            static bool lock_camera = false;
-            static ref<glm::vec3> original_direction;
-            if (lock_camera) {
-                if (!original_direction) {
-                    original_direction = std::make_shared<glm::vec3>(camera.direction);
-                }
-                camera.direction = glm::normalize(-transform.translation);
-            }
-            else if (original_direction) {
-                camera.direction = *original_direction;
-                original_direction.reset();
-            }
-            ImGuiIO& io = ImGui::GetIO();
-            ImGui::Begin("Player control");
-            ImGui::DragFloat3("Position", &transform.translation.x);
-            ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
-            ImGui::SliderFloat("Camera sensitivity", &camera_sensitivity, 0.f, 0.5f);
-            ImGui::Checkbox("Lock camera", &lock_camera);
-            ImGui::Checkbox("Mouse enabled", &data.input_manager_->mouse_enabled());
-            ImGui::Text("FPS: %f", io.Framerate);
-            ImGui::Image((ImTextureID)(size_t)data.atlas->get_texture()->get_id(), { 100, 100 });
-            ImGui::End();
-        }
-#endif*/
         this->m_window->swap_buffers();
     }
 }

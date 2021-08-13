@@ -16,6 +16,11 @@ namespace bve {
         void quit();
         double get_delta_time();
         ref<shader> get_shader(const std::string& name);
+        ref<world> get_world() { return this->m_world; }
+        ref<renderer> get_renderer() { return this->m_renderer; }
+        ref<input_manager> get_input_manager() { return this->m_input_manager; }
+        ref<window> get_window() { return this->m_window; }
+        ref<texture_atlas> get_texture_atlas() { return this->m_atlas; }
     private:
         application();
         void update();

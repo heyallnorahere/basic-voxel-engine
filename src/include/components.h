@@ -31,12 +31,13 @@ namespace bve {
         struct script_component {
             std::vector<ref<script>> scripts;
             entity parent;
-            template<typename T, typename... Args> void bind(Args&&... args) {
+            template<typename T, typename... Args> ref<T> bind(Args&&... args) {
                 static_assert(std::is_base_of_v<script, T>, "[script component] the given type is not a script type");
-                ref<script> script_ = ref<T>::create(std::forward<Args>(args)...);
+                ref<T> script_ = ref<T>::create(std::forward<Args>(args)...);
                 script_->m_entity = this->parent;
                 script_->on_attach();
                 this->scripts.push_back(script_);
+                return script_;
             }
         };
     }
