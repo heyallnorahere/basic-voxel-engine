@@ -3,6 +3,7 @@
 #include "opengl_vao.h"
 #include "opengl_buffer.h"
 #include "opengl_context.h"
+#include "opengl_shader.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
@@ -17,6 +18,28 @@ namespace bve {
             }
             ref<context> opengl_object_factory::create_context() {
                 return ref<opengl_context>::create();
+            }
+            ref<shader> opengl_object_factory::create_shader(const std::vector<shader_source>& sources) {
+                std::vector<opengl_shader::opengl_shader_source> opengl_sources;
+                for (const auto& source : sources) {
+                    GLenum type;
+                    switch (source.type) {
+                    case shader_type::VERTEX:
+                        type = GL_VERTEX_SHADER;
+                        break;
+                    case shader_type::FRAGMENT:
+                        type = GL_FRAGMENT_SHADER;
+                        break;
+                    case shader_type::GEOMETRY:
+                        type = GL_GEOMETRY_SHADER;
+                        break;
+                    default:
+                        throw std::runtime_error("[opengl object factory] invalid shader type");
+                        break;
+                    }
+                    opengl_sources.push_back({ source.path, type });
+                }
+                return ref<opengl_shader>::create(opengl_sources);
             }
         }
     }

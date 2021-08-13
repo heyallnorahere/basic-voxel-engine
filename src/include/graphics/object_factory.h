@@ -2,6 +2,7 @@
 #include "buffer.h"
 #include "context.h"
 #include "vao.h"
+#include "shader.h"
 namespace bve {
     namespace graphics {
         enum class graphics_api {
@@ -21,6 +22,7 @@ namespace bve {
             virtual ref<buffer> create_vbo(const void* data, size_t size) = 0;
             virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) = 0;
             virtual ref<context> create_context() = 0;
+            virtual ref<shader> create_shader(const std::vector<shader_source>& sources) = 0;
         };
     }
 }

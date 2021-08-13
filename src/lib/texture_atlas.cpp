@@ -2,15 +2,15 @@
 #include "texture_atlas.h"
 #include "block.h"
 namespace bve {
-        void texture_atlas::set_uniform(ref<shader> shader_, const std::string& uniform_name, GLint texture_slot) {
+        void texture_atlas::set_uniform(ref<graphics::shader> shader_, const std::string& uniform_name, GLint texture_slot) {
         this->m_texture->bind(texture_slot);
         auto get_uniform_name = [uniform_name](const std::string& field_name) {
             return uniform_name + "." + field_name;
         };
         shader_->bind();
-        shader_->set_uniform(get_uniform_name("texture"), texture_slot);
-        shader_->set_uniform(get_uniform_name("texture_size"), this->m_texture_size);
-        shader_->set_uniform(get_uniform_name("atlas_size"), this->m_atlas_size);
+        shader_->set_int(get_uniform_name("texture"), texture_slot);
+        shader_->set_ivec2(get_uniform_name("texture_size"), this->m_texture_size);
+        shader_->set_ivec2(get_uniform_name("atlas_size"), this->m_atlas_size);
         auto& block_register = registry::get().get_register<block>();
         for (const std::pair<namespaced_name, std::pair<glm::ivec2, glm::ivec2>>& pair : this->m_texture_dimensions) {
             std::optional<size_t> index = block_register.get_index(pair.first);
@@ -18,8 +18,8 @@ namespace bve {
                 throw std::runtime_error("[texture atlas] the specified block does not exist");
             }
             std::string element_name = get_uniform_name("texture_dimensions_array[" + std::to_string(*index) + "]");
-            shader_->set_uniform(element_name + ".atlas_position", pair.second.first);
-            shader_->set_uniform(element_name + ".texture_dimensions", pair.second.second);
+            shader_->set_ivec2(element_name + ".atlas_position", pair.second.first);
+            shader_->set_ivec2(element_name + ".texture_dimensions", pair.second.second);
         }
     }
     glm::ivec2 texture_atlas::get_texture_size() {

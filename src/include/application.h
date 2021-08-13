@@ -3,7 +3,6 @@
 #include "world.h"
 #include "renderer.h"
 #include "input_manager.h"
-#include "shader.h"
 #include "texture_atlas.h"
 #include "mesh_factory.h"
 #include "graphics/object_factory.h"
@@ -16,7 +15,7 @@ namespace bve {
         void run();
         void quit();
         double get_delta_time();
-        ref<shader> get_shader(const std::string& name);
+        ref<graphics::shader> get_shader(const std::string& name);
         ref<world> get_world() { return this->m_world; }
         ref<renderer> get_renderer() { return this->m_renderer; }
         ref<input_manager> get_input_manager() { return this->m_input_manager; }
@@ -33,7 +32,7 @@ namespace bve {
         ref<window> m_window;
         ref<texture_atlas> m_atlas;
         ref<graphics::object_factory> m_object_factory;
-        std::unordered_map<std::string, ref<shader>> m_shaders;
+        std::unordered_map<std::string, ref<graphics::shader>> m_shaders;
         std::vector<std::vector<mesh_factory::processed_voxel>> m_clusters;
         bool m_running;
         double m_delta_time, m_last_frame;

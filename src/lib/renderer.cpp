@@ -1,5 +1,4 @@
 #include "bve_pch.h"
-#include "shader.h"
 #include "renderer.h"
 #include "components.h"
 namespace bve {
@@ -62,10 +61,10 @@ namespace bve {
         free(vertex_buffer_data);
         vao->set_vertex_attributes(attributes);
     }
-    void renderer::render(command_list* cmdlist, ref<shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas) {
+    void renderer::render(command_list* cmdlist, ref<graphics::shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas) {
         shader_->bind();
-        shader_->set_uniform("projection", this->m_projection);
-        shader_->set_uniform("view", this->m_view);
+        shader_->set_mat4("projection", this->m_projection);
+        shader_->set_mat4("view", this->m_view);
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }

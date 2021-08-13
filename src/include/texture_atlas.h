@@ -1,6 +1,6 @@
 #pragma once
 #include "registry.h"
-#include "shader.h"
+#include "graphics/shader.h"
 #include "texture.h"
 namespace bve {
     class asset_manager;
@@ -8,7 +8,7 @@ namespace bve {
     public:
         texture_atlas(const texture_atlas&) = delete;
         texture_atlas& operator=(const texture_atlas&) = delete;
-        void set_uniform(ref<shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
+        void set_uniform(ref<graphics::shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
         glm::ivec2 get_texture_size();
         glm::ivec2 get_atlas_size();
         ref<texture> get_texture();

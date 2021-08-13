@@ -4,7 +4,6 @@
 #include "graphics/object_factory.h"
 namespace bve {
     struct command_list;
-    class shader;
     class mesh : public ref_counted {
     public:
         virtual ~mesh() { }
@@ -25,7 +24,7 @@ namespace bve {
         void destroy_command_list(command_list* cmdlist);
         void add_mesh(command_list* cmdlist, ref<mesh> mesh_);
         void close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes, ref<graphics::object_factory> object_factory);
-        void render(command_list* cmdlist, ref<shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas = nullptr);
+        void render(command_list* cmdlist, ref<graphics::shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas = nullptr);
         void set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float near_plane = 0.1f, float far_plane = 100.f);
         void set_camera_data(entity camera_entity, float aspect_ratio);
     private:

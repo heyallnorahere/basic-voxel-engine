@@ -26,7 +26,7 @@ namespace bve {
     double application::get_delta_time() {
         return this->m_delta_time;
     }
-    ref<shader> application::get_shader(const std::string& name) {
+    ref<graphics::shader> application::get_shader(const std::string& name) {
         if (this->m_shaders.find(name) == this->m_shaders.end()) {
             throw std::runtime_error("[application] the specified shader does not exist");
         }
@@ -40,7 +40,7 @@ namespace bve {
         this->m_world = ref<world>::create(glm::ivec3(16, 16, 256));
         this->m_window = ref<window>::create(800, 600, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas();
-        this->m_shaders["block"] = shader::create({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), GL_VERTEX_SHADER }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), GL_FRAGMENT_SHADER } });
+        this->m_shaders["block"] = this->m_object_factory->create_shader({ { asset_manager_.get_asset_path("shaders:vertex.glsl").string(), graphics::shader_type::VERTEX }, { asset_manager_.get_asset_path("shaders:fragment.glsl").string(), graphics::shader_type::FRAGMENT } });
         this->m_renderer = ref<renderer>::create();
         this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;
