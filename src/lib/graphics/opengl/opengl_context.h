@@ -8,7 +8,6 @@ namespace bve {
                 virtual void clear() override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
-            protected:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
                 virtual void setup_context() override;
