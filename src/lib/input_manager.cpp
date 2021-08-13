@@ -13,9 +13,9 @@ namespace bve {
 #undef key
     static std::map<GLFWwindow*, input_manager*> window_map;
     input_manager::input_manager(std::shared_ptr<window> window_) {
-        this->m_mouse_offset = this->m_temp_mouse_offset = glm::vec2(0.f);
+        this->m_mouse = this->m_last_mouse = this->m_current_offset = glm::vec2(0.f);
         this->m_window = window_;
-        this->m_mouse_enabled = true;
+        this->m_mouse_enabled = false;
         window_map.insert({ this->m_window->m_window, this });
         glfwSetCursorPosCallback(this->m_window->m_window, mouse_callback);
         for (int32_t key : keys) {
@@ -30,13 +30,13 @@ namespace bve {
     input_manager::key_state input_manager::get_key(int32_t glfw_key) {
         return this->m_states[glfw_key];
     }
-    glm::vec2 input_manager::get_mouse_offset() {
-        return this->m_mouse_offset;
+    glm::vec2 input_manager::get_mouse() {
+        return this->m_current_offset;
     }
     void input_manager::update() {
         glfwSetInputMode(this->m_window->m_window, GLFW_CURSOR, this->m_mouse_enabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
-        this->m_mouse_offset = this->m_temp_mouse_offset;
-        this->m_temp_mouse_offset = glm::vec2(0.f);
+        this->m_current_offset = (this->m_mouse - this->m_last_mouse) * glm::vec2(1.f, -1.f);
+        this->m_last_mouse = this->m_mouse;
         for (int32_t key : keys) {
             key_state old_state = this->m_states[key];
             key_state& state = this->m_states[key];
@@ -51,6 +51,6 @@ namespace bve {
     }
     void input_manager::mouse_callback(GLFWwindow* glfw_window, double x, double y) {
         input_manager* im = window_map[glfw_window];
-        im->m_temp_mouse_offset += glm::vec2((float)x, (float)y);
+        im->m_mouse = glm::vec2((float)x, (float)y);
     }
 }

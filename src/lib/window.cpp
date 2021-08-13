@@ -120,10 +120,17 @@ namespace bve {
     }
     void window::framebuffer_size_callback(GLFWwindow* glfw_window, int32_t width, int32_t height) {
         window* window_ = window_map[glfw_window];
-        float scale = (float)height / (float)window_->m_framebuffer_size.y;
-        int32_t new_width = (int32_t)(scale * (float)window_->m_framebuffer_size.x);
-        glfwMakeContextCurrent(glfw_window);
-        glViewport(abs(width - new_width) / 2, 0, new_width, height);
-        window_->m_framebuffer_size = glm::ivec2(new_width, height);
+        constexpr bool preserve_aspect_ratio = false; // temporarily
+        int32_t viewport_width;
+        if (preserve_aspect_ratio) {
+            float scale = (float)height / (float)window_->m_framebuffer_size.y;
+            int32_t new_width = (int32_t)(scale * (float)window_->m_framebuffer_size.x);
+            glfwMakeContextCurrent(glfw_window);
+            glViewport(abs(width - new_width) / 2, 0, new_width, height);
+        } else {
+            glViewport(0, 0, width, height);
+            viewport_width = width;
+        }
+        window_->m_framebuffer_size = glm::ivec2(viewport_width, height);
     }
 }
