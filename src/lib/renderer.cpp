@@ -65,9 +65,11 @@ namespace bve {
         shader_->bind();
         shader_->set_mat4("projection", this->m_projection);
         shader_->set_mat4("view", this->m_view);
+        shader_->set_vec3("camera_position", this->m_camera_position);
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }
+        // todo: set light uniforms
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
         cmdlist->vao->unbind();
@@ -76,6 +78,7 @@ namespace bve {
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
         this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane); // todo: add more arguments to function argument list
         this->m_view = glm::lookAt(position, position + direction, up);
+        this->m_camera_position = position;
     }
     void renderer::set_camera_data(entity camera_entity, float aspect_ratio) {
         if (!camera_entity.has_component<components::camera_component>()) {

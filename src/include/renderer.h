@@ -30,5 +30,6 @@ namespace bve {
     private:
         glm::mat4 m_projection = glm::mat4(1.f);
         glm::mat4 m_view = glm::mat4(1.f);
+        glm::vec3 m_camera_position = glm::vec3(0.f);
     };
 }

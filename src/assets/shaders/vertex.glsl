@@ -7,8 +7,12 @@ uniform mat4 projection;
 uniform mat4 view;
 out vec2 uv;
 flat out int block_id;
+out vec3 fragment_position;
+out vec3 normal;
 void main() {
     gl_Position = projection * view * vec4(in_position, 1.0);
     uv = in_uv;
     block_id = in_block_id;
+    normal = normalize(in_normal);
+    fragment_position = in_position;
 }
