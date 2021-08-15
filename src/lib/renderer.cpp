@@ -74,7 +74,7 @@ namespace bve {
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }
-        if (cmdlist->lights.size() > 100) {
+        if (cmdlist->lights.size() > 30) {
             throw std::runtime_error("[renderer] scene cannot contain more than 100 lights!");
         }
         shader_->set_int("light_count", (int32_t)cmdlist->lights.size());

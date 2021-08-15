@@ -25,6 +25,12 @@ namespace bve {
             virtual void set_uniforms(ref<graphics::shader> shader, const std::string& uniform_name) = 0;
             virtual light_type get_type() = 0;
         protected:
+            void set_universal_values(ref<graphics::shader> shader, const std::string& uniform_name) {
+                shader->set_vec3(uniform_name + ".color", this->m_color);
+                shader->set_float(uniform_name + ".ambient_strength", this->m_ambient_strength);
+                shader->set_float(uniform_name + ".specular_strength", this->m_specular_strength);
+            }
+        private:
             glm::vec3 m_color;
             float m_ambient_strength, m_specular_strength;
         };

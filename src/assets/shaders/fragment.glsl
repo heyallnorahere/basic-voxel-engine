@@ -10,6 +10,8 @@ struct light {
     // spotlight fields
     vec3 direction;
     float cutoff;
+    // point light fields
+    float constant, linear, quadratic;
 };
 struct texture_dimensions_struct {
     ivec2 atlas_position, texture_dimensions;
@@ -19,7 +21,7 @@ struct texture_atlas {
     ivec2 texture_size, atlas_size;
     texture_dimensions_struct texture_dimensions_array[64]; // im gonna increase the size of this array once i add more blocks
 };
-uniform light lights[100];
+uniform light lights[30];
 uniform int light_count;
 uniform texture_atlas atlas;
 uniform vec3 camera_position;
@@ -55,6 +57,12 @@ vec3 calculate_spotlight(light l, vec3 color, vec3 ambient_color) {
         return ambient_color;
     }
 }
+vec3 calculate_point_light(light l, vec3 color) {
+    float distance_ = length(l.position - fragment_position);
+    float distance_squared = distance_ * distance_;
+    float attenuation = 1.0 / (l.constant + l.linear * distance_ + l.quadratic * distance_squared);
+    return color * attenuation;
+}
 vec3 calculate_light(int index, vec3 _fragment_color) {
     light l = lights[index];
     vec3 ambient = calculate_ambient(l);
@@ -64,8 +72,10 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
     switch (l.type) {
     case 1: // spotlight
         return calculate_spotlight(l, color, ambient * _fragment_color);
+    case 2: // point light
+        return calculate_point_light(l, color);
     default:
-        return vec3(0.0);
+        return vec3(1.0);
     }
 }
 void main() {
