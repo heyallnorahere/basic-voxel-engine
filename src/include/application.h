@@ -34,6 +34,7 @@ namespace bve {
         ref<graphics::object_factory> m_object_factory;
         std::unordered_map<std::string, ref<graphics::shader>> m_shaders;
         std::vector<std::vector<mesh_factory::processed_voxel>> m_clusters;
+        std::vector<std::pair<glm::vec3, ref<lighting::light>>> m_lights;
         bool m_running;
         double m_delta_time, m_last_frame;
     };

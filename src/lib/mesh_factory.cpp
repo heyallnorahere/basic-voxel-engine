@@ -113,7 +113,8 @@ namespace bve {
     mesh_factory::mesh_factory(ref<world> _world) {
         this->m_world = _world;
     }
-    std::vector<std::vector<mesh_factory::processed_voxel>> mesh_factory::get_clusters() {
+    std::vector<std::vector<mesh_factory::processed_voxel>> mesh_factory::get_clusters(std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights) {
+        lights.clear();
         auto& block_register = registry::get().get_register<block>();
         std::vector<glm::ivec3> offsets = {
             glm::ivec3(-1, 0, 0), glm::ivec3(1, 0, 0),
@@ -130,6 +131,11 @@ namespace bve {
                     this->m_world->get_block(position, block_id);
                     if (block_id == 0) {
                         continue;
+                    }
+                    ref<block> block_ = block_register[block_id];
+                    ref<lighting::light> light = block_->get_light();
+                    if (light) {
+                        lights.push_back({ glm::vec3(position), light });
                     }
                     cluster_member member;
                     for (const auto& offset : offsets) {

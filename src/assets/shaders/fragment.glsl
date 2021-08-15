@@ -62,7 +62,7 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
     vec3 specular = calculate_specular(l);
     vec3 color = (ambient + diffuse + specular) * _fragment_color;
     switch (l.type) {
-    case 0: // spotlight
+    case 1: // spotlight
         return calculate_spotlight(l, color, ambient * _fragment_color);
     default:
         return vec3(0.0);

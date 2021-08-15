@@ -1,10 +1,12 @@
 #include "bve_pch.h"
 #include "renderer.h"
 #include "components.h"
+#include "lighting/light.h"
 namespace bve {
     struct command_list {
         ref<graphics::buffer> vao, vbo, ebo;
         std::vector<ref<mesh>> meshes;
+        std::vector<std::pair<glm::vec3, ref<lighting::light>>> lights;
         size_t index_count;
         bool open;
     };
@@ -22,6 +24,9 @@ namespace bve {
             throw std::runtime_error("[renderer] attempted to add a mesh to a closed command list");
         }
         cmdlist->meshes.push_back({ mesh_ });
+    }
+    void renderer::add_lights(command_list* cmdlist, const std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights) {
+        cmdlist->lights.insert(cmdlist->lights.end(), lights.begin(), lights.end());
     }
     void renderer::close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes, ref<graphics::object_factory> object_factory) {
         if (!cmdlist->open) {
@@ -69,7 +74,17 @@ namespace bve {
         if (atlas) {
             atlas->set_uniform(shader_, "atlas");
         }
-        // todo: set light uniforms
+        if (cmdlist->lights.size() > 100) {
+            throw std::runtime_error("[renderer] scene cannot contain more than 100 lights!");
+        }
+        shader_->set_int("light_count", (int32_t)cmdlist->lights.size());
+        for (size_t i = 0; i < cmdlist->lights.size(); i++) {
+            std::string uniform_name = "lights[" + std::to_string(i) + "]";
+            ref<lighting::light> light = cmdlist->lights[i].second;
+            shader_->set_int(uniform_name + ".type", (int32_t)light->get_type());
+            shader_->set_vec3(uniform_name + ".position", cmdlist->lights[i].first);
+            light->set_uniforms(shader_, uniform_name);
+        }
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
         cmdlist->vao->unbind();

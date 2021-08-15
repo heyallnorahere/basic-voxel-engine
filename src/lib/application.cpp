@@ -10,8 +10,8 @@ namespace bve {
         return instance;
     }
     void application::run() {
-        this->m_clusters = mesh_factory(this->m_world).get_clusters();
-        this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(); });
+        this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights);
+        this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights); });
         this->m_running = true;
         while (!this->m_window->should_close() && this->m_running) {
             this->m_window->new_frame();
@@ -62,6 +62,7 @@ namespace bve {
             auto mesh_ = factory.create_mesh(cluster);
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
+        this->m_renderer->add_lights(cmdlist, this->m_lights);
         this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes(), this->m_object_factory);
         std::vector<entity> cameras = this->m_world->get_cameras();
         std::optional<entity> main_camera;

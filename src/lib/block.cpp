@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "block.h"
 #include "registry.h"
+#include "lighting/spotlight.h"
 namespace bve {
 
     // blocks
@@ -17,7 +18,18 @@ namespace bve {
         };
         class test_block_2 : public block {
         public:
+            test_block_2() {
+                this->m_light = ref<lighting::spotlight>::create();
+                this->m_light->set_ambient_strength(0.1f);
+                this->m_light->set_specular_strength(0.5f);
+                this->m_light->set_cutoff(cos(glm::radians(45.f)));
+                this->m_light->set_direction(glm::vec3(0.f, -1.f, 0.f));
+                this->m_light->set_color(glm::vec3(1.f));
+            }
             virtual std::string friendly_name() override { return "Test Block 2"; }
+            virtual ref<lighting::light> get_light() override { return this->m_light; }
+        private:
+            ref<lighting::spotlight> m_light;
         };
     }
 
