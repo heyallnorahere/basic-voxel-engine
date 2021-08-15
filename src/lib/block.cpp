@@ -24,6 +24,7 @@ namespace bve {
     block::~block() { }
     float block::opacity() { return 1.f; }
     bool block::solid() { return true; }
+    ref<lighting::light> block::get_light() { return nullptr; }
     void block::register_all() {
         auto& block_register = registry::get().get_register<block>();
 #define register(block_type) block_register.add(ref<blocks::block_type>::create(), "bve:" + std::string(#block_type))
