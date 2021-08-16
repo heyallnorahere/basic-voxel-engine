@@ -7,6 +7,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 #include <spdlog/spdlog.h>
+#include <assimp/scene.h>
 #include <imgui.h>
 #include <entt/entt.hpp>
 #include <string>

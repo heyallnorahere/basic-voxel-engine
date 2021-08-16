@@ -5,6 +5,25 @@
 namespace bve {
     namespace graphics {
         namespace opengl {
+            static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param) {
+                std::string message_ = "[opengl context] " + std::string(message);
+                switch (severity) {
+                case GL_DEBUG_SEVERITY_HIGH:
+                    spdlog::error(message_);
+                    break;
+                case GL_DEBUG_SEVERITY_MEDIUM:
+                    spdlog::warn(message_);
+                    break;
+                case GL_DEBUG_SEVERITY_LOW:
+                    spdlog::info(message_);
+                    break;
+                case GL_DEBUG_SEVERITY_NOTIFICATION:
+                    spdlog::debug(message_);
+                    break;
+                default:
+                    return;
+                }
+            }
             void opengl_context::clear() {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             }
@@ -18,8 +37,12 @@ namespace bve {
                 glfwSwapBuffers(this->get_window());
             }
             void opengl_context::setup_glfw() {
+#ifdef NDEBUG
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#else
+                glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+#endif
             }
             void opengl_context::setup_context() {
                 gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
@@ -28,7 +51,20 @@ namespace bve {
                 glCullFace(GL_BACK);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                // todo: enable more features as they are needed
+                const char* gl_version = (char*)glGetString(GL_VERSION);
+                int32_t major, minor;
+                sscanf(gl_version, "%d.%d", &major, &minor);
+                double numerical_version = major + (minor / 10.0);
+                int32_t context_flags;
+                glGetIntegerv(GL_CONTEXT_FLAGS, &context_flags);
+                if (context_flags & GL_CONTEXT_FLAG_DEBUG_BIT && numerical_version >= 4.3) {
+                    glEnable(GL_DEBUG_OUTPUT);
+                    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+                    glDebugMessageCallback(debug_callback, nullptr);
+                    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
+                }
+                spdlog::info("[opengl context] created opengl context with version {}", numerical_version);
+                
             }
             void opengl_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 glViewport(x, y, width, height);
