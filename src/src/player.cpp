@@ -58,7 +58,7 @@ void player::update() {
             original_direction.reset();
         }
         ImGuiIO& io = ImGui::GetIO();
-        ImGui::Begin("Player control");
+        ImGui::Begin("Debug menu");
         ImVec2 content_region_available = ImGui::GetContentRegionAvail();
         ImGui::DragFloat3("Position", &transform.translation.x);
         ImGui::DragFloat3("Camera direction", &camera.direction.x, 1.f, 0.f, 0.f, "%.3f", lock_camera ? ImGuiSliderFlags_NoInput : ImGuiSliderFlags_None);
