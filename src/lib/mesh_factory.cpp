@@ -6,6 +6,7 @@ namespace bve {
     struct vertex {
         glm::vec3 position, normal;
         glm::vec2 uv;
+        glm::vec3 voxel_position;
         int32_t block_id;
     };
     struct cluster_member {
@@ -183,7 +184,7 @@ namespace bve {
                 std::vector<vertex> current_vertices(pair.second.size());
                 std::copy(pair.second.begin(), pair.second.end(), current_vertices.begin());
                 for (vertex& v : current_vertices) {
-                    v.position += glm::vec3(voxel.position);
+                    v.voxel_position = glm::vec3(voxel.position);
                     size_t block_id;
                     this->m_world->get_block(voxel.position, block_id);
                     v.block_id = (int32_t)block_id;
@@ -205,6 +206,7 @@ namespace bve {
             { sizeof(vertex), offsetof(vertex, position), graphics::vertex_attribute_type::VEC3, false },
             { sizeof(vertex), offsetof(vertex, normal), graphics::vertex_attribute_type::VEC3, false },
             { sizeof(vertex), offsetof(vertex, uv), graphics::vertex_attribute_type::VEC2, false },
+            { sizeof(vertex), offsetof(vertex, voxel_position), graphics::vertex_attribute_type::VEC3, false },
             { sizeof(vertex), offsetof(vertex, block_id), graphics::vertex_attribute_type::INT, false }
         };
     }

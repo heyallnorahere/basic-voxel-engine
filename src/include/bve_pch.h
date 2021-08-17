@@ -8,6 +8,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <spdlog/spdlog.h>
 #include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/Importer.hpp>
 #include <imgui.h>
 #include <entt/entt.hpp>
 #include <string>
