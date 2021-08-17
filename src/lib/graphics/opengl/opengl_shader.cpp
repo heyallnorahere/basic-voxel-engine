@@ -44,6 +44,51 @@ namespace bve {
             void opengl_shader::set_mat4(const std::string& name, const glm::mat4& value) {
                 glUniformMatrix4fv(this->get_location(name), 1, false, glm::value_ptr(value));
             }
+            int32_t opengl_shader::get_int(const std::string& name) {
+                int32_t value;
+                glGetUniformiv(this->m_program, this->get_location(name), &value);
+                return value;
+            }
+            float opengl_shader::get_float(const std::string& name) {
+                float value;
+                glGetUniformfv(this->m_program, this->get_location(name), &value);
+                return value;
+            }
+            glm::ivec2 opengl_shader::get_ivec2(const std::string& name) {
+                glm::ivec2 value;
+                glGetUniformiv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::ivec3 opengl_shader::get_ivec3(const std::string& name) {
+                glm::ivec3 value;
+                glGetUniformiv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::ivec4 opengl_shader::get_ivec4(const std::string& name) {
+                glm::ivec4 value;
+                glGetUniformiv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::vec2 opengl_shader::get_vec2(const std::string& name) {
+                glm::vec2 value;
+                glGetUniformfv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::vec3 opengl_shader::get_vec3(const std::string& name) {
+                glm::vec3 value;
+                glGetUniformfv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::vec4 opengl_shader::get_vec4(const std::string& name) {
+                glm::vec4 value;
+                glGetUniformfv(this->m_program, this->get_location(name), &value.x);
+                return value;
+            }
+            glm::mat4 opengl_shader::get_mat4(const std::string& name) {
+                glm::mat4 value;
+                glGetUniformfv(this->m_program, this->get_location(name), &value[0][0]);
+                return value;
+            }
             opengl_shader::opengl_shader(const std::vector<std::filesystem::path>& sources) {
                 this->m_sources = sources;
                 this->create();

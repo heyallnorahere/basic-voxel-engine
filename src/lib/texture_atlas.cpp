@@ -31,6 +31,13 @@ namespace bve {
     ref<graphics::texture> texture_atlas::get_texture() {
         return this->m_texture;
     }
+    std::vector<namespaced_name> texture_atlas::get_included_block_names() {
+        std::vector<namespaced_name> names;
+        for (const auto& pair : this->m_texture_dimensions) {
+            names.push_back(pair.first);
+        }
+        return names;
+    }
     texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures, ref<graphics::object_factory> object_factory) {
         std::vector<std::pair<namespaced_name, texture_data>> textures_copy(textures.size());
         std::copy(textures.begin(), textures.end(), textures_copy.begin());

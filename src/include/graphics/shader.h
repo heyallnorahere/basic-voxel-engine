@@ -19,6 +19,15 @@ namespace bve {
             virtual void set_vec3(const std::string& name, const glm::vec3& value) = 0;
             virtual void set_vec4(const std::string& name, const glm::vec4& value) = 0;
             virtual void set_mat4(const std::string& name, const glm::mat4& value) = 0;
+            virtual int32_t get_int(const std::string& name) = 0;
+            virtual float get_float(const std::string& name) = 0;
+            virtual glm::ivec2 get_ivec2(const std::string& name) = 0;
+            virtual glm::ivec3 get_ivec3(const std::string& name) = 0;
+            virtual glm::ivec4 get_ivec4(const std::string& name) = 0;
+            virtual glm::vec2 get_vec2(const std::string& name) = 0;
+            virtual glm::vec3 get_vec3(const std::string& name) = 0;
+            virtual glm::vec4 get_vec4(const std::string& name) = 0;
+            virtual glm::mat4 get_mat4(const std::string& name) = 0;
         };
     }
 }

@@ -8,13 +8,16 @@
 namespace bve {
     namespace graphics {
         ref<object_factory> object_factory::create(graphics_api api) {
+            ref<object_factory> factory;
             switch (api) {
             case graphics_api::OPENGL:
-                return ref<opengl::opengl_object_factory>::create();
+                factory = ref<opengl::opengl_object_factory>::create();
                 break;
             default:
                 return nullptr;
             }
+            factory->m_graphics_api = api;
+            return factory;
         }
         std::vector<uint8_t> texture::load_image(const std::filesystem::path& path, int32_t& width, int32_t& height, int32_t& channels) {
             std::string string_path = path.string();
