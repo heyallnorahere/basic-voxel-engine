@@ -37,7 +37,7 @@ namespace bve {
                 glfwSwapBuffers(this->get_window());
             }
             void opengl_context::setup_glfw() {
-#ifdef NDEBUG
+#if defined(NDEBUG) || defined(BVE_PLATFORM_MACOSX)
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #else
