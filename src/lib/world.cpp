@@ -20,9 +20,17 @@ namespace bve {
         auto& block_register = registry::get().get_register<block>();
         uint8_t test_block = (uint8_t)*block_register.get_index("bve:test_block");
         uint8_t test_block_2 = (uint8_t)*block_register.get_index("bve:test_block_2");
-        this->m_voxel_types[glm::ivec3(0)] = test_block;
-        this->m_voxel_types[glm::ivec3(1, 0, 0)] = test_block;
-        this->m_voxel_types[glm::ivec3(2, 1, 1)] = test_block_2;
+        uint8_t model_block = (uint8_t)*block_register.get_index("bve:model_block");
+        for (int32_t x = 0; x < 3; x++) {
+            for (int32_t z = 0; z < 3; z++) {
+                if (x == 1 && z == 1) {
+                    continue;
+                }
+                this->m_voxel_types[glm::ivec3(x, 0, z)] = model_block;
+            }
+        }
+        this->m_voxel_types[glm::ivec3(1, 0, 1)] = test_block;
+        this->m_voxel_types[glm::ivec3(1, 2, 1)] = test_block_2;
     }
     void world::update() {
         auto script_view = this->m_registry.view<components::script_component>();

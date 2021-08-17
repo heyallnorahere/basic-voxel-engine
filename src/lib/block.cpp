@@ -1,7 +1,7 @@
 #include "bve_pch.h"
 #include "block.h"
-#include "registry.h"
 #include "lighting/point_light.h"
+#include "asset_manager.h"
 namespace bve {
 
     // blocks
@@ -18,32 +18,48 @@ namespace bve {
         };
         class test_block_2 : public block {
         public:
-            test_block_2() {
-                this->m_light = ref<lighting::point_light>::create();
-                this->m_light->set_ambient_strength(0.1f);
-                this->m_light->set_specular_strength(0.5f);
-                this->m_light->set_color(glm::vec3(1.f));
-                this->m_light->set_constant(1.f);
-                this->m_light->set_linear(0.09f);
-                this->m_light->set_quadratic(0.032f);
+            virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
+                auto light = ref<lighting::point_light>::create();
+                light->set_ambient_strength(0.1f);
+                light->set_specular_strength(0.5f);
+                light->set_color(glm::vec3(1.f));
+                light->set_constant(1.f);
+                light->set_linear(0.09f);
+                light->set_quadratic(0.032f);
+                this->m_light = light;
             }
             virtual std::string friendly_name() override { return "Test Block 2"; }
             virtual ref<lighting::light> get_light() override { return this->m_light; }
         private:
-            ref<lighting::point_light> m_light;
+            ref<lighting::light> m_light;
+        };
+        class model_block : public block {
+        public:
+            virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
+                std::string asset_name = "model:" + register_name.get_full_name() + ".obj";
+                auto path = asset_manager::get().get_asset_path(asset_name);
+                this->m_model = ref<model>::create(path, object_factory);
+            }
+            virtual std::string friendly_name() override { return "Model block"; }
+            virtual ref<model> get_model() override { return this->m_model; }
+        private:
+            ref<model> m_model;
         };
     }
 
     block::~block() { }
+    void block::load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) { }
     float block::opacity() { return 1.f; }
     bool block::solid() { return true; }
     ref<lighting::light> block::get_light() { return nullptr; }
+    ref<model> block::get_model() { return nullptr; }
     void block::register_all() {
         auto& block_register = registry::get().get_register<block>();
 #define register(block_type) block_register.add(ref<blocks::block_type>::create(), "bve:" + std::string(#block_type))
         register(air);
         register(test_block);
         register(test_block_2);
+        register(model_block);
 #undef register
     }
 }

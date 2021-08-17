@@ -10,13 +10,18 @@ namespace bve {
         return instance;
     }
     void application::run() {
+        auto& block_register = registry::get().get_register<block>();
+        for (const auto& name : block_register.get_names()) {
+            ref<block> block_ = block_register[name];
+            block_->load(this->m_object_factory, name);
+        }
         this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights);
         this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights); });
         this->m_running = true;
         while (!this->m_window->should_close() && this->m_running) {
             this->m_window->new_frame();
-            update();
-            render();
+            this->update();
+            this->render();
             bve::window::poll_events();
         }
     }

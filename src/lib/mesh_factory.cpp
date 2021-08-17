@@ -176,28 +176,52 @@ namespace bve {
             0, 1, 3,
             1, 2, 3
         };
+        auto& block_register = registry::get().get_register<block>();
         for (const auto& voxel : voxels) {
-            for (const std::pair<glm::ivec3, std::vector<vertex>>& pair : faces) {
-                if (contains(voxel.surroundings, pair.first)) {
-                    continue;
+            size_t block_id;
+            this->m_world->get_block(voxel.position, block_id);
+            ref<block> block_ = block_register[block_id];
+            ref<model> block_model = block_->get_model();
+            std::vector<vertex> voxel_vertices;
+            if (block_model) {
+                size_t index_offset = vertices.size() + voxel_vertices.size();
+                for (const auto& model_vertex : block_model->get_vertices()) {
+                    vertex v;
+                    v.position = model_vertex.position;
+                    v.normal = model_vertex.normal;
+                    v.uv = model_vertex.uv;
+                    voxel_vertices.push_back(v);
                 }
-                std::vector<vertex> current_vertices(pair.second.size());
-                std::copy(pair.second.begin(), pair.second.end(), current_vertices.begin());
-                for (vertex& v : current_vertices) {
-                    v.voxel_position = glm::vec3(voxel.position);
-                    size_t block_id;
-                    this->m_world->get_block(voxel.position, block_id);
-                    v.block_id = (int32_t)block_id;
+                for (uint32_t index : block_model->get_indices()) {
+                    indices.push_back(index + (uint32_t)index_offset);
                 }
-                size_t index_offset = vertices.size();
-                vertices.insert(vertices.end(), current_vertices.begin(), current_vertices.end());
-                std::vector<uint32_t> current_indices(face_indices.size());
-                std::copy(face_indices.begin(), face_indices.end(), current_indices.begin());
-                for (uint32_t& index : current_indices) {
-                    index += (uint32_t)index_offset;
+            } else {
+                for (const std::pair<glm::ivec3, std::vector<vertex>>& pair : faces) {
+                    if (contains(voxel.surroundings, pair.first)) {
+                        glm::ivec3 neighbor_position = voxel.position + pair.first;
+                        size_t neighbor_block_id;
+                        this->m_world->get_block(neighbor_position, neighbor_block_id);
+                        ref<block> neighbor = block_register[neighbor_block_id];
+                        ref<model> neighbor_model = neighbor->get_model();
+                        if (!neighbor_model) {
+                            continue;
+                        }
+                    }
+                    size_t index_offset = vertices.size() + voxel_vertices.size();
+                    voxel_vertices.insert(voxel_vertices.end(), pair.second.begin(), pair.second.end());
+                    std::vector<uint32_t> current_indices(face_indices.size());
+                    std::copy(face_indices.begin(), face_indices.end(), current_indices.begin());
+                    for (uint32_t& index : current_indices) {
+                        index += (uint32_t)index_offset;
+                    }
+                    indices.insert(indices.end(), current_indices.begin(), current_indices.end());
                 }
-                indices.insert(indices.end(), current_indices.begin(), current_indices.end());
             }
+            for (vertex& v : voxel_vertices) {
+                v.voxel_position = glm::vec3(voxel.position);
+                v.block_id = (int32_t)block_id;
+            }
+            vertices.insert(vertices.end(), voxel_vertices.begin(), voxel_vertices.end());
         }
         return ref<mesh_factory_mesh>::create(vertices, indices);
     }
