@@ -133,8 +133,7 @@ namespace bve {
                     GLchar info_log[512];
                     glGetProgramInfoLog(this->m_program, 512, nullptr, info_log);
                     spdlog::warn("[opengl shader] error linking shader program: " + std::string(info_log));
-                }
-                else {
+                } else {
                     spdlog::info("[opengl shader] successfully linked shader program");
                 }
             }

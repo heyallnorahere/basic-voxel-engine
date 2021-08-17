@@ -7,30 +7,29 @@ namespace bve {
         this->m_handle = handle;
         this->m_world = world_;
     }
-    world::world(glm::ivec3 size) {
-        this->m_size = size;
-        for (int32_t x = 0; x < this->m_size.x; x++) {
-            for (int32_t y = 0; y < this->m_size.y; y++) {
-                for (int32_t z = 0; z < this->m_size.z; z++) {
-                    this->m_voxel_types[glm::ivec3(x, y, z)] = 0;
-                }
-            }
-        }
+    world::world() {
         // temporary
         auto& block_register = registry::get().get_register<block>();
         uint8_t test_block = (uint8_t)*block_register.get_index("bve:test_block");
         uint8_t test_block_2 = (uint8_t)*block_register.get_index("bve:test_block_2");
         uint8_t model_block = (uint8_t)*block_register.get_index("bve:model_block");
-        for (int32_t x = 0; x < 3; x++) {
-            for (int32_t z = 0; z < 3; z++) {
-                if (x == 1 && z == 1) {
-                    continue;
+        for (int32_t x_offset_factor = 0; x_offset_factor < 3; x_offset_factor++) {
+            int32_t x_offset = x_offset_factor * 3;
+            for (int32_t z_offset_factor = 0; z_offset_factor < 3; z_offset_factor++) {
+                int32_t z_offset = z_offset_factor * 3;
+                for (int32_t x = 0; x < 3; x++) {
+                    for (int32_t z = 0; z < 3; z++) {
+                        glm::ivec3 block_position = glm::ivec3(x + x_offset, 0, z + z_offset);
+                        if (x == 1 && z == 1) {
+                            this->m_voxel_types[block_position] = test_block;
+                            this->m_voxel_types[block_position + glm::ivec3(0, 2, 0)] = test_block_2;
+                        } else {
+                            this->m_voxel_types[block_position] = model_block;
+                        }
+                    }
                 }
-                this->m_voxel_types[glm::ivec3(x, 0, z)] = model_block;
             }
         }
-        this->m_voxel_types[glm::ivec3(1, 0, 1)] = test_block;
-        this->m_voxel_types[glm::ivec3(1, 2, 1)] = test_block_2;
     }
     void world::update() {
         auto script_view = this->m_registry.view<components::script_component>();
@@ -45,19 +44,14 @@ namespace bve {
         ent.add_component<components::transform_component>();
         return ent;
     }
-    glm::ivec3 world::get_size() {
-        return this->m_size;
-    }
     void world::on_block_changed(on_block_changed_callback callback) {
         this->m_on_block_changed.push_back(callback);
     }
     void world::get_block(glm::ivec3 position, namespaced_name& block_type) {
-        if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
-            throw std::runtime_error("[world] could not find a block at the specified position!");
-        }
         auto& block_register = registry::get().get_register<block>();
-        uint8_t index = this->m_voxel_types[position];
-        auto name = block_register.get_name((size_t)index);
+        size_t index;
+        this->get_block(position, index);
+        auto name = block_register.get_name(index);
         if (name) {
             block_type = *name;
         } else {
@@ -66,7 +60,8 @@ namespace bve {
     }
     void world::get_block(glm::ivec3 position, size_t& block_type) {
         if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
-            throw std::runtime_error("[world] could not find a block at the specified position!");
+            block_type = 0;
+            return;
         }
         auto& block_register = registry::get().get_register<block>();
         uint8_t index = this->m_voxel_types[position];
@@ -85,7 +80,11 @@ namespace bve {
         if (block_type >= block_register.size()) {
             throw std::runtime_error("[world] attempted to access an unregistered block");
         }
-        this->m_voxel_types[position] = (uint8_t)block_type;
+        if (block_type == 0) {
+            this->m_voxel_types.erase(position);
+        } else {
+            this->m_voxel_types[position] = (uint8_t)block_type;
+        }
         for (const auto& callback : this->m_on_block_changed) {
             callback(position, ref<world>(this));
         }
@@ -97,5 +96,12 @@ namespace bve {
             entities.push_back(entity(ent, this));
         }
         return entities;
+    }
+    std::vector<glm::ivec3> world::get_set_blocks() {
+        std::vector<glm::ivec3> positions;
+        for (const auto& pair : this->m_voxel_types) {
+            positions.push_back(pair.first);
+        }
+        return positions;
     }
 }

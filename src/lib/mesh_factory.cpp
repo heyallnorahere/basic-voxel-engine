@@ -123,39 +123,29 @@ namespace bve {
             glm::ivec3(0, 0, -1), glm::ivec3(0, 0, 1)
         };
         std::unordered_map<glm::ivec3, cluster_member, hash_vector<3, int32_t>> cluster_members;
-        glm::ivec3 size = this->m_world->get_size();
-        for (int32_t x = 0; x < size.x; x++) {
-            for (int32_t y = 0; y < size.y; y++) {
-                for (int32_t z = 0; z < size.z; z++) {
-                    glm::ivec3 position = glm::ivec3(x, y, z);
-                    size_t block_id;
-                    this->m_world->get_block(position, block_id);
-                    if (block_id == 0) {
-                        continue;
-                    }
-                    ref<block> block_ = block_register[block_id];
-                    ref<lighting::light> light = block_->get_light();
-                    if (light) {
-                        lights.push_back({ glm::vec3(position), light });
-                    }
-                    cluster_member member;
-                    for (const auto& offset : offsets) {
-                        glm::ivec3 block_position = position + offset;
-                        if (block_position.x < 0 || block_position.x >= size.x ||
-                            block_position.y < 0 || block_position.y >= size.y ||
-                            block_position.z < 0 || block_position.z >= size.z) {
-                            continue;
-                        }
-                        this->m_world->get_block(block_position, block_id);
-                        if (block_id == 0) {
-                            continue;
-                        }
-                        member.surroundings.push_back(offset);
-                    }
-                    member.cluster_index = (uint32_t)-1;
-                    cluster_members.insert({ position, member });
-                }
+        std::vector<glm::ivec3> positions = this->m_world->get_set_blocks();
+        for (const auto& position : positions) {
+            size_t block_id;
+            this->m_world->get_block(position, block_id);
+            if (block_id == 0) {
+                continue;
             }
+            ref<block> block_ = block_register[block_id];
+            ref<lighting::light> light = block_->get_light();
+            if (light) {
+                lights.push_back({ glm::vec3(position), light });
+            }
+            cluster_member member;
+            for (const auto& offset : offsets) {
+                glm::ivec3 block_position = position + offset;
+                this->m_world->get_block(block_position, block_id);
+                if (block_id == 0) {
+                    continue;
+                }
+                member.surroundings.push_back(offset);
+            }
+            member.cluster_index = (uint32_t)-1;
+            cluster_members.insert({ position, member });
         }
         uint32_t cluster_count = 0;
         for (const std::pair<glm::ivec3, cluster_member>& pair : cluster_members) {

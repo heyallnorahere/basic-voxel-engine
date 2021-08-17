@@ -42,8 +42,8 @@ namespace bve {
         this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
-        this->m_world = ref<world>::create(glm::ivec3(16, 16, 256));
-        this->m_window = ref<window>::create(800, 600, this->m_object_factory->create_context());
+        this->m_world = ref<world>::create();
+        this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
         this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl").string() });
         this->m_renderer = ref<renderer>::create();

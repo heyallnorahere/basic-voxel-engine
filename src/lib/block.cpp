@@ -1,6 +1,6 @@
 #include "bve_pch.h"
 #include "block.h"
-#include "lighting/point_light.h"
+#include "lighting/spotlight.h"
 #include "asset_manager.h"
 namespace bve {
 
@@ -19,13 +19,12 @@ namespace bve {
         class test_block_2 : public block {
         public:
             virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
-                auto light = ref<lighting::point_light>::create();
-                light->set_ambient_strength(0.1f);
+                auto light = ref<lighting::spotlight>::create();
+                light->set_ambient_strength(0.01f);
                 light->set_specular_strength(0.5f);
                 light->set_color(glm::vec3(1.f));
-                light->set_constant(1.f);
-                light->set_linear(0.09f);
-                light->set_quadratic(0.032f);
+                light->set_cutoff(cos(glm::radians(30.f)));
+                light->set_direction(glm::vec3(0.f, -1.f, 0.f));
                 this->m_light = light;
             }
             virtual std::string friendly_name() override { return "Test Block 2"; }

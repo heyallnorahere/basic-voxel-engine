@@ -31,21 +31,20 @@ namespace bve {
     class world : public ref_counted {
     public:
         using on_block_changed_callback = std::function<void(glm::ivec3, ref<world>)>;
-        world(glm::ivec3 size);
+        world();
         world(const world&) = delete;
         world& operator=(const world&) = delete;
         void update();
         entity create();
-        glm::ivec3 get_size();
         void on_block_changed(on_block_changed_callback callback);
         void get_block(glm::ivec3 position, namespaced_name& block_type);
         void get_block(glm::ivec3 position, size_t& block_type);
         void set_block(glm::ivec3 position, const namespaced_name& block_type);
         void set_block(glm::ivec3 position, size_t block_type);
         std::vector<entity> get_cameras();
+        std::vector<glm::ivec3> get_set_blocks();
     private:
         template<typename T> void on_component_added(T& component, entity ent);
-        glm::ivec3 m_size;
         std::unordered_map<glm::ivec3, uint8_t, hash_vector<3, int32_t>> m_voxel_types;
         entt::registry m_registry;
         std::vector<on_block_changed_callback> m_on_block_changed;
