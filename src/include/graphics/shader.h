@@ -1,15 +1,6 @@
 #pragma once
 namespace bve {
     namespace graphics {
-        enum class shader_type {
-            VERTEX,
-            FRAGMENT,
-            GEOMETRY
-        };
-        struct shader_source {
-            std::filesystem::path path;
-            shader_type type;
-        };
         class shader : public ref_counted {
         public:
             shader() = default;

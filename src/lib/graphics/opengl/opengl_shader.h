@@ -5,11 +5,7 @@ namespace bve {
         namespace opengl {
             class opengl_shader : public shader {
             public:
-                struct opengl_shader_source {
-                    std::filesystem::path path;
-                    GLenum type;
-                };
-                opengl_shader(const std::vector<opengl_shader_source>& sources);
+                opengl_shader(const std::vector<std::filesystem::path>& sources);
                 virtual ~opengl_shader() override;
                 virtual void reload() override;
                 virtual void bind() override;
@@ -26,10 +22,10 @@ namespace bve {
             private:
                 void create();
                 void destroy();
-                GLuint create_shader(const std::string& path, GLenum type);
+                GLuint create_shader(const std::string& source, GLenum type, std::optional<std::filesystem::path> path);
                 GLint get_location(const std::string& name);
                 GLuint m_program;
-                std::vector<opengl_shader_source> m_sources;
+                std::vector<std::filesystem::path> m_sources;
             };
         }
     }

@@ -1,18 +1,9 @@
 #include "bve_pch.h"
 #include "opengl_shader.h"
+#include "shader_parser.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
-            std::string read_file(const std::string& path) {
-                std::ifstream file(path);
-                std::stringstream contents;
-                std::string line;
-                while (std::getline(file, line)) {
-                    contents << line << '\n';
-                }
-                file.close();
-                return contents.str();
-            }
             opengl_shader::~opengl_shader() {
                 this->destroy();
             }
@@ -53,14 +44,34 @@ namespace bve {
             void opengl_shader::set_mat4(const std::string& name, const glm::mat4& value) {
                 glUniformMatrix4fv(this->get_location(name), 1, false, glm::value_ptr(value));
             }
-            opengl_shader::opengl_shader(const std::vector<opengl_shader_source>& sources) {
+            opengl_shader::opengl_shader(const std::vector<std::filesystem::path>& sources) {
                 this->m_sources = sources;
                 this->create();
             }
             void opengl_shader::create() {
-                std::vector<GLuint> shaders;
+                auto parser = shader_parser(shader_language::GLSL, shader_language::GLSL);
                 for (const auto& source : this->m_sources) {
-                    shaders.push_back(this->create_shader(source.path.string(), source.type));
+                    parser.parse(source);
+                }
+                std::vector<GLuint> shaders;
+                for (const auto& type : parser.get_parsed_shader_types()) {
+                    GLenum shader_type_;
+                    switch (type) {
+                    case shader_type::VERTEX:
+                        shader_type_ = GL_VERTEX_SHADER;
+                        break;
+                    case shader_type::FRAGMENT:
+                        shader_type_ = GL_FRAGMENT_SHADER;
+                        break;
+                    case shader_type::GEOMETRY:
+                        shader_type_ = GL_GEOMETRY_SHADER;
+                        break;
+                    default:
+                        throw std::runtime_error("[opengl shader] invalid shader type");
+                    }
+                    std::string source = parser.get_shader(type);
+                    auto path = parser.get_shader_path(type);
+                    shaders.push_back(this->create_shader(source, shader_type_, path));
                 }
                 spdlog::info("[opengl shader] linking shader program...");
                 this->m_program = glCreateProgram();
@@ -85,7 +96,7 @@ namespace bve {
             void opengl_shader::destroy() {
                 glDeleteProgram(this->m_program);
             }
-            GLuint opengl_shader::create_shader(const std::string& path, GLenum type) {
+            GLuint opengl_shader::create_shader(const std::string& source, GLenum type, std::optional<std::filesystem::path> path) {
                 std::string shader_type;
                 switch (type) {
                 case GL_VERTEX_SHADER:
@@ -98,8 +109,7 @@ namespace bve {
                     shader_type = "other";
                     break;
                 }
-                spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + path + ")");
-                std::string source = read_file(path);
+                spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
                 const char* src = source.c_str();
                 GLuint id = glCreateShader(type);
                 glShaderSource(id, 1, &src, nullptr);

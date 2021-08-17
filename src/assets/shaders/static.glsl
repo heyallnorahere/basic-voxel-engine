@@ -1,3 +1,24 @@
+#type vertex
+#version 330 core
+layout(location = 0) in vec3 in_position;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in vec2 in_uv;
+layout(location = 3) in vec3 in_voxel_position;
+layout(location = 4) in int in_block_id;
+uniform mat4 projection;
+uniform mat4 view;
+out vec2 uv;
+flat out int block_id;
+out vec3 fragment_position;
+out vec3 normal;
+void main() {
+    gl_Position = projection * view * vec4(in_voxel_position + in_position, 1.0);
+    uv = in_uv;
+    block_id = in_block_id;
+    normal = normalize(in_normal);
+    fragment_position = in_voxel_position + in_position;
+}
+#type fragment
 #version 330 core
 in vec2 uv;
 flat in int block_id;
@@ -80,9 +101,9 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
 }
 void main() {
     vec4 color = get_texture();
-    vec3 output = vec3(0.0);
+    vec3 output_color = vec3(0.0);
     for (int i = 0; i < light_count; i++) {
-        output += calculate_light(i, vec3(color));
+        output_color += calculate_light(i, vec3(color));
     }
-    fragment_color = vec4(output, color.a);
+    fragment_color = vec4(output_color, color.a);
 }
