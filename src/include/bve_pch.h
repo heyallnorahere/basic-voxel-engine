@@ -37,5 +37,6 @@
 #include <utility>
 #include <tuple>
 #include <optional>
+#include <limits>
 // everything should include ref
 #include "ref.h"

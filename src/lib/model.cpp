@@ -79,7 +79,7 @@ namespace bve {
                 indices.push_back(face.mIndices[j]);
             }
         }
-        if (mesh->mMaterialIndex >= 0) {
+        if (mesh->mMaterialIndex < std::numeric_limits<uint32_t>::max()) {
             this->insert_textures(mesh, aiTextureType_AMBIENT, "ambient");
             this->insert_textures(mesh, aiTextureType_DIFFUSE, "diffuse");
             this->insert_textures(mesh, aiTextureType_SPECULAR, "specular");
