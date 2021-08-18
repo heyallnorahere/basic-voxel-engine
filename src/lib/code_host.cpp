@@ -1,17 +1,17 @@
 #include "bve_pch.h"
 #include "code_host.h"
 namespace bve {
-    namespace managed {
-        static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
-            size_t period_position = full_name.find_last_of('.');
-            if (period_position == std::string::npos) {
-                namespace_name.clear();
-                class_name = full_name;
-            } else {
-                namespace_name = full_name.substr(0, period_position);
-                class_name = full_name.substr(period_position + 1);
-            }
+    static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
+        size_t period_position = full_name.find_last_of('.');
+        if (period_position == std::string::npos) {
+            namespace_name.clear();
+            class_name = full_name;
+        } else {
+            namespace_name = full_name.substr(0, period_position);
+            class_name = full_name.substr(period_position + 1);
         }
+    }
+    namespace managed {
         wrapper::wrapper(MonoDomain* domain) {
             this->m_domain = domain;
         }
@@ -109,8 +109,16 @@ namespace bve {
         MonoImage* class_::get_image() {
             return mono_class_get_image(this->m_class);
         }
-        type::type(MonoType* type, MonoDomain* domain) : wrapper(domain) {
-            this->m_type = type;
+        ref<type> type::get_type(ref<class_> _class) {
+            MonoClass* _class_ = (MonoClass*)_class->get();
+            MonoType* _type = mono_class_get_type(_class_);
+            return ref<type>::create(_type, _class->get_domain());
+        }
+        type::type(MonoType* _type, MonoDomain* domain) : wrapper(domain) {
+            this->m_type = _type;
+        }
+        type::type(MonoReflectionType* _type, MonoDomain* domain) : wrapper(domain) {
+            this->m_type = mono_reflection_type_get_type(_type);
         }
         ref<class_> type::get_class() {
             MonoClass* _class = mono_type_get_class(this->m_type);
@@ -152,5 +160,60 @@ namespace bve {
         MonoImage* assembly::get_image() {
             return this->m_image;
         }
+    }
+    code_host::code_host() {
+        mono_set_assemblies_path(MONO_ASSEMBLIES);
+        this->m_domain = mono_jit_init(BVE_TARGET_NAME);
+    }
+    code_host::~code_host() {
+        mono_jit_cleanup(this->m_domain);
+    }
+    MonoDomain* code_host::get_domain() {
+        return this->m_domain;
+    }
+    void code_host::load_assembly(const std::filesystem::path& path) {
+        // old-fashioned c-style file reading
+        FILE* f = fopen(path.c_str(), "rb");
+        fseek(f, 0, SEEK_END);
+        size_t file_size = (size_t)ftell(f);
+        rewind(f);
+        void* file_data = malloc(file_size * sizeof(char));
+        if (!file_data) {
+            fclose(f);
+            throw std::runtime_error("[code host] application ran out of memory");
+        }
+        memset(file_data, 0, file_size * sizeof(char));
+        size_t bytes_read = fread(file_data, sizeof(char), file_size, f);
+        if (bytes_read < file_size) {
+            fclose(f);
+            throw std::runtime_error("[code host] could not read entire assembly");
+        }
+        fclose(f);
+        MonoImageOpenStatus status;
+        MonoImage* image = mono_image_open_from_data_full((char*)file_data, file_size * sizeof(char), true, &status, false);
+        free(file_data);
+        if (status != MONO_IMAGE_OK) {
+            return;
+        }
+        MonoAssembly* assembly = mono_assembly_load_from_full(image, path.c_str(), &status, false);
+        mono_image_close(image);
+        this->m_assemblies.push_back(ref<managed::assembly>::create(assembly, this->m_domain));
+    }
+    std::vector<ref<managed::assembly>> code_host::get_loaded_assemblies() {
+        return this->m_assemblies;
+    }
+    ref<managed::class_> code_host::find_class(const std::string& name) {
+        std::string namespace_name, class_name;
+        parse_name(name, namespace_name, class_name);
+        return this->find_class(namespace_name, class_name);
+    }
+    ref<managed::class_> code_host::find_class(const std::string& namespace_name, const std::string& class_name) {
+        for (auto assembly : this->m_assemblies) {
+            ref<managed::class_> current_class = assembly->get_class(namespace_name, class_name);
+            if (current_class) {
+                return current_class;
+            }
+        }
+        return nullptr;
     }
 }

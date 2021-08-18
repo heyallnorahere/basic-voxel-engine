@@ -84,7 +84,9 @@ namespace bve {
         class assembly;
         class type : public wrapper {
         public:
-            type(MonoType* type, MonoDomain* domain);
+            static ref<type> get_type(ref<class_> _class);
+            type(MonoType* _type, MonoDomain* domain);
+            type(MonoReflectionType* _type, MonoDomain* domain);
             ref<class_> get_class();
             virtual void* get() override;
             virtual MonoImage* get_image() override;
@@ -105,4 +107,19 @@ namespace bve {
             MonoImage* m_image;
         };
     }
+    class code_host : public ref_counted {
+    public:
+        code_host();
+        ~code_host();
+        code_host(const code_host&) = delete;
+        code_host& operator=(const code_host&) = delete;
+        MonoDomain* get_domain();
+        void load_assembly(const std::filesystem::path& path);
+        std::vector<ref<managed::assembly>> get_loaded_assemblies();
+        ref<managed::class_> find_class(const std::string& name);
+        ref<managed::class_> find_class(const std::string& namespace_name, const std::string& class_name);
+    private:
+        MonoDomain* m_domain;
+        std::vector<ref<managed::assembly>> m_assemblies;
+    };
 }

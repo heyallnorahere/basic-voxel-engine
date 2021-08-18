@@ -5,6 +5,7 @@
 #include "input_manager.h"
 #include "texture_atlas.h"
 #include "mesh_factory.h"
+#include "code_host.h"
 #include "graphics/object_factory.h"
 namespace bve {
     class application {
@@ -22,6 +23,7 @@ namespace bve {
         ref<window> get_window() { return this->m_window; }
         ref<texture_atlas> get_texture_atlas() { return this->m_atlas; }
         ref<graphics::object_factory> get_object_factory() { return this->m_object_factory; }
+        ref<code_host> get_code_host() { return this->m_code_host; }
     private:
         application();
         void update();
@@ -32,6 +34,7 @@ namespace bve {
         ref<window> m_window;
         ref<texture_atlas> m_atlas;
         ref<graphics::object_factory> m_object_factory;
+        ref<code_host> m_code_host;
         std::unordered_map<std::string, ref<graphics::shader>> m_shaders;
         std::vector<std::vector<mesh_factory::processed_voxel>> m_clusters;
         std::vector<std::pair<glm::vec3, ref<lighting::light>>> m_lights;
