@@ -20,7 +20,7 @@ jobs:
           sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
           echo "deb https://download.mono-project.com/repo/ubuntu stable-focal main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
           sudo apt-get update
-          sudo apt-get install -y mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev cmake mono
+          sudo apt-get install -y mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev cmake mono-complete
       - name: install mono (windows)
         if: ${{ matrix.os-name == 'windows' }}
         shell: cmd
@@ -33,11 +33,8 @@ jobs:
         run: |
           curl -L https://download.mono-project.com/archive/6.12.0/macos-10-universal/MonoFramework-MDK-6.12.0.122.macos10.xamarin.universal.pkg -o mono.pkg
           sudo installer -pkg mono.pkg -target /
-      - name: configure
+      - name: build native code
         shell: bash
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release
-      - name: build!
-        shell: bash
-        run: |
           cmake --build build --config Release -j 8
