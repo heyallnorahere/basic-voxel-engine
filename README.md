@@ -4,13 +4,13 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 
 ## Dependencies
 
-- [Assimp](vendor/assimp)
+- [Assimp](https://github.com/assimp/assimp/tree/v5.0.1)
 - [CMake](https://cmake.org)
-- [entt](vendor/entt)
-- [glad](vendor/glad)
-- [GLFW](vendor/glfw)
-- [GLM](vendor/glm)
-- [Dear ImGui](vendor/imgui)
-- [spdlog](vendor/spdlog)
-- [stb](vendor/stb)
+- [entt](https://github.com/skypjack/entt/tree/v3.8.1)
+- [glad](https://github.com/Dav1dde/glad)
+- [GLFW](https://github.com/glfw/glfw/tree/3.3.4)
+- [GLM](https://github.com/g-truc/glm/tree/0.9.9.8)
+- [Dear ImGui](https://github.com/ocornut/imgui/tree/docking)
+- [spdlog](https://github.com/gabime/spdlog/tree/v1.9.1)
+- [stb](https://github.com/nothings/stb)
 - [mono](https://www.mono-project.com/download/stable)
