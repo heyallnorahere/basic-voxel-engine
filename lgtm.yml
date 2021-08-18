@@ -8,3 +8,4 @@ extraction:
         - libxinerama-dev
         - libxcursor-dev
         - libxi-dev
+        - mono-complete
