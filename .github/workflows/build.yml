@@ -16,7 +16,19 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev cmake
+          sudo apt-get install -y mesa-common-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev cmake mono
+      - name: install mono (windows)
+        if: ${{ matrix.os-name == 'windows' }}
+        shell: cmd
+        run: |
+          curl -L https://download.mono-project.com/archive/6.12.0/windows-installer/mono-6.12.0.107-x64-0.msi -o mono.msi
+          msiexec /i mono.msi /quiet
+      - name: install mono (macosx)
+        if: ${{ matrix.os-name == 'macos' }}
+        shell: bash
+        run: |
+          curl -L https://download.mono-project.com/archive/6.12.0/macos-10-universal/MonoFramework-MDK-6.12.0.122.macos10.xamarin.universal.pkg -o mono.pkg
+          sudo installer -pkg mono.pkg -target /
       - name: configure
         shell: bash
         run: |
