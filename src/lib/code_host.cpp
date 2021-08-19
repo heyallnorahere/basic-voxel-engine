@@ -172,8 +172,9 @@ namespace bve {
         return this->m_domain;
     }
     void code_host::load_assembly(const std::filesystem::path& path) {
+        std::string string_path = path.string();
         // old-fashioned c-style file reading
-        FILE* f = fopen(path.c_str(), "rb");
+        FILE* f = fopen(string_path.c_str(), "rb");
         fseek(f, 0, SEEK_END);
         size_t file_size = (size_t)ftell(f);
         rewind(f);
@@ -195,7 +196,7 @@ namespace bve {
         if (status != MONO_IMAGE_OK) {
             return;
         }
-        MonoAssembly* assembly = mono_assembly_load_from_full(image, path.c_str(), &status, false);
+        MonoAssembly* assembly = mono_assembly_load_from_full(image, string_path.c_str(), &status, false);
         mono_image_close(image);
         this->m_assemblies.push_back(ref<managed::assembly>::create(assembly, this->m_domain));
     }
