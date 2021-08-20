@@ -17,6 +17,7 @@
 #include <mono/metadata/attrdefs.h>
 #include <mono/metadata/debug-helpers.h>
 #include <mono/metadata/environment.h>
+#include <vulkan/vulkan.h>
 #include <string>
 #include <fstream>
 #include <iostream>
