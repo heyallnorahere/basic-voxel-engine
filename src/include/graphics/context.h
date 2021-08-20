@@ -23,6 +23,7 @@ namespace bve {
             virtual void init_imgui_backends() = 0;
             virtual void shutdown_imgui_backends() = 0;
             virtual void call_imgui_backend_newframe() = 0;
+            virtual void render_imgui_draw_data(ImDrawData* data) = 0;
             GLFWwindow* m_window = nullptr;
             friend class ::bve::window;
         };

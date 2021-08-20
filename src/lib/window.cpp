@@ -90,11 +90,11 @@ namespace bve {
         io.DisplaySize.x = (float)width;
         io.DisplaySize.y = (float)height;
         ImGui::Render();
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        this->m_context->render_imgui_draw_data(ImGui::GetDrawData());
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
-            glfwMakeContextCurrent(this->m_window);
+            this->m_context->make_current();
         }
         this->m_context->swap_buffers();
     }

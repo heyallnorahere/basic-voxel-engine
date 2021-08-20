@@ -27,6 +27,9 @@ namespace bve {
                 // todo: create texture
                 return nullptr;
             }
+            ref<context> vulkan_object_factory::get_current_context() {
+                return this->m_current_context;
+            }
         }
     }
 }

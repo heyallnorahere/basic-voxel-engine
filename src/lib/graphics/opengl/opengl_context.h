@@ -16,6 +16,7 @@ namespace bve {
                 virtual void init_imgui_backends() override;
                 virtual void shutdown_imgui_backends() override;
                 virtual void call_imgui_backend_newframe() override;
+                virtual void render_imgui_draw_data(ImDrawData* data) override;
             };
         }
     }

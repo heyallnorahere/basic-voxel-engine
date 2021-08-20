@@ -81,6 +81,9 @@ namespace bve {
                 ImGui_ImplOpenGL3_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
             }
+            void opengl_context::render_imgui_draw_data(ImDrawData* data) {
+                ImGui_ImplOpenGL3_RenderDrawData(data);
+            }
         }
     }
 }

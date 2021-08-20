@@ -7,9 +7,11 @@ namespace bve {
             class vulkan_context : public context {
             public:
                 vulkan_context(ref<vulkan_object_factory> factory);
+                virtual ~vulkan_context() override;
                 virtual void clear() override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
+                VkInstance get_instance();
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -18,7 +20,10 @@ namespace bve {
                 virtual void init_imgui_backends() override;
                 virtual void shutdown_imgui_backends() override;
                 virtual void call_imgui_backend_newframe() override;
+                virtual void render_imgui_draw_data(ImDrawData* data) override;
+                void create_instance();
                 ref<vulkan_object_factory> m_factory;
+                VkInstance m_instance;
             };
         }
     }
