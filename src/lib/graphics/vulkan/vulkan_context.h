@@ -24,11 +24,14 @@ namespace bve {
                 virtual void render_imgui_draw_data(ImDrawData* data) override;
                 void create_instance();
                 void create_debug_messenger();
+                void pick_physical_device();
+                uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 std::vector<const char*> get_extensions();
                 ref<vulkan_object_factory> m_factory;
                 VkInstance m_instance;
                 VkDebugUtilsMessengerEXT m_debug_messenger;
+                VkPhysicalDevice m_physical_device;
                 std::vector<const char*> m_layers, m_extensions;
                 bool m_validation_layers_enabled;
             };

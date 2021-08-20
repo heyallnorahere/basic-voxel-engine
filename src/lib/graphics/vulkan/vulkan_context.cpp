@@ -68,6 +68,7 @@ namespace bve {
                 spdlog::info("[vulkan context] vulkan extensions supported: {0}", extension_count);
                 this->create_instance();
                 this->create_debug_messenger();
+                this->pick_physical_device();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
@@ -130,6 +131,45 @@ namespace bve {
                 if (_vkCreateDebugUtilsMessengerEXT(this->m_instance, &create_info, nullptr, &this->m_debug_messenger) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create debug messenger");
                 }
+            }
+            void vulkan_context::pick_physical_device() {
+                this->m_physical_device = nullptr;
+                uint32_t device_count = 0;
+                vkEnumeratePhysicalDevices(this->m_instance, &device_count, nullptr);
+                if (device_count == 0) {
+                    throw std::runtime_error("[vulkan context] no GPUs installed in this system have Vulkan support");
+                }
+                std::vector<VkPhysicalDevice> devices(device_count);
+                vkEnumeratePhysicalDevices(this->m_instance, &device_count, devices.data());
+                std::multimap<uint32_t, VkPhysicalDevice> candidates;
+                for (const auto& device : devices) {
+                    uint32_t score = this->rate_device(device);
+                    candidates.insert({ score, device });
+                }
+                auto it = candidates.rbegin();
+                if (it->first > 0) {
+                    this->m_physical_device = it->second;
+                } else {
+                    throw std::runtime_error("[vulkan context] could not find a suitable GPU");
+                }
+                VkPhysicalDeviceProperties properties;
+                vkGetPhysicalDeviceProperties(this->m_physical_device, &properties);
+                spdlog::info("[vulkan context] picked physical device: {0}", properties.deviceName);
+            }
+            uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
+                VkPhysicalDeviceProperties properties;
+                VkPhysicalDeviceFeatures features;
+                vkGetPhysicalDeviceProperties(device, &properties);
+                vkGetPhysicalDeviceFeatures(device, &features);
+                uint32_t score = 0;
+                if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
+                    score += 1000;
+                }
+                score += properties.limits.maxImageDimension2D;
+                if (!features.geometryShader) {
+                    return 0;
+                }
+                return score;
             }
             bool vulkan_context::layers_supported() {
                 uint32_t layer_count = 0;
