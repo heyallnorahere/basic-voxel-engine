@@ -6,6 +6,38 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            struct queue_data {
+                uint32_t index;
+                float priority;
+            };
+            struct queue_family_indices {
+                std::optional<uint32_t> graphics_family;
+                bool is_complete() {
+                    return this->graphics_family.has_value();
+                }
+                std::vector<queue_data> get_queues() {
+                    return {
+                        { *this->graphics_family, 1.f }
+                    };
+                }
+            };
+            static queue_family_indices find_queue_families(VkPhysicalDevice device) {
+                queue_family_indices indices;
+                uint32_t queue_family_count = 0;
+                vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
+                std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+                vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families.data());
+                for (uint32_t i = 0; i < queue_family_count; i++) {
+                    if (indices.is_complete()) {
+                        break;
+                    }
+                    VkQueueFamilyProperties queue_family = queue_families[i];
+                    if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                        indices.graphics_family = i;
+                    }
+                }
+                return indices;
+            }
             static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
                 VkDebugUtilsMessageSeverityFlagBitsEXT severity, VkDebugUtilsMessageTypeFlagsEXT type,
                 const VkDebugUtilsMessengerCallbackDataEXT* callback_data, void* user_data) {
@@ -36,6 +68,7 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
+                vkDestroyDevice(this->m_device, nullptr);
                 if (this->m_validation_layers_enabled) {
                     _vkDestroyDebugUtilsMessengerEXT(this->m_instance, this->m_debug_messenger, nullptr);
                 }
@@ -56,6 +89,12 @@ namespace bve {
             VkDebugUtilsMessengerEXT vulkan_context::get_debug_messenger() {
                 return this->m_debug_messenger;
             }
+            VkPhysicalDevice vulkan_context::get_physical_device() {
+                return this->m_physical_device;
+            }
+            VkDevice vulkan_context::get_device() {
+                return this->m_device;
+            }
             void vulkan_context::swap_buffers() {
                 // todo: swap buffers
             }
@@ -69,6 +108,7 @@ namespace bve {
                 this->create_instance();
                 this->create_debug_messenger();
                 this->pick_physical_device();
+                this->create_logical_device();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
@@ -77,6 +117,10 @@ namespace bve {
                 ImGui_ImplGlfw_InitForVulkan(this->get_window(), true);
                 ImGui_ImplVulkan_InitInfo info;
                 info.Instance = this->m_instance;
+                info.PhysicalDevice = this->m_physical_device;
+                info.Device = this->m_device;
+                info.QueueFamily = *find_queue_families(this->m_physical_device).graphics_family;
+                info.Queue = this->m_graphics_queue;
                 ImGui_ImplVulkan_Init(&info, nullptr);
             }
             void vulkan_context::shutdown_imgui_backends() {
@@ -156,6 +200,33 @@ namespace bve {
                 vkGetPhysicalDeviceProperties(this->m_physical_device, &properties);
                 spdlog::info("[vulkan context] picked physical device: {0}", properties.deviceName);
             }
+            void vulkan_context::create_logical_device() {
+                auto indices = find_queue_families(this->m_physical_device);
+                std::vector<queue_data> queues = indices.get_queues();
+                std::vector<VkDeviceQueueCreateInfo> queue_create_info;
+                for (const auto& queue : queues) {
+                    VkDeviceQueueCreateInfo create_info;
+                    memset(&create_info, 0, sizeof(VkDeviceQueueCreateInfo));
+                    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+                    create_info.queueFamilyIndex = queue.index;
+                    create_info.queueCount = 1;
+                    float queue_priority = queue.priority;
+                    create_info.pQueuePriorities = &queue_priority;
+                    queue_create_info.push_back(create_info);
+                }
+                VkDeviceCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkDeviceCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+                create_info.pQueueCreateInfos = queue_create_info.data();
+                create_info.queueCreateInfoCount = (uint32_t)queue_create_info.size();
+                VkPhysicalDeviceFeatures features;
+                memset(&features, 0, sizeof(VkPhysicalDeviceFeatures));
+                create_info.pEnabledFeatures = &features;
+                if (vkCreateDevice(this->m_physical_device, &create_info, nullptr, &this->m_device) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create logical device");
+                }
+                vkGetDeviceQueue(this->m_device, *indices.graphics_family, 0, &this->m_graphics_queue);
+            }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;
                 VkPhysicalDeviceFeatures features;
@@ -167,6 +238,9 @@ namespace bve {
                 }
                 score += properties.limits.maxImageDimension2D;
                 if (!features.geometryShader) {
+                    return 0;
+                }
+                if (!find_queue_families(device).is_complete()) {
                     return 0;
                 }
                 return score;
