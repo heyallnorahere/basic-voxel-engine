@@ -16,6 +16,6 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - [mono](https://www.mono-project.com/download/stable)
 - [Vulkan](#installing-vulkan)
 
-## Installing Vulkan {#installing-vulkan}
+## Installing Vulkan
 
 On Windows, MacOS X, and Ubuntu, run [this Python script](scripts/setup_vulkan.py) to install Vulkan. Otherwise, install Vulkan from [here](https://vulkan.lunarg.com/sdk/home).
