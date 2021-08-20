@@ -28,22 +28,39 @@ namespace bve {
                 }
                 return details;
             }
-            struct queue_data {
-                uint32_t index;
-                float priority;
-            };
+            static VkSurfaceFormatKHR choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& available_formats) {
+                for (const auto& format : available_formats) {
+                    if (format.format == VK_FORMAT_R8G8B8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                        return format;
+                    }
+                }
+                return available_formats[0];
+            }
+            static VkPresentModeKHR choose_swap_present_mode(const std::vector<VkPresentModeKHR>& available_present_modes) {
+                for (const auto& present_mode : available_present_modes) {
+                    if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                        return present_mode;
+                    }
+                }
+                return VK_PRESENT_MODE_FIFO_KHR;
+            }
+            static VkExtent2D choose_swap_extent(const VkSurfaceCapabilitiesKHR& capabilities, glm::ivec2 framebuffer_size) {
+                if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+                    return capabilities.currentExtent;
+                } else {
+                    VkExtent2D extent;
+                    extent.width = std::clamp((uint32_t)framebuffer_size.x, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
+                    extent.height = std::clamp((uint32_t)framebuffer_size.y, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
+                    return extent;
+                }
+            }
             struct queue_family_indices {
-                std::optional<uint32_t> graphics_family;
+                std::optional<uint32_t> graphics_family, present_family;
                 bool is_complete() {
-                    return this->graphics_family.has_value();
-                }
-                std::vector<queue_data> get_queues() {
-                    return {
-                        { *this->graphics_family, 1.f }
-                    };
+                    return this->graphics_family.has_value() && this->present_family.has_value();
                 }
             };
-            static queue_family_indices find_queue_families(VkPhysicalDevice device) {
+            static queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
                 queue_family_indices indices;
                 uint32_t queue_family_count = 0;
                 vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
@@ -56,6 +73,11 @@ namespace bve {
                     VkQueueFamilyProperties queue_family = queue_families[i];
                     if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                         indices.graphics_family = i;
+                    }
+                    VkBool32 present_support = false;
+                    vkGetPhysicalDeviceSurfaceSupportKHR(device, i, window_surface, &present_support);
+                    if (present_support) {
+                        indices.present_family = i;
                     }
                 }
                 return indices;
@@ -93,6 +115,7 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
+                vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
                 vkDestroyDevice(this->m_device, nullptr);
                 if (this->m_validation_layers_enabled) {
                     _vkDestroyDebugUtilsMessengerEXT(this->m_instance, this->m_debug_messenger, nullptr);
@@ -127,6 +150,9 @@ namespace bve {
             VkSurfaceKHR vulkan_context::get_window_surface() {
                 return this->m_window_surface;
             }
+            VkSwapchainKHR vulkan_context::get_swap_chain() {
+                return this->m_swap_chain;
+            }
             void vulkan_context::swap_buffers() {
                 // todo: swap buffers
             }
@@ -142,6 +168,10 @@ namespace bve {
                 this->create_window_surface();
                 this->pick_physical_device();
                 this->create_logical_device();
+                glm::ivec2 window_size;
+                glfwGetFramebufferSize(this->m_window, &window_size.x, &window_size.y);
+                this->m_swap_chain = nullptr;
+                this->create_swap_chain(glm::ivec2(0), window_size);
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
@@ -152,8 +182,10 @@ namespace bve {
                 info.Instance = this->m_instance;
                 info.PhysicalDevice = this->m_physical_device;
                 info.Device = this->m_device;
-                info.QueueFamily = *find_queue_families(this->m_physical_device).graphics_family;
+                info.QueueFamily = *find_queue_families(this->m_physical_device, this->m_window_surface).graphics_family;
                 info.Queue = this->m_graphics_queue;
+                info.ImageCount = this->m_image_count;
+                info.MinImageCount = this->m_min_image_count;
                 ImGui_ImplVulkan_Init(&info, nullptr);
             }
             void vulkan_context::shutdown_imgui_backends() {
@@ -239,16 +271,16 @@ namespace bve {
                 spdlog::info("[vulkan context] picked physical device: {0}", properties.deviceName);
             }
             void vulkan_context::create_logical_device() {
-                auto indices = find_queue_families(this->m_physical_device);
-                std::vector<queue_data> queues = indices.get_queues();
+                auto indices = find_queue_families(this->m_physical_device, this->m_window_surface);
+                std::set<uint32_t> queue_families = { *indices.graphics_family, *indices.present_family };
                 std::vector<VkDeviceQueueCreateInfo> queue_create_info;
-                for (const auto& queue : queues) {
+                float queue_priority = 1.f;
+                for (uint32_t index : queue_families) {
                     VkDeviceQueueCreateInfo create_info;
                     memset(&create_info, 0, sizeof(VkDeviceQueueCreateInfo));
                     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-                    create_info.queueFamilyIndex = queue.index;
+                    create_info.queueFamilyIndex = index;
                     create_info.queueCount = 1;
-                    float queue_priority = queue.priority;
                     create_info.pQueuePriorities = &queue_priority;
                     queue_create_info.push_back(create_info);
                 }
@@ -266,6 +298,47 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not create logical device");
                 }
                 vkGetDeviceQueue(this->m_device, *indices.graphics_family, 0, &this->m_graphics_queue);
+                vkGetDeviceQueue(this->m_device, *indices.present_family, 0, &this->m_present_queue);
+            }
+            void vulkan_context::create_swap_chain(glm::ivec2 position, glm::ivec2 size) {
+                auto details = query_swap_chain_support(this->m_physical_device, this->m_window_surface);
+                auto format = choose_swap_surface_format(details.formats);
+                auto present_mode = choose_swap_present_mode(details.present_modes);
+                auto extent = choose_swap_extent(details.capabilities, size);
+                this->m_min_image_count = details.capabilities.minImageCount;
+                this->m_image_count = this->m_min_image_count + 1;
+                if (details.capabilities.maxImageCount > 0 && this->m_image_count > details.capabilities.maxImageCount) {
+                    this->m_image_count = details.capabilities.maxImageCount;
+                }
+                VkSwapchainCreateInfoKHR create_info;
+                memset(&create_info, 0, sizeof(VkSwapchainCreateInfoKHR));
+                create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+                create_info.surface = this->m_window_surface;
+                create_info.minImageCount = this->m_image_count;
+                create_info.imageFormat = format.format;
+                create_info.imageColorSpace = format.colorSpace;
+                create_info.imageExtent = extent;
+                create_info.imageArrayLayers = 1;
+                create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                auto indices = find_queue_families(this->m_physical_device, this->m_window_surface);
+                std::vector<uint32_t> queue_families = { *indices.graphics_family, *indices.present_family };
+                if (indices.graphics_family != indices.present_family) {
+                    create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+                    create_info.queueFamilyIndexCount = (uint32_t)queue_families.size();
+                    create_info.pQueueFamilyIndices = queue_families.data();
+                } else {
+                    create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                    create_info.queueFamilyIndexCount = 0;
+                    create_info.pQueueFamilyIndices = nullptr;
+                }
+                create_info.preTransform = details.capabilities.currentTransform;
+                create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+                create_info.presentMode = present_mode;
+                create_info.clipped = true;
+                create_info.oldSwapchain = this->m_swap_chain;
+                if (vkCreateSwapchainKHR(this->m_device, &create_info, nullptr, &this->m_swap_chain) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create swapchain");
+                }
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;
@@ -283,7 +356,7 @@ namespace bve {
                     auto details = query_swap_chain_support(device, this->m_window_surface);
                     swap_chain_adequate = !details.formats.empty() && !details.present_modes.empty();
                 }
-                bool device_suitable = features.geometryShader && find_queue_families(device).is_complete() && extensions_supported && swap_chain_adequate;
+                bool device_suitable = features.geometryShader && find_queue_families(device, this->m_window_surface).is_complete() && extensions_supported && swap_chain_adequate;
                 if (!device_suitable) {
                     return 0;
                 }

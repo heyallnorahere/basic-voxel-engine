@@ -17,6 +17,7 @@ namespace bve {
                 VkDevice get_device();
                 VkQueue get_graphics_queue();
                 VkSurfaceKHR get_window_surface();
+                VkSwapchainKHR get_swap_chain();
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -31,6 +32,7 @@ namespace bve {
                 void create_window_surface();
                 void pick_physical_device();
                 void create_logical_device();
+                void create_swap_chain(glm::ivec2 position, glm::ivec2 size);
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -40,8 +42,10 @@ namespace bve {
                 VkDebugUtilsMessengerEXT m_debug_messenger;
                 VkPhysicalDevice m_physical_device;
                 VkDevice m_device;
-                VkQueue m_graphics_queue;
+                VkQueue m_graphics_queue, m_present_queue;
                 VkSurfaceKHR m_window_surface;
+                VkSwapchainKHR m_swap_chain;
+                uint32_t m_image_count, m_min_image_count;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };
