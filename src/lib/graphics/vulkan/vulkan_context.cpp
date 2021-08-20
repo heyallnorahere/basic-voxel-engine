@@ -115,6 +115,9 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
+                for (const auto& image_view : this->m_swapchain_image_views) {
+                    vkDestroyImageView(this->m_device, image_view, nullptr);
+                }
                 vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
                 vkDestroyDevice(this->m_device, nullptr);
                 if (this->m_validation_layers_enabled) {
@@ -171,7 +174,8 @@ namespace bve {
                 glm::ivec2 window_size;
                 glfwGetFramebufferSize(this->m_window, &window_size.x, &window_size.y);
                 this->m_swap_chain = nullptr;
-                this->create_swap_chain(glm::ivec2(0), window_size);
+                this->create_swap_chain(window_size);
+                this->create_image_views();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
@@ -186,6 +190,7 @@ namespace bve {
                 info.Queue = this->m_graphics_queue;
                 info.ImageCount = this->m_image_count;
                 info.MinImageCount = this->m_min_image_count;
+                
                 ImGui_ImplVulkan_Init(&info, nullptr);
             }
             void vulkan_context::shutdown_imgui_backends() {
@@ -300,7 +305,7 @@ namespace bve {
                 vkGetDeviceQueue(this->m_device, *indices.graphics_family, 0, &this->m_graphics_queue);
                 vkGetDeviceQueue(this->m_device, *indices.present_family, 0, &this->m_present_queue);
             }
-            void vulkan_context::create_swap_chain(glm::ivec2 position, glm::ivec2 size) {
+            void vulkan_context::create_swap_chain(glm::ivec2 size) {
                 auto details = query_swap_chain_support(this->m_physical_device, this->m_window_surface);
                 auto format = choose_swap_surface_format(details.formats);
                 auto present_mode = choose_swap_present_mode(details.present_modes);
@@ -338,6 +343,38 @@ namespace bve {
                 create_info.oldSwapchain = this->m_swap_chain;
                 if (vkCreateSwapchainKHR(this->m_device, &create_info, nullptr, &this->m_swap_chain) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create swapchain");
+                }
+                this->m_swapchain_image_format = format.format;
+                this->m_swapchain_extent = extent;
+                vkGetSwapchainImagesKHR(this->m_device, this->m_swap_chain, &this->m_image_count, nullptr);
+                this->m_swapchain_images.resize(this->m_image_count);
+                vkGetSwapchainImagesKHR(this->m_device, this->m_swap_chain, &this->m_image_count, this->m_swapchain_images.data());
+            }
+            void vulkan_context::create_image_views() {
+                for (const auto& view : this->m_swapchain_image_views) {
+                    vkDestroyImageView(this->m_device, view, nullptr);
+                }
+                this->m_swapchain_image_views.clear();
+                for (size_t i = 0; i < this->m_swapchain_images.size(); i++) {
+                    VkImageViewCreateInfo create_info;
+                    memset(&create_info, 0, sizeof(VkImageViewCreateInfo));
+                    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                    create_info.image = this->m_swapchain_images[i];
+                    create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                    create_info.format = this->m_swapchain_image_format;
+                    create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+                    create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+                    create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+                    create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+                    create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                    create_info.subresourceRange.baseMipLevel = 0;
+                    create_info.subresourceRange.levelCount = 1;
+                    create_info.subresourceRange.baseArrayLayer = 0;
+                    create_info.subresourceRange.layerCount = 1;
+                    VkImageView image_view;
+                    if (vkCreateImageView(this->m_device, &create_info, nullptr, &image_view) != VK_SUCCESS) {
+                        throw std::runtime_error("[vulkan context] could not create image view " + std::to_string(i));
+                    }
                 }
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {

@@ -32,7 +32,8 @@ namespace bve {
                 void create_window_surface();
                 void pick_physical_device();
                 void create_logical_device();
-                void create_swap_chain(glm::ivec2 position, glm::ivec2 size);
+                void create_swap_chain(glm::ivec2 size);
+                void create_image_views();
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -46,6 +47,10 @@ namespace bve {
                 VkSurfaceKHR m_window_surface;
                 VkSwapchainKHR m_swap_chain;
                 uint32_t m_image_count, m_min_image_count;
+                std::vector<VkImage> m_swapchain_images;
+                VkFormat m_swapchain_image_format;
+                VkExtent2D m_swapchain_extent;
+                std::vector<VkImageView> m_swapchain_image_views;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };
