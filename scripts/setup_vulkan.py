@@ -11,7 +11,7 @@ def setup_windows():
     with open(installer_path, "wb") as stream:
         stream.write(response.content)
         stream.close()
-    if subprocess.call([ installer_path ], shell=True) != 0:
+    if subprocess.call([ installer_path, "/S" ], shell=True) != 0:
         exit(1)
 def setup_ubuntu():
     PACKAGES = [
