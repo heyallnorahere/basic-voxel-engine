@@ -39,7 +39,12 @@ namespace bve {
     }
     application::application() {
         block::register_all();
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
+#ifdef NDEBUG
+        graphics::graphics_api api = graphics::graphics_api::OPENGL;
+#else
+        graphics::graphics_api api = graphics::graphics_api::VULKAN;
+#endif
+        this->m_object_factory = graphics::object_factory::create(api);
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
         this->m_world = ref<world>::create();

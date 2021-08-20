@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "graphics/object_factory.h"
 #include "opengl/opengl_object_factory.h"
+#include "vulkan/vulkan_object_factory.h"
 // todo: add check to see if stb_image was already implemented
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
@@ -12,6 +13,9 @@ namespace bve {
             switch (api) {
             case graphics_api::OPENGL:
                 factory = ref<opengl::opengl_object_factory>::create();
+                break;
+            case graphics_api::VULKAN:
+                factory = ref<vulkan::vulkan_object_factory>::create();
                 break;
             default:
                 return nullptr;

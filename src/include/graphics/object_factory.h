@@ -7,7 +7,8 @@
 namespace bve {
     namespace graphics {
         enum class graphics_api {
-            OPENGL
+            OPENGL,
+            VULKAN
         };
         class object_factory : public ref_counted {
         public:
