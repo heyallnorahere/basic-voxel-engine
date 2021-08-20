@@ -12,6 +12,7 @@ namespace bve {
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
                 VkInstance get_instance();
+                VkDebugUtilsMessengerEXT get_debug_messenger();
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -22,8 +23,14 @@ namespace bve {
                 virtual void call_imgui_backend_newframe() override;
                 virtual void render_imgui_draw_data(ImDrawData* data) override;
                 void create_instance();
+                void create_debug_messenger();
+                bool layers_supported();
+                std::vector<const char*> get_extensions();
                 ref<vulkan_object_factory> m_factory;
                 VkInstance m_instance;
+                VkDebugUtilsMessengerEXT m_debug_messenger;
+                std::vector<const char*> m_layers, m_extensions;
+                bool m_validation_layers_enabled;
             };
         }
     }
