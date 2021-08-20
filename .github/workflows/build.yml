@@ -38,11 +38,14 @@ jobs:
         with:
           python-version: 3.9.x
       - name: install vulkan
+        id: install-vulkan
         shell: bash
         run: |
           python -m pip install requests
           python scripts/setup_vulkan.py
       - name: build!
+        env:
+          VULKAN_SDK: ${{ steps.install-vulkan.outputs.VULKAN_SDK_VALUE }}
         shell: bash
         run: |
           cmake . -B build -DCMAKE_BUILD_TYPE=Release
