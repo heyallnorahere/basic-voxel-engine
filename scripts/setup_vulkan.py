@@ -24,16 +24,19 @@ def setup_ubuntu():
     subprocess.call(["sudo", "apt-get", "update"])
     args = [
         "sudo",
-        "apt-get"
+        "apt-get",
+        "install",
+        "-y"
     ]
     for package in PACKAGES:
         args.append(package)
-    subprocess.call(args)
+    if subprocess.call(args) != 0:
+        exit(1)
 def setup_macosx():
     DISK_IMAGE_URL="https://sdk.lunarg.com/sdk/download/1.2.182.0/mac/vulkansdk-macos-1.2.182.0.dmg"
     response = requests.get(DISK_IMAGE_URL, allow_redirects=True)
     tempdir = tempfile.TemporaryDirectory()
-    disk_image_name = "vulkan-installer"
+    disk_image_name = "vulkansdk-macos-1.2.182.0"
     disk_image_path = path.join(tempdir.name, f"{disk_image_name}.dmg")
     with open(disk_image_path, "wb") as stream:
         stream.write(response.content)
