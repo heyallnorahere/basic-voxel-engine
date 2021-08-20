@@ -6,6 +6,28 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            struct swap_chain_support_details {
+                VkSurfaceCapabilitiesKHR capabilities;
+                std::vector<VkSurfaceFormatKHR> formats;
+                std::vector<VkPresentModeKHR> present_modes;
+            };
+            static swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
+                swap_chain_support_details details;
+                vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, window_surface, &details.capabilities);
+                uint32_t format_count = 0;
+                vkGetPhysicalDeviceSurfaceFormatsKHR(device, window_surface, &format_count, nullptr);
+                if (format_count > 0) {
+                    details.formats.resize(format_count);
+                    vkGetPhysicalDeviceSurfaceFormatsKHR(device, window_surface, &format_count, details.formats.data());
+                }
+                uint32_t present_mode_count = 0;
+                vkGetPhysicalDeviceSurfacePresentModesKHR(device, window_surface, &present_mode_count, nullptr);
+                if (present_mode_count > 0) {
+                    details.present_modes.resize(present_mode_count);
+                    vkGetPhysicalDeviceSurfacePresentModesKHR(device, window_surface, &present_mode_count, details.present_modes.data());
+                }
+                return details;
+            }
             struct queue_data {
                 uint32_t index;
                 float priority;
@@ -61,6 +83,9 @@ namespace bve {
             vulkan_context::vulkan_context(ref<vulkan_object_factory> factory) {
                 this->m_factory = factory;
                 this->m_validation_layers_enabled = false;
+                this->m_device_extensions = {
+                    VK_KHR_SWAPCHAIN_EXTENSION_NAME
+                };
 #ifndef NDEBUG
                 this->m_validation_layers_enabled = true;
                 this->m_layers.push_back("VK_LAYER_KHRONOS_validation");
@@ -72,6 +97,7 @@ namespace bve {
                 if (this->m_validation_layers_enabled) {
                     _vkDestroyDebugUtilsMessengerEXT(this->m_instance, this->m_debug_messenger, nullptr);
                 }
+                vkDestroySurfaceKHR(this->m_instance, this->m_window_surface, nullptr);
                 vkDestroyInstance(this->m_instance, nullptr);
             }
             void vulkan_context::clear() {
@@ -95,6 +121,12 @@ namespace bve {
             VkDevice vulkan_context::get_device() {
                 return this->m_device;
             }
+            VkQueue vulkan_context::get_graphics_queue() {
+                return this->m_graphics_queue;
+            }
+            VkSurfaceKHR vulkan_context::get_window_surface() {
+                return this->m_window_surface;
+            }
             void vulkan_context::swap_buffers() {
                 // todo: swap buffers
             }
@@ -107,6 +139,7 @@ namespace bve {
                 spdlog::info("[vulkan context] vulkan extensions supported: {0}", extension_count);
                 this->create_instance();
                 this->create_debug_messenger();
+                this->create_window_surface();
                 this->pick_physical_device();
                 this->create_logical_device();
             }
@@ -114,7 +147,7 @@ namespace bve {
                 // todo: resize
             }
             void vulkan_context::init_imgui_backends() {
-                ImGui_ImplGlfw_InitForVulkan(this->get_window(), true);
+                ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
                 ImGui_ImplVulkan_InitInfo info;
                 info.Instance = this->m_instance;
                 info.PhysicalDevice = this->m_physical_device;
@@ -176,6 +209,11 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not create debug messenger");
                 }
             }
+            void vulkan_context::create_window_surface() {
+                if (glfwCreateWindowSurface(this->m_instance, this->m_window, nullptr, &this->m_window_surface) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create window surface");
+                }
+            }
             void vulkan_context::pick_physical_device() {
                 this->m_physical_device = nullptr;
                 uint32_t device_count = 0;
@@ -222,6 +260,8 @@ namespace bve {
                 VkPhysicalDeviceFeatures features;
                 memset(&features, 0, sizeof(VkPhysicalDeviceFeatures));
                 create_info.pEnabledFeatures = &features;
+                create_info.enabledExtensionCount = (uint32_t)this->m_device_extensions.size();
+                create_info.ppEnabledExtensionNames = this->m_device_extensions.data();
                 if (vkCreateDevice(this->m_physical_device, &create_info, nullptr, &this->m_device) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create logical device");
                 }
@@ -237,10 +277,14 @@ namespace bve {
                     score += 1000;
                 }
                 score += properties.limits.maxImageDimension2D;
-                if (!features.geometryShader) {
-                    return 0;
+                bool extensions_supported = this->check_device_extension_support(device);
+                bool swap_chain_adequate = false;
+                if (extensions_supported) {
+                    auto details = query_swap_chain_support(device, this->m_window_surface);
+                    swap_chain_adequate = !details.formats.empty() && !details.present_modes.empty();
                 }
-                if (!find_queue_families(device).is_complete()) {
+                bool device_suitable = features.geometryShader && find_queue_families(device).is_complete() && extensions_supported && swap_chain_adequate;
+                if (!device_suitable) {
                     return 0;
                 }
                 return score;
@@ -263,6 +307,17 @@ namespace bve {
                     }
                 }
                 return true;
+            }
+            bool vulkan_context::check_device_extension_support(VkPhysicalDevice device) {
+                uint32_t extension_count = 0;
+                vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
+                std::vector<VkExtensionProperties> available_extensions(extension_count);
+                vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, available_extensions.data());
+                std::set<std::string> required_extensions(this->m_device_extensions.begin(), this->m_device_extensions.end());
+                for (const auto& extension : available_extensions) {
+                    required_extensions.erase(extension.extensionName);
+                }
+                return required_extensions.empty();
             }
             std::vector<const char*> vulkan_context::get_extensions() {
                 uint32_t glfw_extension_count = 0;

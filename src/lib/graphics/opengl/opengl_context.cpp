@@ -28,13 +28,13 @@ namespace bve {
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             }
             void opengl_context::make_current() {
-                glfwMakeContextCurrent(this->get_window());
+                glfwMakeContextCurrent(this->m_window);
             }
             void opengl_context::draw_indexed(size_t index_count) {
                 glDrawElements(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_INT, nullptr);
             }
             void opengl_context::swap_buffers() {
-                glfwSwapBuffers(this->get_window());
+                glfwSwapBuffers(this->m_window);
             }
             void opengl_context::setup_glfw() {
 #if defined(NDEBUG) || defined(BVE_PLATFORM_MACOSX)
@@ -70,7 +70,7 @@ namespace bve {
                 glViewport(x, y, width, height);
             }
             void opengl_context::init_imgui_backends() {
-                ImGui_ImplGlfw_InitForOpenGL(this->get_window(), true);
+                ImGui_ImplGlfw_InitForOpenGL(this->m_window, true);
                 ImGui_ImplOpenGL3_Init("#version 330 core");
             }
             void opengl_context::shutdown_imgui_backends() {

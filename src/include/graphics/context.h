@@ -12,10 +12,6 @@ namespace bve {
             virtual void make_current() = 0;
             virtual void draw_indexed(size_t index_count) = 0;
         protected:
-            GLFWwindow* get_window() {
-                return this->m_window;
-            }
-        private:
             virtual void swap_buffers() = 0;
             virtual void setup_glfw() = 0;
             virtual void setup_context() = 0;

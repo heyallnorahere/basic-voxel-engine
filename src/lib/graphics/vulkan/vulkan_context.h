@@ -15,6 +15,8 @@ namespace bve {
                 VkDebugUtilsMessengerEXT get_debug_messenger();
                 VkPhysicalDevice get_physical_device();
                 VkDevice get_device();
+                VkQueue get_graphics_queue();
+                VkSurfaceKHR get_window_surface();
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -26,10 +28,12 @@ namespace bve {
                 virtual void render_imgui_draw_data(ImDrawData* data) override;
                 void create_instance();
                 void create_debug_messenger();
+                void create_window_surface();
                 void pick_physical_device();
                 void create_logical_device();
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
+                bool check_device_extension_support(VkPhysicalDevice device);
                 std::vector<const char*> get_extensions();
                 ref<vulkan_object_factory> m_factory;
                 VkInstance m_instance;
@@ -37,7 +41,8 @@ namespace bve {
                 VkPhysicalDevice m_physical_device;
                 VkDevice m_device;
                 VkQueue m_graphics_queue;
-                std::vector<const char*> m_layers, m_extensions;
+                VkSurfaceKHR m_window_surface;
+                std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };
         }
