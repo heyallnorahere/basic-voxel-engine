@@ -10,6 +10,7 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - [glad](https://github.com/Dav1dde/glad)
 - [GLFW](https://github.com/glfw/glfw/tree/3.3.4)
 - [GLM](https://github.com/g-truc/glm/tree/0.9.9.8)
+- [glslang](https://github.com/KhronosGroup/glslang)
 - [Dear ImGui](https://github.com/ocornut/imgui/tree/docking)
 - [spdlog](https://github.com/gabime/spdlog/tree/v1.9.1)
 - [stb](https://github.com/nothings/stb)
