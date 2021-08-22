@@ -38,10 +38,8 @@ namespace bve {
             ref<block> block_ = block_register[name];
             auto path = this->get_asset_path("block:" + name.get_full_name() + ".png"); // single texture per block, for now
             texture_data data;
-            try {
-                data.data = graphics::texture::load_image(path, data.width, data.height, data.channels);
-            } catch (const std::runtime_error&) {
-                continue; // we dont know if the block will even be rendered - so we pass
+            if (!graphics::texture::load_image(path, data.data, data.width, data.height, data.channels)) {
+                continue;
             }
             textures.push_back({ name, data });
         }
