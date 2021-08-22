@@ -1,5 +1,6 @@
 #pragma once
 namespace bve {
+    // A namespaced_name is an identifier in the form of "namespace:name".
     struct namespaced_name {
     public:
         struct hash_function {
@@ -22,7 +23,7 @@ namespace bve {
         namespaced_name& operator=(const char* full_name) {
             this->convert(full_name);
             return *this;
-        }
+}
         namespaced_name& operator=(const std::string& full_name) {
             this->convert(full_name);
             return *this;
@@ -48,72 +49,53 @@ namespace bve {
             }
         }
     };
+
+    // An object register creates an ID from a namespaced_name
+    // and stores an object for that ID.
+    //
+    // Users can:
+    //  * Insert a new object with or without a name, the ID is returned
+    //  * Get the object from the ID
+    //  * Iterate over all IDs
+    //  * Get a list of all of the names
     template<typename T> class object_register : public ref_counted {
     public:
         using stored_type = T;
         using element_type = ref<stored_type>;
-        using size_type = typename std::list<element_type>::size_type;
+        using id_type = typename std::vector<element_type>::size_type;
+
         object_register(const object_register<T>&) = delete;
         object_register<T>& operator=(const object_register<T>&) = delete;
+
         void add(element_type object, const namespaced_name& name) {
-            size_type index = *this += object;
-            this->set_name(name, index);
-        }
-        void add(element_type object, namespaced_name&& name) {
-            this->add(object, name);
-        }
-        size_type operator+=(element_type object) {
-            size_type index = this->m_objects.size();
+            id_type id = this->m_objects.size();
             this->m_objects.push_back(object);
-            return index;
+            this->m_name_map[name] = id;
+            this->m_id_map[id] = name;
         }
-        void operator-=(element_type object) {
-            this->m_objects.remove(object);
-        }
-        void operator-=(const namespaced_name& name) {
-            if (this->m_name_map.find(name) == this->m_name_map.end()) {
-                return;
-            }
-            size_t index = this->m_name_map[name];
-            auto& element = (*this)[index];
-            this->m_objects.remove(element);
-        }
-        void set_name(const namespaced_name& name, size_type index) {
-            this->m_name_map[name] = index;
-        }
-        size_type size() const {
+        id_type size() const {
             return this->m_objects.size();
         }
-        element_type& operator[](size_type index) {
-            auto it = this->m_objects.begin();
-            std::advance(it, index);
-            return *it;
+        element_type& operator[](id_type id) {
+            return this->m_objects.at(id);
         }
         element_type& operator[](const namespaced_name& name) {
-            auto index = this->get_index(name);
-            if (!index) {
-                throw std::runtime_error("[register] could not find specified register entry!");
-            }
-            return (*this)[*index];
+            auto id = this->m_name_map.at(name);
+            return (*this)[id];
         }
-        const element_type& operator[](size_type index) const {
-            auto it = this->m_objects.begin();
-            std::advance(it, index);
-            return *it;
-        }
-        std::optional<namespaced_name> get_name(size_type index) {
-            for (const auto& pair : this->m_name_map) {
-                if (pair.second == index) {
-                    return pair.first;
-                }
+        std::optional<namespaced_name> get_name(id_type id) {
+            auto it = this->m_id_map.find(id);
+            if (it == this->m_id_map.end()) {
+                return std::nullopt;
             }
-            return std::optional<namespaced_name>();
+            return it->second;
         }
-        std::optional<size_type> get_index(const namespaced_name& name) {
-            if (this->m_name_map.find(name) == this->m_name_map.end()) {
-                return std::optional<size_type>();
+        std::optional<id_type> get_index(const namespaced_name& name) {
+            auto it = this->m_name_map.find(name);
+            if (it == this->m_name_map.end()) {
+                return std::nullopt;
             }
-            return this->m_name_map[name];
+            return it->second;
         }
         std::vector<namespaced_name> get_names() {
             std::vector<namespaced_name> names;
@@ -135,11 +117,15 @@ namespace bve {
             return this->m_objects.end();
         }
     private:
-        object_register() { }
-        std::list<element_type> m_objects;
-        std::unordered_map<namespaced_name, size_type, namespaced_name::hash_function> m_name_map;
         friend class registry;
+        object_register() {}
+
+        std::vector<element_type> m_objects;
+        std::unordered_map<namespaced_name, id_type, namespaced_name::hash_function> m_name_map;
+        std::unordered_map<id_type, namespaced_name>  m_id_map;
     };
+
+    // A registry is a set of object registers keyed off of the type that the register stores.
     class registry {
     public:
         static registry& get() {

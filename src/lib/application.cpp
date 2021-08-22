@@ -69,6 +69,8 @@ namespace bve {
         }
         this->m_renderer->add_lights(cmdlist, this->m_lights);
         this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes(), this->m_object_factory);
+
+        // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();
         std::optional<entity> main_camera;
         for (entity camera : cameras) {
@@ -85,6 +87,7 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
+
         this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_window->get_context(), this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
