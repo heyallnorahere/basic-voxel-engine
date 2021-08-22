@@ -1,5 +1,6 @@
 #pragma once
 #include "vulkan_object_factory.h"
+#include "shader_parser.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -30,9 +31,12 @@ namespace bve {
                 virtual glm::mat4 get_mat4(const std::string& name) override;
             private:
                 void compile();
+                VkShaderModule compile_shader(shader_type type, const shader_parser& parser);
                 void cleanup();
                 ref<vulkan_object_factory> m_factory;
                 std::vector<std::filesystem::path> m_sources;
+                VkDevice m_device;
+                std::vector<VkPipelineShaderStageCreateInfo> m_pipeline_create_info;
             };
         }
     }

@@ -15,8 +15,8 @@ namespace bve {
         shader_parser(shader_language input, shader_language output);
         void parse(const std::filesystem::path& path);
         void parse(const std::string& source, std::optional<std::filesystem::path> path = std::optional<std::filesystem::path>());
-        std::vector<shader_type> get_parsed_shader_types();
-        std::string get_shader(shader_type type);
+        std::vector<shader_type> get_parsed_shader_types() const;
+        std::string get_shader(shader_type type) const;
         std::optional<std::filesystem::path> get_shader_path(shader_type type);
     private:
         void process_file(const std::string& source, std::optional<std::filesystem::path> path);

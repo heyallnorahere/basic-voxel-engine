@@ -1,9 +1,15 @@
 #include "bve_pch.h"
 #include "vulkan_shader.h"
+#include "vulkan_context.h"
+#include <glslang/Public/ShaderLang.h>
+#include <glslang/Include/ShHandle.h>
+#include <SPIRV/GlslangToSpv.h>
+#include <StandAlone/ResourceLimits.h>
 namespace bve {
     namespace graphics {
         namespace vulkan {
             vulkan_shader::vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<std::filesystem::path>& sources) {
+                this->m_device = nullptr;
                 this->m_factory = factory;
                 this->m_sources = sources;
                 this->compile();
@@ -76,10 +82,98 @@ namespace bve {
                 return glm::mat4(1.f);
             }
             void vulkan_shader::compile() {
-                // todo: read, compile, and set up shader modules
+                ref<vulkan_context> context_ = this->m_factory->get_current_context();
+                this->m_device = context_->get_device();
+                auto parser = shader_parser(shader_language::GLSL, shader_language::GLSL);
+                for (const auto& source : this->m_sources) {
+                    parser.parse(source);
+                }
+                std::vector<std::pair<shader_type, VkShaderModule>> shader_modules;
+                for (shader_type type : parser.get_parsed_shader_types()) {
+                    shader_modules.push_back({ type, this->compile_shader(type, parser) });
+                }
+                for (const auto& module : shader_modules) {
+                    VkPipelineShaderStageCreateInfo create_info;
+                    memset(&create_info, 0, sizeof(VkPipelineShaderStageCreateInfo));
+                    create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+                    switch (module.first) {
+                    case shader_type::VERTEX:
+                        create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+                        break;
+                    case shader_type::FRAGMENT:
+                        create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                        break;
+                    case shader_type::GEOMETRY:
+                        create_info.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+                        break;
+                    default:
+                        throw std::runtime_error("[vulkan shader] the given shader type is not supported yet");
+                        break;
+                    }
+                    create_info.module = module.second;
+                    create_info.pName = "main";
+                    this->m_pipeline_create_info.push_back(create_info);
+                }
+            }
+            static void print_info_log(std::shared_ptr<glslang::TShader> shader_, const std::string& shader_name) {
+                std::string info_log = shader_->getInfoLog();
+                throw std::runtime_error("[vulkan shader] could not compile " + shader_name + " shader: " + info_log);
+            }
+            std::vector<uint32_t> glsl_to_spirv(EShLanguage language, const std::string& shader_name, const std::string& source) {
+                const char* src = source.c_str();
+                auto shader_ = std::make_shared<glslang::TShader>(language);
+                shader_->setStrings(&src, 1);
+                EShMessages messages = static_cast<EShMessages>(EShMsgSpvRules | EShMsgVulkanRules);
+                if (!shader_->parse(&glslang::DefaultTBuiltInResource, 330, false, messages)) {
+                    print_info_log(shader_, shader_name);
+                }
+                auto program = std::make_shared<glslang::TProgram>();
+                program->addShader(shader_.get());
+                if (!program->link(messages)) {
+                    print_info_log(shader_, shader_name);
+                }
+                std::vector<uint32_t> spirv;
+                glslang::GlslangToSpv(*program->getIntermediate(language), spirv);
+                return spirv;
+            }
+            VkShaderModule vulkan_shader::compile_shader(shader_type type, const shader_parser& parser) {
+                EShLanguage language;
+                std::string shader_name;
+                switch (type) {
+                case shader_type::VERTEX:
+                    language = EShLangVertex;
+                    shader_name = "vertex";
+                    break;
+                case shader_type::FRAGMENT:
+                    language = EShLangFragment;
+                    shader_name = "fragment";
+                    break;
+                case shader_type::GEOMETRY:
+                    language = EShLangGeometry;
+                    shader_name = "geometry";
+                    break;
+                default:
+                    throw std::runtime_error("[vulkan shader] the specified shader type is not supported yet");
+                    break;
+                }
+                std::string source = parser.get_shader(type);
+                auto spirv = glsl_to_spirv(language, shader_name, source);
+                VkShaderModuleCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkShaderModuleCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+                create_info.codeSize = spirv.size() * sizeof(uint32_t);
+                create_info.pCode = spirv.data();
+                VkShaderModule shader_module;
+                if (vkCreateShaderModule(this->m_device, &create_info, nullptr, &shader_module) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan shader] could not create " + shader_name + " shader module");
+                }
+                return shader_module;
             }
             void vulkan_shader::cleanup() {
-                // todo: clean up shader modules
+                for (const auto& create_info : this->m_pipeline_create_info) {
+                    vkDestroyShaderModule(this->m_device, create_info.module, nullptr);
+                }
+                this->m_pipeline_create_info.clear();
             }
         }
     }

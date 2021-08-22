@@ -122,18 +122,19 @@ namespace bve {
         pair.first = parsed_source;
         pair.second = path;
     }
-    std::vector<shader_type> shader_parser::get_parsed_shader_types() {
+    std::vector<shader_type> shader_parser::get_parsed_shader_types() const {
         std::vector<shader_type> types;
         for (const auto& pair : this->m_sources) {
             types.push_back(pair.first);
         }
         return types;
     }
-    std::string shader_parser::get_shader(shader_type type) {
-        if (this->m_sources.find(type) == this->m_sources.end()) {
+    std::string shader_parser::get_shader(shader_type type) const {
+        auto it = this->m_sources.find(type);
+        if (it == this->m_sources.end()) {
             throw std::runtime_error("[shader parser] a shader of this type was not parsed");
         }
-        std::string source = this->m_sources[type].first;
+        std::string source = it->second.first;
         if (this->m_output_language != shader_language::GLSL) {
             // todo: convert shader source to something like HLSL
         }
