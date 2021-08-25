@@ -3,7 +3,8 @@ namespace bve {
     namespace graphics {
         class texture : public ref_counted {
         public:
-            static std::vector<uint8_t> load_image(const std::filesystem::path& path, int32_t& width, int32_t& height, int32_t& channels);
+            // Load a texture from path into data. Return true if successful
+            static bool load_image(const std::filesystem::path& path, std::vector<uint8_t>& data, int32_t& width, int32_t& height, int32_t& channels);
             texture() = default;
             virtual ~texture() = default;
             texture(const texture&) = delete;
