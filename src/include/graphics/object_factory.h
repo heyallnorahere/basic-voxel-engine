@@ -26,7 +26,8 @@ namespace bve {
             virtual ref<shader> create_shader(const std::vector<std::filesystem::path>& sources) = 0;
             ref<texture> create_texture(std::filesystem::path path) {
                 int32_t width, height, channels;
-                std::vector<uint8_t> data = texture::load_image(path, width, height, channels);
+                std::vector<uint8_t> data;
+                texture::load_image(path, data, width, height, channels);
                 return this->create_texture(data, width, height, channels);
             }
             virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) = 0;
