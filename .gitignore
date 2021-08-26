@@ -1,6 +1,5 @@
 build/
 .vscode/settings.json
 imgui.ini
-*.dll
 bin/
 obj/
