@@ -4,12 +4,12 @@
 #include "asset_manager.h"
 #include "components.h"
 namespace bve {
-    using callback = std::function<void()>;
     application& application::get() {
         static application instance;
         return instance;
     }
     void application::run() {
+        this->load_assemblies();
         auto& block_register = registry::get().get_register<block>();
         for (const auto& name : block_register.get_names()) {
             ref<block> block_ = block_register[name];
@@ -45,16 +45,22 @@ namespace bve {
         this->m_world = ref<world>::create();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
-        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl").string() });
+        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") });
         this->m_renderer = ref<renderer>::create();
         this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;
         this->m_delta_time = 0.0;
         this->m_last_frame = glfwGetTime();
+        this->m_code_host = ref<code_host>::create();
     }
     void application::update() {
         double current_frame = glfwGetTime();
         this->m_delta_time = current_frame - this->m_last_frame;
+        {
+            ref<managed::class_> application_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
+            auto method = application_class->get_method("BasicVoxelEngine.Application:TestMethod()");
+            application_class->invoke(method);
+        }
         this->m_last_frame = current_frame;
         this->m_input_manager->update();
         this->m_world->update();
@@ -88,5 +94,11 @@ namespace bve {
         this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_window->get_context(), this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
+    }
+    void application::load_assemblies() {
+        this->m_code_host->load_assembly(std::filesystem::current_path() / "BasicVoxelEngine.dll");
+        for (const auto& pair : code_host::get_script_wrappers()) {
+            this->m_code_host->register_function(pair.first, pair.second);
+        }
     }
 }

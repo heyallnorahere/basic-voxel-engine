@@ -34,7 +34,8 @@ namespace bve {
                 MonoObject* _object = mono_gchandle_get_target(this->m_handle);
                 std::vector<void*> args_vector = { std::forward<Args*>(args)... };
                 MonoObject* exc = nullptr;
-                MonoObject* returned = mono_runtime_invoke(method, _object, args_vector.data(), &exc);
+                void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
+                MonoObject* returned = mono_runtime_invoke(method, _object, args_ptr, &exc);
                 if (exc) {
                     ref<object> exception = ref<object>::create(exc, this->get_domain());
                     handle_exception(exception);
@@ -64,7 +65,8 @@ namespace bve {
                 }
                 std::vector<void*> args_vector = { std::forward<Args*>(args)... };
                 MonoObject* exc = nullptr;
-                MonoObject* returned = mono_runtime_invoke(method, nullptr, args_vector.data(), &exc);
+                void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
+                MonoObject* returned = mono_runtime_invoke(method, nullptr, args_ptr, &exc);
                 if (exc) {
                     ref<object> exception = ref<object>::create(exc, this->get_domain());
                     object::handle_exception(exception);
@@ -109,6 +111,7 @@ namespace bve {
     }
     class code_host : public ref_counted {
     public:
+        static std::unordered_map<std::string, void*> get_script_wrappers();
         code_host();
         ~code_host();
         code_host(const code_host&) = delete;
@@ -116,6 +119,9 @@ namespace bve {
         MonoDomain* get_domain();
         void load_assembly(const std::filesystem::path& path);
         std::vector<ref<managed::assembly>> get_loaded_assemblies();
+        template<typename T> void register_function(const std::string& name, const T& func) {
+            mono_add_internal_call(name.c_str(), (void*)func);
+        }
         ref<managed::class_> find_class(const std::string& name);
         ref<managed::class_> find_class(const std::string& namespace_name, const std::string& class_name);
     private:

@@ -1,5 +1,6 @@
 #include "bve_pch.h"
 #include "code_host.h"
+#include "script_wrappers.h"
 namespace bve {
     static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
         size_t period_position = full_name.find_last_of('.');
@@ -20,7 +21,9 @@ namespace bve {
         }
         void object::handle_exception(ref<object> exception) {
             ref<class_> exception_class = ref<class_>::create(mono_get_exception_class(), exception->get_domain());
-            // todo: read data
+            auto property = exception_class->get_property("Message");
+            std::string message = exception->get(property)->get_string();
+            spdlog::error("[managed object] threw exception: {0}", message);
         }
         object::object(MonoObject* _object, MonoDomain* domain) : wrapper(domain) {
             this->m_handle = mono_gchandle_new(_object, false);
@@ -161,6 +164,17 @@ namespace bve {
             return this->m_image;
         }
     }
+    std::unordered_map<std::string, void*> code_host::get_script_wrappers() {
+        using namespace script_wrappers;
+        return {
+            { "BasicVoxelEngine.Application::GetDeltaTime", (void*)BasicVoxelEngine_Application_GetDeltaTime },
+
+            { "BasicVoxelEngine.Logger::PrintDebug", (void*)BasicVoxelEngine_Logger_PrintDebug },
+            { "BasicVoxelEngine.Logger::PrintInfo", (void*)BasicVoxelEngine_Logger_PrintInfo },
+            { "BasicVoxelEngine.Logger::PrintWarning", (void*)BasicVoxelEngine_Logger_PrintWarning },
+            { "BasicVoxelEngine.Logger::PrintError", (void*)BasicVoxelEngine_Logger_PrintError },
+        };
+    }
     code_host::code_host() {
         mono_set_assemblies_path(MONO_ASSEMBLIES);
         this->m_domain = mono_jit_init(BVE_TARGET_NAME);
@@ -175,23 +189,27 @@ namespace bve {
         std::string string_path = path.string();
         // old-fashioned c-style file reading
         FILE* f = fopen(string_path.c_str(), "rb");
+        if (!f) {
+            throw std::runtime_error("[code host] could not open assembly");
+        }
         fseek(f, 0, SEEK_END);
         size_t file_size = (size_t)ftell(f);
         rewind(f);
-        void* file_data = malloc(file_size * sizeof(char));
+        char* file_data = (char*)malloc(file_size * sizeof(char));
         if (!file_data) {
             fclose(f);
             throw std::runtime_error("[code host] application ran out of memory");
         }
         memset(file_data, 0, file_size * sizeof(char));
         size_t bytes_read = fread(file_data, sizeof(char), file_size, f);
-        if (bytes_read < file_size) {
+        if (bytes_read != file_size) {
             fclose(f);
+            free(file_data);
             throw std::runtime_error("[code host] could not read entire assembly");
         }
         fclose(f);
         MonoImageOpenStatus status;
-        MonoImage* image = mono_image_open_from_data_full((char*)file_data, file_size * sizeof(char), true, &status, false);
+        MonoImage* image = mono_image_open_from_data_full(file_data, file_size * sizeof(char), true, &status, false);
         free(file_data);
         if (status != MONO_IMAGE_OK) {
             return;

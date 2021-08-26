@@ -2,6 +2,11 @@
 
 A Minecraft-like voxel engine, written in C++. To use the library on its own without the application, include this repository as a submodule in your project and add it to your build via CMake's `add_subdirectory()` and link against the `basic-voxel-engine` target.
 
+## Project Structure
+
+`src`: core C++ BVE code
+`BasicVoxelEngine`: core C# scripting library
+
 ## Dependencies
 
 - [Assimp](https://github.com/assimp/assimp/tree/v5.0.1)
