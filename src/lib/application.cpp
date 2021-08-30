@@ -56,11 +56,6 @@ namespace bve {
     void application::update() {
         double current_frame = glfwGetTime();
         this->m_delta_time = current_frame - this->m_last_frame;
-        {
-            ref<managed::class_> application_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
-            auto method = application_class->get_method("BasicVoxelEngine.Application:TestMethod()");
-            application_class->invoke(method);
-        }
         this->m_last_frame = current_frame;
         this->m_input_manager->update();
         this->m_world->update();

@@ -20,10 +20,27 @@ namespace bve {
             return this->m_domain;
         }
         void object::handle_exception(ref<object> exception) {
+            ref<class_> object_class = class_::get_class(exception);
             ref<class_> exception_class = ref<class_>::create(mono_get_exception_class(), exception->get_domain());
             auto property = exception_class->get_property("Message");
             std::string message = exception->get(property)->get_string();
-            spdlog::error("[managed object] threw exception: {0}", message);
+            property = exception_class->get_property("StackTrace");
+            ref<object> stacktrace_object = exception->get(property);
+            spdlog::error("[managed object] threw {0}: {1}", object_class->get_name(), message);
+            if (stacktrace_object) {
+                std::string stacktrace = stacktrace_object->get_string();
+                std::stringstream ss(stacktrace);
+                std::string line;
+                while (std::getline(ss, line)) {
+                    spdlog::error("[managed object] {0}", line);
+                }
+            }
+            property = exception_class->get_property("InnerException");
+            ref<object> inner_exception = exception->get(property);
+            if (inner_exception) {
+                spdlog::info("[managed object] inner exception:");
+                handle_exception(inner_exception);
+            }
         }
         object::object(MonoObject* _object, MonoDomain* domain) : wrapper(domain) {
             this->m_handle = mono_gchandle_new(_object, false);
@@ -83,6 +100,11 @@ namespace bve {
             MonoObject* _object = mono_gchandle_get_target(this->m_handle);
             MonoClass* _class = mono_object_get_class(_object);
             return mono_class_get_image(_class);
+        }
+        ref<class_> class_::get_class(ref<object> _object) {
+            auto object_ptr = (MonoObject*)_object->get();
+            MonoClass* class_ptr = mono_object_get_class(object_ptr);
+            return ref<class_>::create(class_ptr, _object->get_domain());
         }
         class_::class_(MonoClass* _class, MonoDomain* domain) : wrapper(domain) {
             this->m_class = _class;
@@ -176,6 +198,7 @@ namespace bve {
         };
     }
     code_host::code_host() {
+        mono_config_parse(nullptr);
         mono_set_assemblies_path(MONO_ASSEMBLIES);
         this->m_domain = mono_jit_init(BVE_TARGET_NAME);
     }

@@ -53,6 +53,7 @@ namespace bve {
         };
         class class_ : public wrapper {
         public:
+            static ref<class_> get_class(ref<object> _object);
             class_(MonoClass* _class, MonoDomain* domain);
             std::string get_name();
             void get_name(std::string& namespace_name, std::string& class_name);
