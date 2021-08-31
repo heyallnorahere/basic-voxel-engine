@@ -67,7 +67,7 @@ namespace BasicVoxelEngine
         protected event Action? OnReady;
         private IntPtr? mNativeAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool DestroyRef_Native(IntPtr nativeAddress, Type type);
+        private static extern void DestroyRef_Native(IntPtr nativeAddress, Type type);
     }
     public class Register<T> : RegisteredObject<Register<T>> where T : RegisteredObject<T>, new()
     {

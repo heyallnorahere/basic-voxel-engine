@@ -18,28 +18,28 @@ namespace BasicVoxelEngine
             switch (severity)
             {
             case Severity.Debug:
-                PrintDebug(toPrint);
+                PrintDebug_Native(toPrint);
                 break;
             case Severity.Info:
-                PrintInfo(toPrint);
+                PrintInfo_Native(toPrint);
                 break;
             case Severity.Warning:
-                PrintWarning(toPrint);
+                PrintWarning_Native(toPrint);
                 break;
             case Severity.Error:
-                PrintError(toPrint);
+                PrintError_Native(toPrint);
                 break;
             default:
                 throw new ArgumentException("Invalid severity!");
             }
         }
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void PrintDebug(string message);
+        private static extern void PrintDebug_Native(string message);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void PrintInfo(string message);
+        private static extern void PrintInfo_Native(string message);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void PrintWarning(string message);
+        private static extern void PrintWarning_Native(string message);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void PrintError(string message);
+        private static extern void PrintError_Native(string message);
     }
 }

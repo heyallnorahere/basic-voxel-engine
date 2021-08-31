@@ -4,8 +4,8 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 
 ## Project Structure
 
-`src`: core C++ BVE code
-`BasicVoxelEngine`: core C# scripting library
+- `src`: core C++ BVE code
+- `BasicVoxelEngine`: core C# scripting library
 
 ## Dependencies
 
