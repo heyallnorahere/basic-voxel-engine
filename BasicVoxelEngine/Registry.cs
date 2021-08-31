@@ -10,8 +10,8 @@ namespace BasicVoxelEngine
         public const char Separator = ':';
         public NamespacedName(string fullName)
         {
-            string namespaceName = string.Empty, localName = string.Empty;
-            Convert(fullName, ref namespaceName, ref localName);
+            string namespaceName, localName;
+            Convert(fullName, out namespaceName, out localName);
             NamespaceName = namespaceName;
             LocalName = localName;
         }
@@ -26,7 +26,7 @@ namespace BasicVoxelEngine
         public override string ToString() => FullName;
         public static implicit operator NamespacedName(string fullName) => new(fullName);
         public static implicit operator string(NamespacedName namespacedName) => namespacedName.FullName;
-        private static void Convert(string name, ref string namespaceName, ref string localName)
+        private static void Convert(string name, out string namespaceName, out string localName)
         {
             string[] sections = name.Split(Separator);
             if (sections.Length > 1)
@@ -48,7 +48,7 @@ namespace BasicVoxelEngine
     }
     public abstract class RegisteredObject<T> where T : RegisteredObject<T>
     {
-        public IntPtr NativeAddress
+        public IntPtr? NativeAddress
         {
             get => mNativeAddress;
             internal set
@@ -59,10 +59,13 @@ namespace BasicVoxelEngine
         }
         ~RegisteredObject()
         {
-            DestroyRef_Native(NativeAddress, typeof(T));
+            if (mNativeAddress != null)
+            {
+                DestroyRef_Native(NativeAddress ?? throw new NullReferenceException(), typeof(T));
+            }
         }
         protected event Action? OnReady;
-        private IntPtr mNativeAddress;
+        private IntPtr? mNativeAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern bool DestroyRef_Native(IntPtr nativeAddress, Type type);
     }
@@ -70,7 +73,7 @@ namespace BasicVoxelEngine
     {
         internal Register(IntPtr nativeAddress)
         {
-            NativeAddress = nativeAddress;
+            base.NativeAddress = nativeAddress;
         }
         public T this[int index]
         {
@@ -80,9 +83,16 @@ namespace BasicVoxelEngine
                 {
                     throw new IndexOutOfRangeException();
                 }
-                var @object = new T();
-                @object.NativeAddress = CreateRef_Native(index, typeof(T), NativeAddress);
-                return @object;
+                if (IsManaged_Native(index, typeof(T), NativeAddress))
+                {
+                    return GetManagedObject_Native(index, typeof(T), NativeAddress);
+                }
+                else
+                {
+                    var @object = new T();
+                    @object.NativeAddress = CreateRef_Native(index, typeof(T), NativeAddress);
+                    return @object;
+                }
             }
         }
         public T this[NamespacedName name]
@@ -100,9 +110,14 @@ namespace BasicVoxelEngine
                 }
             }
         }
+        public int RegisterObject(T @object, NamespacedName namespacedName)
+        {
+            return RegisterObject_Native(@object, namespacedName, typeof(T), NativeAddress);
+        }
         public int? GetIndex(NamespacedName namespacedName) => GetIndex_Native(namespacedName, typeof(T), NativeAddress);
         public NamespacedName? GetNamespacedName(int index) => GetNamespacedName_Native(index, typeof(T), NativeAddress);
         public int Count => GetCount_Native(typeof(T), NativeAddress);
+        private new IntPtr NativeAddress => base.NativeAddress ?? throw new NullReferenceException();
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr CreateRef_Native(int index, Type type, IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -111,6 +126,12 @@ namespace BasicVoxelEngine
         private static extern int? GetIndex_Native(NamespacedName namespacedName, Type type, IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern NamespacedName? GetNamespacedName_Native(int index, Type type, IntPtr address);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern int RegisterObject_Native(T @object, NamespacedName namespacedName, Type type, IntPtr address);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern bool IsManaged_Native(int index, Type type, IntPtr address);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern T GetManagedObject_Native(int index, Type type, IntPtr address);
     }
     public static class Registry
     {
@@ -124,6 +145,10 @@ namespace BasicVoxelEngine
         }
         public static Register<T> GetRegister<T>() where T : RegisteredObject<T>, new()
         {
+            if (!RegisterExists<T>())
+            {
+                throw new ArgumentException("The specified register does not exist!");
+            }
             IntPtr address = CreateRegisterRef_Native(typeof(T));
             return new Register<T>(address);
         }
