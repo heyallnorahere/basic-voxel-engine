@@ -5,6 +5,19 @@ using System.Runtime.InteropServices;
 
 namespace BasicVoxelEngine
 {
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+    public sealed class AutoRegisterAttribute : Attribute
+    {
+        public AutoRegisterAttribute(string fullName)
+        {
+            Name = fullName;
+        }
+        public AutoRegisterAttribute(string namespaceName, string localName)
+        {
+            Name = (namespaceName, localName);
+        }
+        public NamespacedName Name { get; }
+    }
     [StructLayout(LayoutKind.Sequential)]
     public struct NamespacedName
     {
@@ -26,6 +39,7 @@ namespace BasicVoxelEngine
         public string FullName => NamespaceName + Separator + LocalName;
         public override string ToString() => FullName;
         public static implicit operator NamespacedName(string fullName) => new(fullName);
+        public static implicit operator NamespacedName((string namespaceName, string localName) tuple) => new(tuple.namespaceName, tuple.localName);
         public static implicit operator string(NamespacedName namespacedName) => namespacedName.FullName;
         private static void Convert(string name, out string namespaceName, out string localName)
         {
@@ -53,28 +67,18 @@ namespace BasicVoxelEngine
     }
     public abstract class RegisteredObject<T> where T : RegisteredObject<T>
     {
-        public IntPtr? NativeAddress
-        {
-            get => mNativeAddress;
-            internal set
-            {
-                mNativeAddress = value;
-                OnReady?.Invoke();
-            }
-        }
+        public IntPtr? NativeAddress { get; internal set; }
         ~RegisteredObject()
         {
-            if (mNativeAddress != null)
+            if (NativeAddress != null)
             {
                 DestroyRef_Native(NativeAddress ?? throw new NullReferenceException(), typeof(T));
             }
         }
-        protected event Action? OnReady;
-        private IntPtr? mNativeAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr nativeAddress, Type type);
     }
-    public class Register<T> : RegisteredObject<Register<T>> where T : RegisteredObject<T>, new()
+    public sealed class Register<T> : RegisteredObject<Register<T>> where T : RegisteredObject<T>, new()
     {
         internal Register(IntPtr nativeAddress)
         {

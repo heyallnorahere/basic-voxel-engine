@@ -7,6 +7,10 @@ namespace BasicVoxelEngine
     {
         public Block() { }
         /// <summary>
+        /// This function is called just before the game runs and after every other block is registered.
+        /// </summary>
+        protected virtual void Load() { }
+        /// <summary>
         /// The opacity of this block. Default is 100% (1.0).
         /// </summary>
         public virtual float Opacity

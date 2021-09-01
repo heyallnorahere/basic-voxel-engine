@@ -5,6 +5,41 @@
 #include "block.h"
 namespace bve {
     namespace script_wrappers {
+        class managed_block : public block {
+        public:
+            managed_block(ref<managed::object> object) {
+                this->m_object = object;
+            }
+            ref<managed::object> get_object() {
+                return this->m_object;
+            }
+            virtual float opacity() override {
+                auto property = this->get_property("Opacity");
+                return this->m_object->get(property)->unbox<float>();
+            }
+            virtual bool solid() override {
+                auto property = this->get_property("Solid");
+                return this->m_object->get(property)->unbox<bool>();
+            }
+            // todo: get_light() and get_model()
+            virtual std::string friendly_name() override {
+                auto property = this->get_property("FriendlyName");
+                return this->m_object->get(property)->get_string();
+            }
+            virtual bool managed() override {
+                return true;
+            }
+        private:
+            ref<managed::object> m_object;
+            ref<managed::class_> get_class() {
+                ref<code_host> host = code_host::current();
+                return host->find_class("BasicVoxelEngine.Block");
+            }
+            MonoProperty* get_property(const std::string& name) {
+                auto _class = this->get_class();
+                return _class->get_property(name);
+            }
+        };
         static namespaced_name get_native(const NamespacedName& managed_object) {
             MonoDomain* domain = mono_domain_get();
             std::string namespace_name = ref<managed::object>::create((MonoObject*)managed_object.namespace_name, domain)->get_string();
@@ -33,6 +68,9 @@ namespace bve {
                 return hasher(to_hash->get());
             }
         };
+        static void no_implementation_exists() {
+            throw std::runtime_error("[script wrappers] no specific implementation exists for this type yet");
+        }
         template<typename T> static object_register<T>& get_register(void* ref_address) {
             return **(ref<object_register<T>>*)ref_address;
         }
@@ -55,6 +93,33 @@ namespace bve {
             auto& register_ = get_register<T>(ref_address);
             return register_.get_name(index);
         }
+        template<typename T> static size_t register_object(ref<managed::object>, const namespaced_name&, void*) {
+            no_implementation_exists();
+            return 0;
+        }
+        template<> size_t register_object<block>(ref<managed::object> object, const namespaced_name& name, void* ref_address) {
+            auto& block_register = get_register<block>(ref_address);
+            size_t index = block_register.size();
+            block_register.add(ref<managed_block>::create(object), name);
+            return index;
+        }
+        template<typename T> static bool is_managed(size_t, void*) {
+            no_implementation_exists();
+            return false;
+        }
+        template<> bool is_managed<block>(size_t index, void* ref_address) {
+            auto& block_register = get_register<block>(ref_address);
+            return block_register[index]->managed();
+        }
+        template<typename T> static ref<managed::object> get_managed_object(size_t, void*) {
+            no_implementation_exists();
+            return nullptr;
+        }
+        template<> ref<managed::object> get_managed_object<block>(size_t index, void* ref_address) {
+            auto& block_register = get_register<block>(ref_address);
+            ref<managed_block> block_ = block_register[index];
+            return block_->get_object();
+        }
         template<typename T> static void delete_ref(void* pointer) {
             delete (ref<T>*)pointer;
         }
@@ -64,6 +129,9 @@ namespace bve {
             std::function<size_t(void*)> get_register_size_callback;
             std::function<std::optional<size_t>(const namespaced_name&, void*)> get_index_callback;
             std::function<std::optional<namespaced_name>(size_t, void*)> get_name_callback;
+            std::function<size_t(ref<managed::object>, const namespaced_name&, void*)> register_object_callback;
+            std::function<bool(size_t, void*)> is_managed_callback;
+            std::function<ref<managed::object>(size_t, void*)> get_managed_object_callback;
         };
         static std::unordered_map<void*, registry_callbacks_t> registry_callbacks;
         static std::unordered_map<void*, std::function<void(void*)>> ref_destruction_callbacks;
@@ -103,10 +171,14 @@ namespace bve {
                 get_register_size<T>,
                 get_index<T>,
                 get_name<T>,
+                register_object<T>,
+                is_managed<T>,
+                get_managed_object<T>,
             };
             ref_destruction_callbacks[type->get()] = delete_ref<T>;
             ref_destruction_callbacks[get_register_type(type)->get()] = delete_ref<object_register<T>>;
         }
+
         double BasicVoxelEngine_Application_GetDeltaTime() {
             auto& app = application::get();
             return app.get_delta_time();
@@ -164,16 +236,19 @@ namespace bve {
             }
         }
         int32_t BasicVoxelEngine_Register_RegisterObject(MonoObject* object, NamespacedName namespacedName, Type type, IntPtr address) {
-            // todo: register the object in the specified register
-            return 0;
+            MonoDomain* domain = mono_domain_get();
+            auto callback = registry_callbacks[get_type(type)->get()].register_object_callback;
+            auto managed_object = ref<managed::object>::create(object, domain);
+            auto name = get_native(namespacedName);
+            return (int32_t)callback(managed_object, name, address);
         }
         bool BasicVoxelEngine_Register_IsManaged(int32_t index, Type type, IntPtr address) {
-            // todo: check if the specified element is managed
-            return false;
+            auto callback = registry_callbacks[get_type(type)->get()].is_managed_callback;
+            return callback((size_t)index, address);
         }
         MonoObject* BasicVoxelEngine_Register_GetManagedObject(int32_t index, Type type, IntPtr address) {
-            // todo: get the managed object in the specified element
-            return nullptr;
+            auto callback = registry_callbacks[get_type(type)->get()].get_managed_object_callback;
+            return (MonoObject*)callback((size_t)index, address)->get();
         }
 
         void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress, Type type) {
@@ -184,16 +259,18 @@ namespace bve {
         }
 
         float BasicVoxelEngine_Block_GetOpacity(IntPtr nativeAddress) {
-            // todo: get the passed block's opacity
-            return 0.f;
+            ref<block> block_ = *(ref<block>*)nativeAddress;
+            return block_->opacity();
         }
         bool BasicVoxelEngine_Block_GetSolid(IntPtr nativeAddress) {
-            // todo: check if the passed block is solid
-            return false;
+            ref<block> block_ = *(ref<block>*)nativeAddress;
+            return block_->solid();
         }
         string BasicVoxelEngine_Block_GetFriendlyName(IntPtr nativeAddress) {
-            // todo: get the passed block's name
-            return nullptr;
+            ref<block> block_ = *(ref<block>*)nativeAddress;
+            MonoDomain* domain = mono_domain_get();
+            std::string friendly_name = block_->friendly_name();
+            return mono_string_new(domain, friendly_name.c_str());
         }
     }
 }

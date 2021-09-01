@@ -9,7 +9,6 @@ namespace bve {
         return instance;
     }
     void application::run() {
-        this->load_assemblies();
         auto& block_register = registry::get().get_register<block>();
         for (const auto& name : block_register.get_names()) {
             ref<block> block_ = block_register[name];
@@ -45,7 +44,10 @@ namespace bve {
         return this->m_shaders[name];
     }
     application::application() {
+        this->m_code_host = ref<code_host>::create();
+        this->load_assemblies();
         block::register_all();
+        // todo: register managed blocks
         this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
@@ -58,7 +60,6 @@ namespace bve {
         this->m_running = false;
         this->m_delta_time = 0.0;
         this->m_last_frame = glfwGetTime();
-        this->m_code_host = ref<code_host>::create();
     }
     void application::update() {
         double current_frame = glfwGetTime();
