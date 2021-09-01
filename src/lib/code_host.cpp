@@ -24,9 +24,15 @@ namespace bve {
             ref<class_> exception_class = ref<class_>::create(mono_get_exception_class(), exception->get_domain());
             auto property = exception_class->get_property("Message");
             std::string message = exception->get(property)->get_string();
+            property = exception_class->get_property("Source");
+            ref<object> source_object = exception->get(property);
             property = exception_class->get_property("StackTrace");
             ref<object> stacktrace_object = exception->get(property);
             spdlog::error("[managed object] threw {0}: {1}", object_class->get_name(), message);
+            if (source_object) {
+                std::string source = source_object->get_string();
+                spdlog::error("[managed object] from assembly: {0}", source);
+            }
             if (stacktrace_object) {
                 std::string stacktrace = stacktrace_object->get_string();
                 std::stringstream ss(stacktrace);
@@ -149,6 +155,9 @@ namespace bve {
             MonoClass* _class = mono_type_get_class(this->m_type);
             return ref<class_>::create(_class, this->get_domain());
         }
+        MonoReflectionType* type::get_object() {
+            return mono_type_get_object(this->get_domain(), this->m_type);
+        }
         void* type::get() {
             return this->m_type;
         }
@@ -198,7 +207,7 @@ namespace bve {
             register("BasicVoxelEngine.Logger::PrintWarning_Native", BasicVoxelEngine_Logger_PrintWarning)
             register("BasicVoxelEngine.Logger::PrintError_Native", BasicVoxelEngine_Logger_PrintError)
 
-            register("BasicVoxelEngine.Registry::RegistryTypes_Native", BasicVoxelEngine_Registry_RegisterTypes)
+            register("BasicVoxelEngine.Registry::RegisterTypes_Native", BasicVoxelEngine_Registry_RegisterTypes)
             register("BasicVoxelEngine.Registry::RegisterExists_Native", BasicVoxelEngine_Registry_RegisterExists)
             register("BasicVoxelEngine.Registry::CreateRegisterRef_Native", BasicVoxelEngine_Registry_CreateRegisterRef)
 
@@ -218,13 +227,24 @@ namespace bve {
         };
 #undef register
     }
+    static ref<code_host> current_code_host;
+    ref<code_host> code_host::current() {
+        return current_code_host;
+    }
     code_host::code_host() {
         mono_config_parse(nullptr);
         mono_set_assemblies_path(MONO_ASSEMBLIES);
         this->m_domain = mono_jit_init(BVE_TARGET_NAME);
+        this->make_current();
     }
     code_host::~code_host() {
         mono_jit_cleanup(this->m_domain);
+    }
+    void code_host::make_current() {
+        current_code_host = ref<code_host>(this);
+        if (!mono_domain_set(this->m_domain, false)) {
+            throw std::runtime_error("[code host] could not set the domain");
+        }
     }
     MonoDomain* code_host::get_domain() {
         return this->m_domain;

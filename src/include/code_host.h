@@ -91,6 +91,7 @@ namespace bve {
             type(MonoType* _type, MonoDomain* domain);
             type(MonoReflectionType* _type, MonoDomain* domain);
             ref<class_> get_class();
+            MonoReflectionType* get_object();
             virtual void* get() override;
             virtual MonoImage* get_image() override;
         private:
@@ -113,10 +114,12 @@ namespace bve {
     class code_host : public ref_counted {
     public:
         static std::unordered_map<std::string, void*> get_script_wrappers();
+        static ref<code_host> current();
         code_host();
         ~code_host();
         code_host(const code_host&) = delete;
         code_host& operator=(const code_host&) = delete;
+        void make_current();
         MonoDomain* get_domain();
         void load_assembly(const std::filesystem::path& path);
         std::vector<ref<managed::assembly>> get_loaded_assemblies();

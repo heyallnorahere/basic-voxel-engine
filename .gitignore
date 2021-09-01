@@ -3,3 +3,4 @@ build/
 imgui.ini
 bin/
 obj/
+mono_crash*

@@ -15,6 +15,13 @@ namespace bve {
             ref<block> block_ = block_register[name];
             block_->load(this->m_object_factory, name);
         }
+#ifndef NDEBUG
+        {
+            auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
+            auto testmethod = app_class->get_method("BasicVoxelEngine.Application:TestMethod()");
+            app_class->invoke(testmethod);
+        }
+#endif
         this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights);
         this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights); });
         this->m_running = true;

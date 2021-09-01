@@ -22,8 +22,8 @@ namespace bve {
 
         IntPtr BasicVoxelEngine_Register_CreateRef(int32_t index, Type type, IntPtr address);
         int32_t BasicVoxelEngine_Register_GetCount(Type type, IntPtr address);
-        MonoObject* BasicVoxelEngine_Register_GetIndex(NamespacedName namespacedName, Type type, IntPtr address);
-        MonoObject* BasicVoxelEngine_Register_GetNamespacedName(int32_t index, Type type, IntPtr address);
+        bool BasicVoxelEngine_Register_GetIndex(NamespacedName namespacedName, Type type, IntPtr address, int32_t* index);
+        bool BasicVoxelEngine_Register_GetNamespacedName(int32_t index, Type type, IntPtr address, NamespacedName* namespacedName);
         int32_t BasicVoxelEngine_Register_RegisterObject(MonoObject* object, NamespacedName namespacedName, Type type, IntPtr address);
         bool BasicVoxelEngine_Register_IsManaged(int32_t index, Type type, IntPtr address);
         MonoObject* BasicVoxelEngine_Register_GetManagedObject(int32_t index, Type type, IntPtr address);

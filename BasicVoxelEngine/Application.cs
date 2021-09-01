@@ -10,7 +10,7 @@ namespace BasicVoxelEngine
         public static extern double GetDeltaTime();
         public static void TestMethod()
         {
-            Logger.Print(Logger.Severity.Info, "Frame time: {0}", GetDeltaTime());
+            Logger.Print(Logger.Severity.Info, $"{Registry.GetRegister<Block>().GetIndex("bve:air")}");
         }
     }
 }
