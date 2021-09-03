@@ -6,10 +6,11 @@ namespace BasicVoxelEngine
     public class Block : RegisteredObject<Block>
     {
         public Block() { }
+        // todo: pass and object_factory instance for model loading
         /// <summary>
         /// This function is called just before the game runs and after every other block is registered.
         /// </summary>
-        protected virtual void Load() { }
+        protected virtual void Load(NamespacedName namespacedName) { }
         /// <summary>
         /// The opacity of this block. Default is 100% (1.0).
         /// </summary>

@@ -12,7 +12,7 @@ namespace BasicVoxelEngine
             Warning,
             Error
         }
-        public static void Print(Severity severity, string message, params object[] args)
+        public static void Print(Severity severity, string message, params object?[] args)
         {
             string toPrint = string.Format(message, args);
             switch (severity)

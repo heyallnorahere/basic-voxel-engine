@@ -2,4 +2,8 @@
 
   <Import Project="..\ManagedCode.targets" />
 
+  <ItemGroup>
+    <ProjectReference Include="..\BasicVoxelEngine\BasicVoxelEngine.csproj" />
+  </ItemGroup>
+
 </Project>

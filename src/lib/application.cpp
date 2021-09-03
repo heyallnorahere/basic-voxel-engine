@@ -17,7 +17,7 @@ namespace bve {
 #ifndef NDEBUG
         {
             auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
-            auto testmethod = app_class->get_method("BasicVoxelEngine.Application:TestMethod()");
+            auto testmethod = app_class->get_method("*:TestMethod");
             app_class->invoke(testmethod);
         }
 #endif
@@ -47,7 +47,11 @@ namespace bve {
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         block::register_all();
-        // todo: register managed blocks
+        {
+            auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
+            auto load_content = app_class->get_method("*:LoadContent");
+            app_class->invoke(load_content);
+        }
         this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
@@ -102,7 +106,14 @@ namespace bve {
         this->m_window->swap_buffers();
     }
     void application::load_assemblies() {
-        this->m_code_host->load_assembly(std::filesystem::current_path() / "BasicVoxelEngine.dll");
+        std::vector<std::filesystem::path> assembly_paths = {
+            std::filesystem::current_path() / "BasicVoxelEngine.dll",
+            std::filesystem::current_path() / "BasicVoxelEngine.Content.dll",
+        };
+        for (const auto& path : assembly_paths) {
+            this->m_code_host->load_assembly(path);
+            spdlog::info("[application] loaded assembly: " + path.string());
+        }
         for (const auto& pair : code_host::get_script_wrappers()) {
             this->m_code_host->register_function(pair.first, pair.second);
         }

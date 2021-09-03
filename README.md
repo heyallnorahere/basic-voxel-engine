@@ -18,6 +18,8 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - [Dear ImGui](https://github.com/ocornut/imgui/tree/docking)\*
 - [spdlog](https://github.com/gabime/spdlog/tree/v1.9.1)\*
 - [stb](https://github.com/nothings/stb)\*
-- [mono](https://www.mono-project.com/download/stable)
+- [mono](https://www.mono-project.com/download/stable)\*\*
+- mono msbuild via a package manager, on non-Windows platforms
 
 \* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.
+\*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR instead.

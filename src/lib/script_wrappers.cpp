@@ -5,6 +5,18 @@
 #include "block.h"
 namespace bve {
     namespace script_wrappers {
+        static namespaced_name get_native(const NamespacedName& managed_object) {
+            MonoDomain* domain = mono_domain_get();
+            std::string namespace_name = ref<managed::object>::create((MonoObject*)managed_object.namespace_name, domain)->get_string();
+            std::string local_name = ref<managed::object>::create((MonoObject*)managed_object.local_name, domain)->get_string();
+            return namespaced_name(namespace_name, local_name);
+        }
+        static NamespacedName get_managed(const namespaced_name& name) {
+            MonoDomain* domain = mono_domain_get();
+            MonoString* namespace_name = mono_string_new(domain, name.namespace_name.c_str());
+            MonoString* local_name = mono_string_new(domain, name.local_name.c_str());
+            return { namespace_name, local_name };
+        }
         class managed_block : public block {
         public:
             managed_block(ref<managed::object> object) {
@@ -12,6 +24,12 @@ namespace bve {
             }
             ref<managed::object> get_object() {
                 return this->m_object;
+            }
+            virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) {
+                auto _class = this->get_class();
+                auto load = _class->get_method("BasicVoxelEngine.Block:Load");
+                NamespacedName managed_register_name = get_managed(register_name);
+                this->m_object->invoke(load, &managed_register_name);
             }
             virtual float opacity() override {
                 auto property = this->get_property("Opacity");
@@ -40,18 +58,6 @@ namespace bve {
                 return _class->get_property(name);
             }
         };
-        static namespaced_name get_native(const NamespacedName& managed_object) {
-            MonoDomain* domain = mono_domain_get();
-            std::string namespace_name = ref<managed::object>::create((MonoObject*)managed_object.namespace_name, domain)->get_string();
-            std::string local_name = ref<managed::object>::create((MonoObject*)managed_object.local_name, domain)->get_string();
-            return namespaced_name(namespace_name, local_name);
-        }
-        static NamespacedName get_managed(const namespaced_name& name) {
-            MonoDomain* domain = mono_domain_get();
-            MonoString* namespace_name = mono_string_new(domain, name.namespace_name.c_str());
-            MonoString* local_name = mono_string_new(domain, name.local_name.c_str());
-            return { namespace_name, local_name };
-        }
         static std::string get_string(MonoString* string) {
             MonoDomain* current = mono_domain_get();
             auto object = ref<managed::object>::create((MonoObject*)string, current);
@@ -252,6 +258,9 @@ namespace bve {
         }
 
         void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress, Type type) {
+            if (ref_destruction_callbacks.size() == 0) {
+                return;
+            }
             auto callback = ref_destruction_callbacks[get_type(type)->get()];
             if (callback) {
                 callback(nativeAddress);

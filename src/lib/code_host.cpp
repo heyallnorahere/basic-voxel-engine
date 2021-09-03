@@ -188,6 +188,9 @@ namespace bve {
             MonoMethodDesc* desc = mono_method_desc_new(descriptor.c_str(), false);
             return mono_method_desc_search_in_image(desc, this->m_image);
         }
+        MonoReflectionAssembly* assembly::get_object() {
+            return mono_assembly_get_object(this->get_domain(), this->m_assembly);
+        }
         void* assembly::get() {
             return this->m_assembly;
         }
@@ -249,7 +252,7 @@ namespace bve {
     MonoDomain* code_host::get_domain() {
         return this->m_domain;
     }
-    void code_host::load_assembly(const std::filesystem::path& path) {
+    void code_host::load_assembly(const std::filesystem::path& path, bool ref_only) {
         std::string string_path = path.string();
         // old-fashioned c-style file reading
         FILE* f = fopen(string_path.c_str(), "rb");
@@ -273,7 +276,7 @@ namespace bve {
         }
         fclose(f);
         MonoImageOpenStatus status;
-        MonoImage* image = mono_image_open_from_data_full(file_data, file_size * sizeof(char), true, &status, false);
+        MonoImage* image = mono_image_open_from_data_full(file_data, file_size * sizeof(char), true, &status, ref_only);
         free(file_data);
         if (status != MONO_IMAGE_OK) {
             return;

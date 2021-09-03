@@ -14,7 +14,7 @@ namespace BasicVoxelEngine
         }
         public AutoRegisterAttribute(string namespaceName, string localName)
         {
-            Name = (namespaceName, localName);
+            Name = new NamespacedName(namespaceName, localName);
         }
         public NamespacedName Name { get; }
     }
@@ -38,8 +38,7 @@ namespace BasicVoxelEngine
         public string LocalName { get; set; }
         public string FullName => NamespaceName + Separator + LocalName;
         public override string ToString() => FullName;
-        public static implicit operator NamespacedName(string fullName) => new(fullName);
-        public static implicit operator NamespacedName((string namespaceName, string localName) tuple) => new(tuple.namespaceName, tuple.localName);
+        public static implicit operator NamespacedName(string fullName) => new NamespacedName(fullName);
         public static implicit operator string(NamespacedName namespacedName) => namespacedName.FullName;
         private static void Convert(string name, out string namespaceName, out string localName)
         {
