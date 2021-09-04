@@ -44,6 +44,7 @@ namespace bve {
         return this->m_shaders[name];
     }
     application::application() {
+        spdlog::info("[application] starting BVE, working directory: {0}", std::filesystem::current_path().string());
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         block::register_all();

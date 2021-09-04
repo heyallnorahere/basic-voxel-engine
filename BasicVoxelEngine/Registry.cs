@@ -71,11 +71,11 @@ namespace BasicVoxelEngine
         {
             if (NativeAddress != null)
             {
-                DestroyRef_Native(NativeAddress ?? throw new NullReferenceException(), typeof(T));
+                DestroyRef_Native(NativeAddress ?? throw new NullReferenceException());
             }
         }
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void DestroyRef_Native(IntPtr nativeAddress, Type type);
+        private static extern void DestroyRef_Native(IntPtr nativeAddress);
     }
     public sealed class Register<T> : RegisteredObject<Register<T>> where T : RegisteredObject<T>, new()
     {

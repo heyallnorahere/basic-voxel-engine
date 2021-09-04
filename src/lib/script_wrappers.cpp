@@ -5,6 +5,13 @@
 #include "block.h"
 namespace bve {
     namespace script_wrappers {
+        struct script_ref {
+            void* data;
+            std::function<void(void*)> cleanup;
+            ~script_ref() {
+                cleanup(data);
+            }
+        };
         static namespaced_name get_native(const NamespacedName& managed_object) {
             MonoDomain* domain = mono_domain_get();
             std::string namespace_name = ref<managed::object>::create((MonoObject*)managed_object.namespace_name, domain)->get_string();
@@ -25,9 +32,9 @@ namespace bve {
             ref<managed::object> get_object() {
                 return this->m_object;
             }
-            virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) {
+            virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
                 auto _class = this->get_class();
-                auto load = _class->get_method("BasicVoxelEngine.Block:Load");
+                auto load = _class->get_method("*:Load");
                 NamespacedName managed_register_name = get_managed(register_name);
                 this->m_object->invoke(load, &managed_register_name);
             }
@@ -78,7 +85,8 @@ namespace bve {
             throw std::runtime_error("[script wrappers] no specific implementation exists for this type yet");
         }
         template<typename T> static object_register<T>& get_register(void* ref_address) {
-            return **(ref<object_register<T>>*)ref_address;
+            auto& ref_struct = *(script_ref*)ref_address;
+            return **(ref<object_register<T>>*)ref_struct.data;
         }
         template<typename T> static void* create_register_ref() {
             return new ref<object_register<T>>(&registry::get().get_register<T>());
@@ -212,11 +220,17 @@ namespace bve {
             return registry_callbacks.find(type_->get()) != registry_callbacks.end();
         }
         IntPtr BasicVoxelEngine_Registry_CreateRegisterRef(Type type) {
-            return registry_callbacks[get_type(type)->get()].create_register_ref_callback();
+            ref<managed::type> type_object = get_type(type);
+            void* ref_pointer = registry_callbacks[type_object->get()].create_register_ref_callback();
+            ref<managed::type> register_type = get_register_type(type_object);
+            auto cleanup = ref_destruction_callbacks[register_type->get()];
+            return new script_ref{ ref_pointer, cleanup };
         }
-
         IntPtr BasicVoxelEngine_Register_CreateRef(int32_t index, Type type, IntPtr address) {
-            return registry_callbacks[get_type(type)->get()].create_ref_callback((size_t)index, address);
+            ref<managed::type> type_object = get_type(type);
+            void* ref_pointer = registry_callbacks[type_object->get()].create_ref_callback((size_t)index, address);
+            auto cleanup = ref_destruction_callbacks[type_object->get()];
+            return new script_ref{ ref_pointer, cleanup };
         }
         int32_t BasicVoxelEngine_Register_GetCount(Type type, IntPtr address) {
             auto callback = registry_callbacks[get_type(type)->get()].get_register_size_callback;
@@ -257,26 +271,24 @@ namespace bve {
             return (MonoObject*)callback((size_t)index, address)->get();
         }
 
-        void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress, Type type) {
-            if (ref_destruction_callbacks.size() == 0) {
-                return;
-            }
-            auto callback = ref_destruction_callbacks[get_type(type)->get()];
-            if (callback) {
-                callback(nativeAddress);
-            }
+        void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress) {
+            delete (script_ref*)nativeAddress;
         }
 
+        static ref<block> get_block_ref(void* address) {
+            auto& ref_struct = *(script_ref*)address;
+            return *(ref<block>*)ref_struct.data;
+        }
         float BasicVoxelEngine_Block_GetOpacity(IntPtr nativeAddress) {
-            ref<block> block_ = *(ref<block>*)nativeAddress;
+            ref<block> block_ = get_block_ref(nativeAddress);
             return block_->opacity();
         }
         bool BasicVoxelEngine_Block_GetSolid(IntPtr nativeAddress) {
-            ref<block> block_ = *(ref<block>*)nativeAddress;
+            ref<block> block_ = get_block_ref(nativeAddress);
             return block_->solid();
         }
         string BasicVoxelEngine_Block_GetFriendlyName(IntPtr nativeAddress) {
-            ref<block> block_ = *(ref<block>*)nativeAddress;
+            ref<block> block_ = get_block_ref(nativeAddress);
             MonoDomain* domain = mono_domain_get();
             std::string friendly_name = block_->friendly_name();
             return mono_string_new(domain, friendly_name.c_str());

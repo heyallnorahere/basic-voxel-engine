@@ -28,7 +28,7 @@ namespace bve {
         bool BasicVoxelEngine_Register_IsManaged(int32_t index, Type type, IntPtr address);
         MonoObject* BasicVoxelEngine_Register_GetManagedObject(int32_t index, Type type, IntPtr address);
 
-        void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress, Type type);
+        void BasicVoxelEngine_RegisteredObject_DestroyRef(IntPtr nativeAddress);
 
         float BasicVoxelEngine_Block_GetOpacity(IntPtr nativeAddress);
         bool BasicVoxelEngine_Block_GetSolid(IntPtr nativeAddress);
