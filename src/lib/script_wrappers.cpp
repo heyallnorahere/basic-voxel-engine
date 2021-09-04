@@ -293,5 +293,18 @@ namespace bve {
             std::string friendly_name = block_->friendly_name();
             return mono_string_new(domain, friendly_name.c_str());
         }
+
+        void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address) {
+            delete (ref<graphics::object_factory>*)address;
+        }
+
+        IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory) {
+            std::filesystem::path native_path = get_string(path);
+            auto factory_ref = *(ref<graphics::object_factory>*)factory;
+            return new ref<model>(new model(native_path, factory_ref));
+        }
+        void BasicVoxelEngine_Model_DestroyRef(IntPtr address) {
+            delete (ref<model>*)address;
+        }
     }
 }

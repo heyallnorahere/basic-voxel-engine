@@ -23,6 +23,7 @@ namespace bve {
         if (asset_name.find(separator) == std::string::npos) {
             this->m_asset_directory /= asset_name;
         } else {
+            // sorry for the spaghetti code lmao
             for (size_t position = asset_name.find(separator), last_position = 0, substring_position = 0; last_position != std::string::npos; last_position = position, substring_position = last_position + 1, position = asset_name.find(separator, position + 1)) {
                 asset_path /= asset_name.substr(substring_position, position - substring_position);
             }

@@ -201,34 +201,39 @@ namespace bve {
     std::unordered_map<std::string, void*> code_host::get_script_wrappers() {
         using namespace script_wrappers;
         // todo: improve this macro
-#define register(name, function) { name, (void*)function },
+#define ADD(name, function) { name, (void*)function }
         return {
-            register("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime)
+            ADD("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
 
-            register("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug)
-            register("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo)
-            register("BasicVoxelEngine.Logger::PrintWarning_Native", BasicVoxelEngine_Logger_PrintWarning)
-            register("BasicVoxelEngine.Logger::PrintError_Native", BasicVoxelEngine_Logger_PrintError)
+            ADD("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
+            ADD("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
+            ADD("BasicVoxelEngine.Logger::PrintWarning_Native", BasicVoxelEngine_Logger_PrintWarning),
+            ADD("BasicVoxelEngine.Logger::PrintError_Native", BasicVoxelEngine_Logger_PrintError),
 
-            register("BasicVoxelEngine.Registry::RegisterTypes_Native", BasicVoxelEngine_Registry_RegisterTypes)
-            register("BasicVoxelEngine.Registry::RegisterExists_Native", BasicVoxelEngine_Registry_RegisterExists)
-            register("BasicVoxelEngine.Registry::CreateRegisterRef_Native", BasicVoxelEngine_Registry_CreateRegisterRef)
+            ADD("BasicVoxelEngine.Registry::RegisterTypes_Native", BasicVoxelEngine_Registry_RegisterTypes),
+            ADD("BasicVoxelEngine.Registry::RegisterExists_Native", BasicVoxelEngine_Registry_RegisterExists),
+            ADD("BasicVoxelEngine.Registry::CreateRegisterRef_Native", BasicVoxelEngine_Registry_CreateRegisterRef),
 
-            register("BasicVoxelEngine.Register`1::CreateRef_Native", BasicVoxelEngine_Register_CreateRef)
-            register("BasicVoxelEngine.Register`1::GetCount_Native", BasicVoxelEngine_Register_GetCount)
-            register("BasicVoxelEngine.Register`1::GetIndex_Native", BasicVoxelEngine_Register_GetIndex)
-            register("BasicVoxelEngine.Register`1::GetNamespacedName_Native", BasicVoxelEngine_Register_GetNamespacedName)
-            register("BasicVoxelEngine.Register`1::RegisterObject_Native", BasicVoxelEngine_Register_RegisterObject)
-            register("BasicVoxelEngine.Register`1::IsManaged_Native", BasicVoxelEngine_Register_IsManaged)
-            register("BasicVoxelEngine.Register`1::GetManagedObject_Native", BasicVoxelEngine_Register_GetManagedObject)
+            ADD("BasicVoxelEngine.Register`1::CreateRef_Native", BasicVoxelEngine_Register_CreateRef),
+            ADD("BasicVoxelEngine.Register`1::GetCount_Native", BasicVoxelEngine_Register_GetCount),
+            ADD("BasicVoxelEngine.Register`1::GetIndex_Native", BasicVoxelEngine_Register_GetIndex),
+            ADD("BasicVoxelEngine.Register`1::GetNamespacedName_Native", BasicVoxelEngine_Register_GetNamespacedName),
+            ADD("BasicVoxelEngine.Register`1::RegisterObject_Native", BasicVoxelEngine_Register_RegisterObject),
+            ADD("BasicVoxelEngine.Register`1::IsManaged_Native", BasicVoxelEngine_Register_IsManaged),
+            ADD("BasicVoxelEngine.Register`1::GetManagedObject_Native", BasicVoxelEngine_Register_GetManagedObject),
 
-            register("BasicVoxelEngine.RegisteredObject`1::DestroyRef_Native", BasicVoxelEngine_RegisteredObject_DestroyRef)
+            ADD("BasicVoxelEngine.RegisteredObject`1::DestroyRef_Native", BasicVoxelEngine_RegisteredObject_DestroyRef),
 
-            register("BasicVoxelEngine.Block::GetOpacity_Native", BasicVoxelEngine_Block_GetOpacity)
-            register("BasicVoxelEngine.Block::GetSolid_Native", BasicVoxelEngine_Block_GetSolid)
-            register("BasicVoxelEngine.Block::GetFriendlyName_Native", BasicVoxelEngine_Block_GetFriendlyName)
+            ADD("BasicVoxelEngine.Block::GetOpacity_Native", BasicVoxelEngine_Block_GetOpacity),
+            ADD("BasicVoxelEngine.Block::GetSolid_Native", BasicVoxelEngine_Block_GetSolid),
+            ADD("BasicVoxelEngine.Block::GetFriendlyName_Native", BasicVoxelEngine_Block_GetFriendlyName),
+
+            ADD("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
+
+            ADD("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
+            ADD("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),
         };
-#undef register
+#undef ADD
     }
     static ref<code_host> current_code_host;
     ref<code_host> code_host::current() {
