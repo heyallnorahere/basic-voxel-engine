@@ -4,3 +4,4 @@ imgui.ini
 bin/
 obj/
 mono_crash*
+managed-code/
