@@ -9,3 +9,9 @@ extraction:
         - libxcursor-dev
         - libxi-dev
         - mono-complete
+    configure:
+      command:
+        - cmake $LGTM_SRC -B $LGTM_SRC/build -DBVE_BUILD_MANAGED_CODE=OFF
+    index:
+      build_command:
+        - cmake --build $LGTM_SRC/build -j 8
