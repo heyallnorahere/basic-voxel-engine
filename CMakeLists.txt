@@ -8,4 +8,6 @@ option(BVE_BUILD_EXECUTABLE "Build basic-voxel-engine as an executable" ${BVE_ST
 option(BVE_BUILD_MANAGED_CODE "Build managed BVE code" ${BVE_STANDALONE})
 add_subdirectory("vendor")
 add_subdirectory("src")
-include("managed.cmake")
+if(BVE_BUILD_MANAGED_CODE)
+    include("managed.cmake")
+endif()
