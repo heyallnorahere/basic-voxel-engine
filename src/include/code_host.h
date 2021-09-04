@@ -78,6 +78,14 @@ namespace bve {
                 }
                 return returned_object;
             }
+            template<typename... Args> ref<object> instantiate(Args*... args) {
+                MonoDomain* domain = this->get_domain();
+                MonoObject* instance = mono_object_new(domain, this->m_class);
+                ref<object> referenced_object = ref<object>::create(instance, domain);
+                MonoMethod* constructor = this->get_method("*:.ctor");
+                referenced_object->invoke(constructor, std::forward<Args*>(args)...);
+                return referenced_object;
+            }
             virtual void* get() override;
             virtual MonoImage* get_image() override;
         private:

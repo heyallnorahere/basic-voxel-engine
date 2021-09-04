@@ -33,10 +33,13 @@ namespace bve {
         float BasicVoxelEngine_Block_GetOpacity(IntPtr nativeAddress);
         bool BasicVoxelEngine_Block_GetSolid(IntPtr nativeAddress);
         string BasicVoxelEngine_Block_GetFriendlyName(IntPtr nativeAddress);
+        IntPtr BasicVoxelEngine_Block_GetModel(IntPtr nativeAddress);
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address);
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory);
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address);
+
+        string BasicVoxelEngine_AssetManager_GetAssetPath(string assetName);
     }
 }

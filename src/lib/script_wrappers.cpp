@@ -3,6 +3,7 @@
 #include "application.h"
 #include "code_host.h"
 #include "block.h"
+#include "asset_manager.h"
 namespace bve {
     namespace script_wrappers {
         struct script_ref {
@@ -36,7 +37,8 @@ namespace bve {
                 auto _class = this->get_class();
                 auto load = _class->get_method("*:Load");
                 NamespacedName managed_register_name = get_managed(register_name);
-                this->m_object->invoke(load, &managed_register_name);
+                ref<managed::object> factory = this->create_factory_object(object_factory);
+                this->m_object->invoke(load, factory->get(), &managed_register_name);
             }
             virtual float opacity() override {
                 auto property = this->get_property("Opacity");
@@ -46,7 +48,11 @@ namespace bve {
                 auto property = this->get_property("Solid");
                 return this->m_object->get(property)->unbox<bool>();
             }
-            // todo: get_light() and get_model()
+            virtual ref<model> get_model() override {
+                auto property = this->get_property("Model");
+                return this->get_model(this->m_object->get(property));
+            }
+            // todo: get_light()
             virtual std::string friendly_name() override {
                 auto property = this->get_property("FriendlyName");
                 return this->m_object->get(property)->get_string();
@@ -57,12 +63,25 @@ namespace bve {
         private:
             ref<managed::object> m_object;
             ref<managed::class_> get_class() {
-                ref<code_host> host = code_host::current();
-                return host->find_class("BasicVoxelEngine.Block");
+                return managed::class_::get_class(this->m_object);
             }
             MonoProperty* get_property(const std::string& name) {
                 auto _class = this->get_class();
                 return _class->get_property(name);
+            }
+            ref<managed::object> create_factory_object(ref<graphics::object_factory> factory) {
+                ref<code_host> host = code_host::current();
+                ref<managed::class_> factory_class = host->find_class("BasicVoxelEngine.Graphics.Factory");
+                auto pointer = (uint32_t)(size_t)new ref<graphics::object_factory>(factory);
+                return factory_class->instantiate(&pointer);
+            }
+            ref<model> get_model(ref<managed::object> object) {
+                // very hacky but i had no other choice
+                ref<code_host> host = code_host::current();
+                ref<managed::class_> model_class = host->find_class("BasicVoxelEngine.Model");
+                auto field = model_class->get_field("mNativeAddress");
+                void* pointer = (void*)(size_t)this->m_object->get(field)->unbox<uint32_t>();
+                return *(ref<model>*)pointer;
             }
         };
         static std::string get_string(MonoString* string) {
@@ -293,6 +312,10 @@ namespace bve {
             std::string friendly_name = block_->friendly_name();
             return mono_string_new(domain, friendly_name.c_str());
         }
+        IntPtr BasicVoxelEngine_Block_GetModel(IntPtr nativeAddress) {
+            ref<block> block_ = get_block_ref(nativeAddress);
+            return new ref<model>(block_->get_model());
+        }
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address) {
             delete (ref<graphics::object_factory>*)address;
@@ -305,6 +328,12 @@ namespace bve {
         }
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address) {
             delete (ref<model>*)address;
+        }
+
+        string BasicVoxelEngine_AssetManager_GetAssetPath(string assetName) {
+            auto& asset_manager_ = asset_manager::get();
+            auto path = asset_manager_.get_asset_path(get_string(assetName)).string();
+            return mono_string_new(mono_domain_get(), path.c_str());
         }
     }
 }

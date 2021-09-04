@@ -1,3 +1,4 @@
+using BasicVoxelEngine.Graphics;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -10,7 +11,10 @@ namespace BasicVoxelEngine
         /// <summary>
         /// This function is called just before the game runs and after every other block is registered.
         /// </summary>
-        protected virtual void Load(NamespacedName namespacedName) { }
+        protected virtual void Load(Factory factory, NamespacedName namespacedName)
+        {
+            Logger.Print(Logger.Severity.Info, "base has been hit");
+        }
         /// <summary>
         /// The opacity of this block. Default is 100% (1.0).
         /// </summary>
@@ -45,7 +49,26 @@ namespace BasicVoxelEngine
                 }
             }
         }
-        // todo: Model and Light
+        /// <summary>
+        /// The model that represents this image. Default is null.
+        /// Use <see cref="Model.LoadModel(string, Factory)" /> to load a model.
+        /// </summary>
+        public virtual Model? Model
+        {
+            get
+            {
+                if (IsNative)
+                {
+                    IntPtr address = GetModel_Native(NativeAddress);
+                    if (address != IntPtr.Zero)
+                    {
+                        return new Model(address);
+                    }
+                }
+                return null;
+            }
+        }
+        // todo: Light
         /// <summary>
         /// The friendly name of this block.
         /// This property MUST be overwritten for managed <see cref="Block" /> definitions.
@@ -59,5 +82,7 @@ namespace BasicVoxelEngine
         private static extern bool GetSolid_Native(IntPtr nativeAddress);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern string GetFriendlyName_Native(IntPtr nativeAddress);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr GetModel_Native(IntPtr nativeAddress);
     }
 }
