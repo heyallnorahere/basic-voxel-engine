@@ -72,15 +72,18 @@ namespace bve {
             ref<managed::object> create_factory_object(ref<graphics::object_factory> factory) {
                 ref<code_host> host = code_host::current();
                 ref<managed::class_> factory_class = host->find_class("BasicVoxelEngine.Graphics.Factory");
-                auto pointer = (uint32_t)(size_t)new ref<graphics::object_factory>(factory);
+                auto pointer = new ref<graphics::object_factory>(factory);
                 return factory_class->instantiate(&pointer);
             }
             ref<model> get_model(ref<managed::object> object) {
+                if (!object->get()) {
+                    return nullptr;
+                }
                 // very hacky but i had no other choice
                 ref<code_host> host = code_host::current();
                 ref<managed::class_> model_class = host->find_class("BasicVoxelEngine.Model");
                 auto field = model_class->get_field("mNativeAddress");
-                void* pointer = (void*)(size_t)this->m_object->get(field)->unbox<uint32_t>();
+                void* pointer = (void*)object->get(field)->unbox<size_t>();
                 return *(ref<model>*)pointer;
             }
         };

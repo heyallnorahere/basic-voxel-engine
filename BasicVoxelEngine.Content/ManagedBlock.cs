@@ -11,6 +11,7 @@ namespace BasicVoxelEngine.Content
         {
             mModel = Model.LoadModel(AssetManager.GetAssetPath("model/bve:model_block.obj"), factory);
         }
+        public override Model? Model => mModel;
         private Model? mModel;
     }
 }
