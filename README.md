@@ -24,4 +24,4 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - mono msbuild via a package manager, on non-Windows platforms
 
 \* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.  
-\*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR instead.
+\*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR and `mono-msbuild` from the Community repository instead.
