@@ -4,8 +4,10 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 
 ## Project Structure
 
-- `src`: core C++ BVE code
+- `src`: core C++ BVE code and assets
 - `BasicVoxelEngine`: core C# scripting library
+- `BasicVoxelEngine.Content`: C# BVE content (blocks, etc.)
+- `vendor`: submodule dependencies
 
 ## Dependencies
 
@@ -21,5 +23,5 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - [mono](https://www.mono-project.com/download/stable)\*\*
 - mono msbuild via a package manager, on non-Windows platforms
 
-\* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.
+\* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.  
 \*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR instead.
