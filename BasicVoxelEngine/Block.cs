@@ -1,4 +1,5 @@
 using BasicVoxelEngine.Graphics;
+using BasicVoxelEngine.Lighting;
 using System;
 using System.Runtime.CompilerServices;
 
@@ -68,7 +69,28 @@ namespace BasicVoxelEngine
                 return null;
             }
         }
-        // todo: Light
+        public virtual Light? Light
+        {
+            get
+            {
+                if (IsNative)
+                {
+                    LightType lightType;
+                    IntPtr address = GetLight_Native(NativeAddress, out lightType);
+                    if (address != IntPtr.Zero)
+                    {
+                        switch (lightType)
+                        {
+                            case LightType.Spotlight:
+                                return new Spotlight(address);
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+                }
+                return null;
+            }
+        }
         /// <summary>
         /// The friendly name of this block.
         /// This property MUST be overwritten for managed <see cref="Block" /> definitions.
@@ -84,5 +106,7 @@ namespace BasicVoxelEngine
         private static extern string GetFriendlyName_Native(IntPtr nativeAddress);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr GetModel_Native(IntPtr nativeAddress);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr GetLight_Native(IntPtr nativeAddress, out LightType type);
     }
 }
