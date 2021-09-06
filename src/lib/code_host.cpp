@@ -247,6 +247,11 @@ namespace bve {
             pair("BasicVoxelEngine.Lighting.Spotlight::Create_Native", BasicVoxelEngine_Lighting_Spotlight_Create),
             pair("BasicVoxelEngine.Lighting.Spotlight::SetDirection_Native", BasicVoxelEngine_Lighting_Spotlight_SetDirection),
             pair("BasicVoxelEngine.Lighting.Spotlight::SetCutoff_Native", BasicVoxelEngine_Lighting_Spotlight_SetCutoff),
+
+            pair("BasicVoxelEngine.Lighting.PointLight::Create_Native", BasicVoxelEngine_Lighting_PointLight_Create),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetConstant_Native", BasicVoxelEngine_Lighting_PointLight_SetConstant),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetLinear_Native", BasicVoxelEngine_Lighting_PointLight_SetLinear),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetQuadratic_Native", BasicVoxelEngine_Lighting_PointLight_SetQuadratic),
         };
     }
     static ref<code_host> current_code_host;

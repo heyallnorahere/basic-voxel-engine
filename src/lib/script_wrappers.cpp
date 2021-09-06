@@ -5,6 +5,7 @@
 #include "block.h"
 #include "asset_manager.h"
 #include "lighting/spotlight.h"
+#include "lighting/point_light.h"
 namespace bve {
     namespace script_wrappers {
         struct script_ref {
@@ -390,7 +391,7 @@ namespace bve {
             return *(ref<lighting::light>*)address;
         }
         IntPtr BasicVoxelEngine_Lighting_Spotlight_Create() {
-            return new ref<lighting::light>(new lighting::spotlight());
+            return new ref<lighting::light>(new lighting::spotlight);
         }
         void BasicVoxelEngine_Lighting_Spotlight_SetDirection(IntPtr address, Vector3 direction) {
             auto light = get_spotlight_ref(address);
@@ -399,6 +400,25 @@ namespace bve {
         void BasicVoxelEngine_Lighting_Spotlight_SetCutoff(IntPtr address, float cutoff) {
             auto light = get_spotlight_ref(address);
             light->set_cutoff(cutoff);
+        }
+
+        ref<lighting::point_light> get_point_light_ref(void* address) {
+            return *(ref<lighting::light>*)address;
+        }
+        IntPtr BasicVoxelEngine_Lighting_PointLight_Create() {
+            return new ref<lighting::light>(new lighting::point_light);
+        }
+        void BasicVoxelEngine_Lighting_PointLight_SetConstant(IntPtr address, float constant) {
+            auto light = get_point_light_ref(address);
+            light->set_constant(constant);
+        }
+        void BasicVoxelEngine_Lighting_PointLight_SetLinear(IntPtr address, float linear) {
+            auto light = get_point_light_ref(address);
+            light->set_linear(linear);
+        }
+        void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic) {
+            auto light = get_point_light_ref(address);
+            light->set_quadratic(quadratic);
         }
     }
 }

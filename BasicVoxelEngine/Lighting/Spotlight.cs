@@ -9,17 +9,11 @@ namespace BasicVoxelEngine.Lighting
         internal Spotlight(IntPtr address) : base(address) { }
         public Vector3 Direction
         {
-            set
-            {
-                SetDirection_Native(mAddress, value);
-            }
+            set => SetDirection_Native(mAddress, value);
         }
         public float Cutoff
         {
-            set
-            {
-                SetCutoff_Native(mAddress, value);
-            }
+            set => SetCutoff_Native(mAddress, value);
         }
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr Create_Native();

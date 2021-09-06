@@ -21,24 +21,15 @@ namespace BasicVoxelEngine.Lighting
         }
         public Vector3 Color
         {
-            set
-            {
-                SetColor_Native(mAddress, value);
-            }
+            set => SetColor_Native(mAddress, value);
         }
         public float AmbientStrength
         {
-            set
-            {
-                SetAmbientStrength_Native(mAddress, value);
-            }
+            set => SetAmbientStrength_Native(mAddress, value);
         }
         public float SpecularStrength
         {
-            set
-            {
-                SetSpecularStrength_Native(mAddress, value);
-            }
+            set => SetSpecularStrength_Native(mAddress, value);
         }
         public LightType Type => GetType_Native(mAddress);
         protected readonly IntPtr mAddress;

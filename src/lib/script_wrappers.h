@@ -55,5 +55,10 @@ namespace bve {
         IntPtr BasicVoxelEngine_Lighting_Spotlight_Create();
         void BasicVoxelEngine_Lighting_Spotlight_SetDirection(IntPtr address, Vector3 direction);
         void BasicVoxelEngine_Lighting_Spotlight_SetCutoff(IntPtr address, float cutoff);
+
+        IntPtr BasicVoxelEngine_Lighting_PointLight_Create();
+        void BasicVoxelEngine_Lighting_PointLight_SetConstant(IntPtr address, float constant);
+        void BasicVoxelEngine_Lighting_PointLight_SetLinear(IntPtr address, float linear);
+        void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic);
     }
 }

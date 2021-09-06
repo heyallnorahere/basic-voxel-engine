@@ -83,6 +83,8 @@ namespace BasicVoxelEngine
                         {
                             case LightType.Spotlight:
                                 return new Spotlight(address);
+                            case LightType.PointLight:
+                                return new PointLight(address);
                             default:
                                 throw new NotImplementedException();
                         }
