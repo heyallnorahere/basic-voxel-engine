@@ -15,6 +15,10 @@ namespace BasicVoxelEngine.Lighting
         {
             mAddress = address;
         }
+        ~Light()
+        {
+            Destroy_Native(mAddress);
+        }
         public Vector3 Color
         {
             set
@@ -38,6 +42,8 @@ namespace BasicVoxelEngine.Lighting
         }
         public LightType Type => GetType_Native(mAddress);
         protected readonly IntPtr mAddress;
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern void Destroy_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void SetColor_Native(IntPtr address, Vector3 color);
         [MethodImpl(MethodImplOptions.InternalCall)]

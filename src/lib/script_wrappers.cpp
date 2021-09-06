@@ -4,6 +4,7 @@
 #include "code_host.h"
 #include "block.h"
 #include "asset_manager.h"
+#include "lighting/spotlight.h"
 namespace bve {
     namespace script_wrappers {
         struct script_ref {
@@ -52,7 +53,10 @@ namespace bve {
                 auto property = this->get_property("Model");
                 return this->get_model(this->m_object->get(property));
             }
-            // todo: get_light()
+            virtual ref<lighting::light> get_light() override {
+                auto property = this->get_property("Light");
+                return this->get_light(this->m_object->get(property));
+            }
             virtual std::string friendly_name() override {
                 auto property = this->get_property("FriendlyName");
                 return this->m_object->get(property)->get_string();
@@ -83,8 +87,18 @@ namespace bve {
                 ref<code_host> host = code_host::current();
                 ref<managed::class_> model_class = host->find_class("BasicVoxelEngine.Model");
                 auto field = model_class->get_field("mNativeAddress");
-                void* pointer = (void*)object->get(field)->unbox<size_t>();
+                void* pointer = object->get(field)->unbox<void*>();
                 return *(ref<model>*)pointer;
+            }
+            ref<lighting::light> get_light(ref<managed::object> object) {
+                if (!object || !object->get()) {
+                    return nullptr;
+                }
+                ref<code_host> host = code_host::current();
+                ref<managed::class_> light_class = host->find_class("BasicVoxelEngine.Lighting.Light");
+                auto field = light_class->get_field("mAddress");
+                void* pointer = object->get(field)->unbox<void*>();
+                return *(ref<lighting::light>*)pointer;
             }
         };
         static std::string get_string(MonoString* string) {
@@ -319,6 +333,16 @@ namespace bve {
             ref<block> block_ = get_block_ref(nativeAddress);
             return new ref<model>(block_->get_model());
         }
+        IntPtr BasicVoxelEngine_Block_GetLight(IntPtr nativeAddress, LightType* type) {
+            ref<block> block_ = get_block_ref(nativeAddress);
+            auto light = block_->get_light();
+            if (light) {
+                *type = light->get_type();
+                return new ref<lighting::light>(light);
+            } else {
+                return nullptr;
+            }
+        }
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address) {
             delete (ref<graphics::object_factory>*)address;
@@ -337,6 +361,44 @@ namespace bve {
             auto& asset_manager_ = asset_manager::get();
             auto path = asset_manager_.get_asset_path(get_string(assetName)).string();
             return mono_string_new(mono_domain_get(), path.c_str());
+        }
+
+        ref<lighting::light> get_light_ref(void* address) {
+            return *(ref<lighting::light>*)address;
+        }
+        void BasicVoxelEngine_Lighting_Light_Destroy(IntPtr address) {
+            delete (ref<lighting::light>*)address;
+        }
+        void BasicVoxelEngine_Lighting_Light_SetColor(IntPtr address, Vector3 color) {
+            auto light = get_light_ref(address);
+            light->set_color(color);
+        }
+        void BasicVoxelEngine_Lighting_Light_SetAmbientStrength(IntPtr address, float strength) {
+            auto light = get_light_ref(address);
+            light->set_ambient_strength(strength);
+        }
+        void BasicVoxelEngine_Lighting_Light_SetSpecularStrength(IntPtr address, float strength) {
+            auto light = get_light_ref(address);
+            light->set_specular_strength(strength);
+        }
+        LightType BasicVoxelEngine_Lighting_Light_GetType(IntPtr address) {
+            auto light = get_light_ref(address);
+            return light->get_type();
+        }
+
+        ref<lighting::spotlight> get_spotlight_ref(void* address) {
+            return *(ref<lighting::light>*)address;
+        }
+        IntPtr BasicVoxelEngine_Lighting_Spotlight_Create() {
+            return new ref<lighting::light>(new lighting::spotlight());
+        }
+        void BasicVoxelEngine_Lighting_Spotlight_SetDirection(IntPtr address, Vector3 direction) {
+            auto light = get_spotlight_ref(address);
+            light->set_direction(direction);
+        }
+        void BasicVoxelEngine_Lighting_Spotlight_SetCutoff(IntPtr address, float cutoff) {
+            auto light = get_spotlight_ref(address);
+            light->set_cutoff(cutoff);
         }
     }
 }

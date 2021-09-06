@@ -1,4 +1,5 @@
 #pragma once
+#include "lighting/light.h"
 namespace bve {
     namespace script_wrappers {
         struct NamespacedName {
@@ -8,6 +9,8 @@ namespace bve {
         using Type = MonoReflectionType*;
         using IntPtr = void*;
         using string = MonoString*;
+        using Vector3 = glm::vec3;
+        using LightType = lighting::light_type;
 
         double BasicVoxelEngine_Application_GetDeltaTime();
 
@@ -34,6 +37,7 @@ namespace bve {
         bool BasicVoxelEngine_Block_GetSolid(IntPtr nativeAddress);
         string BasicVoxelEngine_Block_GetFriendlyName(IntPtr nativeAddress);
         IntPtr BasicVoxelEngine_Block_GetModel(IntPtr nativeAddress);
+        IntPtr BasicVoxelEngine_Block_GetLight(IntPtr nativeAddress, LightType* type);
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address);
 
@@ -41,5 +45,15 @@ namespace bve {
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address);
 
         string BasicVoxelEngine_AssetManager_GetAssetPath(string assetName);
+
+        void BasicVoxelEngine_Lighting_Light_Destroy(IntPtr address);
+        void BasicVoxelEngine_Lighting_Light_SetColor(IntPtr address, Vector3 color);
+        void BasicVoxelEngine_Lighting_Light_SetAmbientStrength(IntPtr address, float strength);
+        void BasicVoxelEngine_Lighting_Light_SetSpecularStrength(IntPtr address, float strength);
+        LightType BasicVoxelEngine_Lighting_Light_GetType(IntPtr address);
+
+        IntPtr BasicVoxelEngine_Lighting_Spotlight_Create();
+        void BasicVoxelEngine_Lighting_Spotlight_SetDirection(IntPtr address, Vector3 direction);
+        void BasicVoxelEngine_Lighting_Spotlight_SetCutoff(IntPtr address, float cutoff);
     }
 }

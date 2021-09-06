@@ -5,10 +5,7 @@ namespace BasicVoxelEngine.Lighting
 {
     public sealed class Spotlight : Light
     {
-        public static Spotlight Create()
-        {
-            return new Spotlight(Create_Native());
-        }
+        public Spotlight() : this(Create_Native()) { }
         internal Spotlight(IntPtr address) : base(address) { }
         public Vector3 Direction
         {

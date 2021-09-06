@@ -229,6 +229,7 @@ namespace bve {
             pair("BasicVoxelEngine.Block::GetSolid_Native", BasicVoxelEngine_Block_GetSolid),
             pair("BasicVoxelEngine.Block::GetFriendlyName_Native", BasicVoxelEngine_Block_GetFriendlyName),
             pair("BasicVoxelEngine.Block::GetModel_Native", BasicVoxelEngine_Block_GetModel),
+            pair("BasicVoxelEngine.Block::GetLight_Native", BasicVoxelEngine_Block_GetLight),
 
             pair("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
 
@@ -236,6 +237,16 @@ namespace bve {
             pair("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),
 
             pair("BasicVoxelEngine.AssetManager::GetAssetPath", BasicVoxelEngine_AssetManager_GetAssetPath),
+
+            pair("BasicVoxelEngine.Lighting.Light::Destroy_Native", BasicVoxelEngine_Lighting_Light_Destroy),
+            pair("BasicVoxelEngine.Lighting.Light::SetColor_Native", BasicVoxelEngine_Lighting_Light_SetColor),
+            pair("BasicVoxelEngine.Lighting.Light::SetAmbientStrength_Native", BasicVoxelEngine_Lighting_Light_SetAmbientStrength),
+            pair("BasicVoxelEngine.Lighting.Light::SetSpecularStrength_Native", BasicVoxelEngine_Lighting_Light_SetSpecularStrength),
+            pair("BasicVoxelEngine.Lighting.Light::GetType_Native", BasicVoxelEngine_Lighting_Light_GetType),
+
+            pair("BasicVoxelEngine.Lighting.Spotlight::Create_Native", BasicVoxelEngine_Lighting_Spotlight_Create),
+            pair("BasicVoxelEngine.Lighting.Spotlight::SetDirection_Native", BasicVoxelEngine_Lighting_Spotlight_SetDirection),
+            pair("BasicVoxelEngine.Lighting.Spotlight::SetCutoff_Native", BasicVoxelEngine_Lighting_Spotlight_SetCutoff),
         };
     }
     static ref<code_host> current_code_host;
