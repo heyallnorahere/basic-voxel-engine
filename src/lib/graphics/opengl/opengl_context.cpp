@@ -37,11 +37,17 @@ namespace bve {
                 glfwSwapBuffers(this->m_window);
             }
             void opengl_context::setup_glfw() {
-#if defined(NDEBUG) || defined(BVE_PLATFORM_MACOSX)
+#ifdef BVE_PLATFORM_MACOSX
+                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
+                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #else
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+#ifndef NDEBUG
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+#endif
 #endif
             }
             void opengl_context::setup_context() {

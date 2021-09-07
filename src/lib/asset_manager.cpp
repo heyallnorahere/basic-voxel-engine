@@ -23,6 +23,7 @@ namespace bve {
         if (asset_name.find(separator) == std::string::npos) {
             this->m_asset_directory /= asset_name;
         } else {
+            // sorry for the spaghetti code lmao
             for (size_t position = asset_name.find(separator), last_position = 0, substring_position = 0; last_position != std::string::npos; last_position = position, substring_position = last_position + 1, position = asset_name.find(separator, position + 1)) {
                 asset_path /= asset_name.substr(substring_position, position - substring_position);
             }
@@ -38,10 +39,8 @@ namespace bve {
             ref<block> block_ = block_register[name];
             auto path = this->get_asset_path("block:" + name.get_full_name() + ".png"); // single texture per block, for now
             texture_data data;
-            try {
-                data.data = graphics::texture::load_image(path, data.width, data.height, data.channels);
-            } catch (const std::runtime_error&) {
-                continue; // we dont know if the block will even be rendered - so we pass
+            if (!graphics::texture::load_image(path, data.data, data.width, data.height, data.channels)) {
+                continue;
             }
             textures.push_back({ name, data });
         }

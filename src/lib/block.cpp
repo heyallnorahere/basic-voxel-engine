@@ -52,6 +52,7 @@ namespace bve {
     bool block::solid() { return true; }
     ref<lighting::light> block::get_light() { return nullptr; }
     ref<model> block::get_model() { return nullptr; }
+    bool block::managed() { return false; }
     void block::register_all() {
         auto& block_register = registry::get().get_register<block>();
 #define register(block_type) block_register.add(ref<blocks::block_type>::create(), "bve:" + std::string(#block_type))

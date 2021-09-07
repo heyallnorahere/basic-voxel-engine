@@ -23,17 +23,18 @@ namespace bve {
             factory->m_graphics_api = api;
             return factory;
         }
-        std::vector<uint8_t> texture::load_image(const std::filesystem::path& path, int32_t& width, int32_t& height, int32_t& channels) {
+        bool texture::load_image(const std::filesystem::path& path, std::vector<uint8_t>& data, int32_t& width, int32_t& height, int32_t& channels) {
             std::string string_path = path.string();
             uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 0);
             if (!data_pointer) {
-                throw std::runtime_error("[texture] could not open file: " + string_path);
+                spdlog::warn("[texture] could not open file : " + string_path);
+                return false;
             }
             size_t buffer_size = (size_t)width * height * channels;
-            std::vector<uint8_t> data(buffer_size);
+            data.resize(buffer_size);
             std::copy(data_pointer, data_pointer + buffer_size, data.begin());
             stbi_image_free(data_pointer);
-            return data;
+            return true;
         }
     }
 }

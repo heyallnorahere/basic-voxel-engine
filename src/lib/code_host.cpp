@@ -1,5 +1,6 @@
 #include "bve_pch.h"
 #include "code_host.h"
+#include "script_wrappers.h"
 namespace bve {
     static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
         size_t period_position = full_name.find_last_of('.');
@@ -19,8 +20,33 @@ namespace bve {
             return this->m_domain;
         }
         void object::handle_exception(ref<object> exception) {
+            ref<class_> object_class = class_::get_class(exception);
             ref<class_> exception_class = ref<class_>::create(mono_get_exception_class(), exception->get_domain());
-            // todo: read data
+            auto property = exception_class->get_property("Message");
+            std::string message = exception->get(property)->get_string();
+            property = exception_class->get_property("Source");
+            ref<object> source_object = exception->get(property);
+            property = exception_class->get_property("StackTrace");
+            ref<object> stacktrace_object = exception->get(property);
+            spdlog::error("[managed object] threw {0}: {1}", object_class->get_name(), message);
+            if (source_object) {
+                std::string source = source_object->get_string();
+                spdlog::error("[managed object] from assembly: {0}", source);
+            }
+            if (stacktrace_object) {
+                std::string stacktrace = stacktrace_object->get_string();
+                std::stringstream ss(stacktrace);
+                std::string line;
+                while (std::getline(ss, line)) {
+                    spdlog::error("[managed object] {0}", line);
+                }
+            }
+            property = exception_class->get_property("InnerException");
+            ref<object> inner_exception = exception->get(property);
+            if (inner_exception) {
+                spdlog::info("[managed object] inner exception:");
+                handle_exception(inner_exception);
+            }
         }
         object::object(MonoObject* _object, MonoDomain* domain) : wrapper(domain) {
             this->m_handle = mono_gchandle_new(_object, false);
@@ -81,6 +107,11 @@ namespace bve {
             MonoClass* _class = mono_object_get_class(_object);
             return mono_class_get_image(_class);
         }
+        ref<class_> class_::get_class(ref<object> _object) {
+            auto object_ptr = (MonoObject*)_object->get();
+            MonoClass* class_ptr = mono_object_get_class(object_ptr);
+            return ref<class_>::create(class_ptr, _object->get_domain());
+        }
         class_::class_(MonoClass* _class, MonoDomain* domain) : wrapper(domain) {
             this->m_class = _class;
         }
@@ -124,6 +155,9 @@ namespace bve {
             MonoClass* _class = mono_type_get_class(this->m_type);
             return ref<class_>::create(_class, this->get_domain());
         }
+        MonoReflectionType* type::get_object() {
+            return mono_type_get_object(this->get_domain(), this->m_type);
+        }
         void* type::get() {
             return this->m_type;
         }
@@ -154,6 +188,9 @@ namespace bve {
             MonoMethodDesc* desc = mono_method_desc_new(descriptor.c_str(), false);
             return mono_method_desc_search_in_image(desc, this->m_image);
         }
+        MonoReflectionAssembly* assembly::get_object() {
+            return mono_assembly_get_object(this->get_domain(), this->m_assembly);
+        }
         void* assembly::get() {
             return this->m_assembly;
         }
@@ -161,37 +198,109 @@ namespace bve {
             return this->m_image;
         }
     }
+    template<typename T> static std::pair<std::string, void*> pair(const std::string& name, T function) {
+        return { name, (void*)function };
+    }
+    std::unordered_map<std::string, void*> code_host::get_script_wrappers() {
+        using namespace script_wrappers;
+        return {
+            pair("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
+
+            pair("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
+            pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
+            pair("BasicVoxelEngine.Logger::PrintWarning_Native", BasicVoxelEngine_Logger_PrintWarning),
+            pair("BasicVoxelEngine.Logger::PrintError_Native", BasicVoxelEngine_Logger_PrintError),
+
+            pair("BasicVoxelEngine.Registry::RegisterTypes_Native", BasicVoxelEngine_Registry_RegisterTypes),
+            pair("BasicVoxelEngine.Registry::RegisterExists_Native", BasicVoxelEngine_Registry_RegisterExists),
+            pair("BasicVoxelEngine.Registry::CreateRegisterRef_Native", BasicVoxelEngine_Registry_CreateRegisterRef),
+
+            pair("BasicVoxelEngine.Register`1::CreateRef_Native", BasicVoxelEngine_Register_CreateRef),
+            pair("BasicVoxelEngine.Register`1::GetCount_Native", BasicVoxelEngine_Register_GetCount),
+            pair("BasicVoxelEngine.Register`1::GetIndex_Native", BasicVoxelEngine_Register_GetIndex),
+            pair("BasicVoxelEngine.Register`1::GetNamespacedName_Native", BasicVoxelEngine_Register_GetNamespacedName),
+            pair("BasicVoxelEngine.Register`1::RegisterObject_Native", BasicVoxelEngine_Register_RegisterObject),
+            pair("BasicVoxelEngine.Register`1::IsManaged_Native", BasicVoxelEngine_Register_IsManaged),
+            pair("BasicVoxelEngine.Register`1::GetManagedObject_Native", BasicVoxelEngine_Register_GetManagedObject),
+
+            pair("BasicVoxelEngine.RegisteredObject`1::DestroyRef_Native", BasicVoxelEngine_RegisteredObject_DestroyRef),
+
+            pair("BasicVoxelEngine.Block::GetOpacity_Native", BasicVoxelEngine_Block_GetOpacity),
+            pair("BasicVoxelEngine.Block::GetSolid_Native", BasicVoxelEngine_Block_GetSolid),
+            pair("BasicVoxelEngine.Block::GetFriendlyName_Native", BasicVoxelEngine_Block_GetFriendlyName),
+            pair("BasicVoxelEngine.Block::GetModel_Native", BasicVoxelEngine_Block_GetModel),
+            pair("BasicVoxelEngine.Block::GetLight_Native", BasicVoxelEngine_Block_GetLight),
+
+            pair("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
+
+            pair("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
+            pair("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),
+
+            pair("BasicVoxelEngine.AssetManager::GetAssetPath", BasicVoxelEngine_AssetManager_GetAssetPath),
+
+            pair("BasicVoxelEngine.Lighting.Light::Destroy_Native", BasicVoxelEngine_Lighting_Light_Destroy),
+            pair("BasicVoxelEngine.Lighting.Light::SetColor_Native", BasicVoxelEngine_Lighting_Light_SetColor),
+            pair("BasicVoxelEngine.Lighting.Light::SetAmbientStrength_Native", BasicVoxelEngine_Lighting_Light_SetAmbientStrength),
+            pair("BasicVoxelEngine.Lighting.Light::SetSpecularStrength_Native", BasicVoxelEngine_Lighting_Light_SetSpecularStrength),
+            pair("BasicVoxelEngine.Lighting.Light::GetType_Native", BasicVoxelEngine_Lighting_Light_GetType),
+
+            pair("BasicVoxelEngine.Lighting.Spotlight::Create_Native", BasicVoxelEngine_Lighting_Spotlight_Create),
+            pair("BasicVoxelEngine.Lighting.Spotlight::SetDirection_Native", BasicVoxelEngine_Lighting_Spotlight_SetDirection),
+            pair("BasicVoxelEngine.Lighting.Spotlight::SetCutoff_Native", BasicVoxelEngine_Lighting_Spotlight_SetCutoff),
+
+            pair("BasicVoxelEngine.Lighting.PointLight::Create_Native", BasicVoxelEngine_Lighting_PointLight_Create),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetConstant_Native", BasicVoxelEngine_Lighting_PointLight_SetConstant),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetLinear_Native", BasicVoxelEngine_Lighting_PointLight_SetLinear),
+            pair("BasicVoxelEngine.Lighting.PointLight::SetQuadratic_Native", BasicVoxelEngine_Lighting_PointLight_SetQuadratic),
+        };
+    }
+    static ref<code_host> current_code_host;
+    ref<code_host> code_host::current() {
+        return current_code_host;
+    }
     code_host::code_host() {
+        mono_config_parse(nullptr);
         mono_set_assemblies_path(MONO_ASSEMBLIES);
         this->m_domain = mono_jit_init(BVE_TARGET_NAME);
+        this->make_current();
     }
     code_host::~code_host() {
         mono_jit_cleanup(this->m_domain);
     }
+    void code_host::make_current() {
+        current_code_host = ref<code_host>(this);
+        if (!mono_domain_set(this->m_domain, false)) {
+            throw std::runtime_error("[code host] could not set the domain");
+        }
+    }
     MonoDomain* code_host::get_domain() {
         return this->m_domain;
     }
-    void code_host::load_assembly(const std::filesystem::path& path) {
+    void code_host::load_assembly(const std::filesystem::path& path, bool ref_only) {
         std::string string_path = path.string();
         // old-fashioned c-style file reading
         FILE* f = fopen(string_path.c_str(), "rb");
+        if (!f) {
+            throw std::runtime_error("[code host] could not open assembly");
+        }
         fseek(f, 0, SEEK_END);
         size_t file_size = (size_t)ftell(f);
         rewind(f);
-        void* file_data = malloc(file_size * sizeof(char));
+        char* file_data = (char*)malloc(file_size * sizeof(char));
         if (!file_data) {
             fclose(f);
             throw std::runtime_error("[code host] application ran out of memory");
         }
         memset(file_data, 0, file_size * sizeof(char));
         size_t bytes_read = fread(file_data, sizeof(char), file_size, f);
-        if (bytes_read < file_size) {
+        if (bytes_read != file_size) {
             fclose(f);
+            free(file_data);
             throw std::runtime_error("[code host] could not read entire assembly");
         }
         fclose(f);
         MonoImageOpenStatus status;
-        MonoImage* image = mono_image_open_from_data_full((char*)file_data, file_size * sizeof(char), true, &status, false);
+        MonoImage* image = mono_image_open_from_data_full(file_data, file_size * sizeof(char), true, &status, ref_only);
         free(file_data);
         if (status != MONO_IMAGE_OK) {
             return;

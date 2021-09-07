@@ -16,19 +16,6 @@
             "externalConsole": false,
             "MIMode": "gdb",
             "preLaunchTask": "build"
-        },
-        {
-            "name": "launch (lldb)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/src/basic-voxel-engine",
-            "args": [],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}/src",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
-            "preLaunchTask": "build"
         }
     ]
 }

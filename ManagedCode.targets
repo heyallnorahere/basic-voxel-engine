@@ -1,0 +1,24 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+        <OutputPath>$(MSBuildThisFileDirectory)\managed-code</OutputPath>
+        <OutputType>Library</OutputType>
+        <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+        <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    </PropertyGroup>
+
+    <Target Name="CopyBinary" AfterTargets="Build">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildThisFileDirectory)\src" />
+    </Target>
+
+    <ItemGroup>
+        <Compile Include="$(ProjectDir)\**\*.cs" />
+    </ItemGroup>
+
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+</Project>

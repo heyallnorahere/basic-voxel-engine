@@ -13,6 +13,7 @@ namespace bve {
         uint8_t test_block = (uint8_t)*block_register.get_index("bve:test_block");
         uint8_t test_block_2 = (uint8_t)*block_register.get_index("bve:test_block_2");
         uint8_t model_block = (uint8_t)*block_register.get_index("bve:model_block");
+        uint8_t managed_block = (uint8_t)*block_register.get_index("bve:managed_block");
         for (int32_t x_offset_factor = 0; x_offset_factor < 3; x_offset_factor++) {
             int32_t x_offset = x_offset_factor * 3;
             for (int32_t z_offset_factor = 0; z_offset_factor < 3; z_offset_factor++) {
@@ -21,8 +22,12 @@ namespace bve {
                     for (int32_t z = 0; z < 3; z++) {
                         glm::ivec3 block_position = glm::ivec3(x + x_offset, 0, z + z_offset);
                         if (x == 1 && z == 1) {
-                            this->m_voxel_types[block_position] = test_block;
-                            this->m_voxel_types[block_position + glm::ivec3(0, 2, 0)] = test_block_2;
+                            glm::ivec3 temp_position = block_position;
+                            this->m_voxel_types[temp_position] = test_block;
+                            temp_position.y += 2;
+                            this->m_voxel_types[temp_position] = test_block_2;
+                            temp_position.y++;
+                            this->m_voxel_types[temp_position] = managed_block;
                         } else {
                             this->m_voxel_types[block_position] = model_block;
                         }

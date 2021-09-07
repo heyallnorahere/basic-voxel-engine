@@ -13,6 +13,7 @@ namespace bve {
         virtual ref<lighting::light> get_light();
         virtual ref<model> get_model();
         virtual std::string friendly_name() = 0;
+        virtual bool managed();
         // todo: add more properties
         static void register_all();
     };

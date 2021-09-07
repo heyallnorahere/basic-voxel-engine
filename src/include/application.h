@@ -28,6 +28,7 @@ namespace bve {
         application();
         void update();
         void render();
+        void load_assemblies();
         ref<world> m_world;
         ref<renderer> m_renderer;
         ref<input_manager> m_input_manager;

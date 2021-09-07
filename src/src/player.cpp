@@ -141,6 +141,7 @@ void player::take_input() {
     auto& transform = this->get_component<components::transform_component>();
     float player_speed = 2.5f * (float)app.get_delta_time();
     glm::vec3 forward = camera.direction * player_speed;
+    glm::vec3 up = camera.up * player_speed;
     glm::vec3 right = glm::normalize(glm::cross(camera.direction, camera.up)) * player_speed;
     if (input_manager_->get_key(GLFW_KEY_W).held) {
         transform.translation += forward;
@@ -153,6 +154,12 @@ void player::take_input() {
     }
     if (input_manager_->get_key(GLFW_KEY_D).held) {
         transform.translation += right;
+    }
+    if (input_manager_->get_key(GLFW_KEY_SPACE).held) {
+        transform.translation += up;
+    }
+    if (input_manager_->get_key(GLFW_KEY_LEFT_SHIFT).held) {
+        transform.translation -= up;
     }
     if (input_manager_->get_key(GLFW_KEY_E).down) {
         bool& mouse_enabled = input_manager_->mouse_enabled();

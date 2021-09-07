@@ -1,4 +1,9 @@
 build/
-.vscode/settings.json
+.vscode/*.json
+!.vscode/launch.json
+!.vscode/tasks.json
 imgui.ini
-src/**.dll
+bin/
+obj/
+mono_crash*
+managed-code/
