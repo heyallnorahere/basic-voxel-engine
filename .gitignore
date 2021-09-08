@@ -7,3 +7,5 @@ bin/
 obj/
 mono_crash*
 managed-code/
+*.user
+.vs/

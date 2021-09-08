@@ -1,6 +1,6 @@
 if(WIN32)
-    include_external_msproject(BasicVoxelEngine ${CMAKE_CURRENT_SOURCE_DIR}/BasicVoxelEngine/BasicVoxelEngine.csproj)
-    include_external_msproject(BasicVoxelEngine.Content ${CMAKE_CURRENT_SOURCE_DIR}/BasicVoxelEngine.Content/BasicVoxelEngine.Content.csproj)
+    include_external_msproject(BasicVoxelEngine ${CMAKE_CURRENT_SOURCE_DIR}/BasicVoxelEngine/BasicVoxelEngine.csproj GUID 2fce1b93-8db7-4844-9a28-96c7b1e70a17)
+    include_external_msproject(BasicVoxelEngine.Content ${CMAKE_CURRENT_SOURCE_DIR}/BasicVoxelEngine.Content/BasicVoxelEngine.Content.csproj GUID 09aa96d4-84a6-425d-adee-e299962ddde3)
     set(MANAGED_TARGET_NAMES BasicVoxelEngine BasicVoxelEngine.Content)
 else()
     find_file(MSBUILD_ASSEMBLY MSBuild.dll PATHS "/usr/lib/mono/msbuild/Current/bin" "/Library/Frameworks/Mono.framework/Versions/Current/lib/mono/msbuild/Current/bin")
