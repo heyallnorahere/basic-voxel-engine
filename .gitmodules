@@ -23,6 +23,9 @@
 [submodule "vendor/assimp"]
 	path = vendor/assimp
 	url = https://github.com/assimp/assimp.git
-[submodule "vendor/glslang"]
-	path = vendor/glslang
-	url = https://github.com/KhronosGroup/glslang.git
+[submodule "vendor/shaderc"]
+	path = vendor/shaderc
+	url = https://github.com/google/shaderc.git
+[submodule "vendor/spirv-cross"]
+	path = vendor/spirv-cross
+	url = https://github.com/khronosgroup/spirv-cross.git

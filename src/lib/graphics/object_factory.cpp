@@ -23,7 +23,7 @@ namespace bve {
             factory->m_graphics_api = api;
             return factory;
         }
-        bool texture::load_image(const std::filesystem::path& path, std::vector<uint8_t>& data, int32_t& width, int32_t& height, int32_t& channels) {
+        bool texture::load_image(const fs::path& path, std::vector<uint8_t>& data, int32_t& width, int32_t& height, int32_t& channels) {
             std::string string_path = path.string();
             uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 0);
             if (!data_pointer) {

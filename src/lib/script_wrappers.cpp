@@ -350,7 +350,7 @@ namespace bve {
         }
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory) {
-            std::filesystem::path native_path = get_string(path);
+            fs::path native_path = get_string(path);
             auto factory_ref = *(ref<graphics::object_factory>*)factory;
             return new ref<model>(new model(native_path, factory_ref));
         }

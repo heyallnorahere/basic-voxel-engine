@@ -1,7 +1,8 @@
 #include "bve_pch.h"
 #include "shader_parser.h"
+#include <shaderc/shaderc.hpp>
 namespace bve {
-    static std::string read_file(const std::filesystem::path& path) {
+    static std::string read_file(const fs::path& path) {
         std::ifstream file = std::ifstream(path);
         std::stringstream contents;
         std::string line;
@@ -20,18 +21,15 @@ namespace bve {
         this->m_input_language = input;
         this->m_output_language = output;
     }
-    void shader_parser::parse(const std::filesystem::path& path) {
+    void shader_parser::parse(const fs::path& path) {
         std::string source = read_file(path);
         this->parse(source, path);
     }
-    void shader_parser::parse(const std::string& source, std::optional<std::filesystem::path> path) {
+    void shader_parser::parse(const std::string& source, std::optional<fs::path> path) {
         std::string source_copy = source;
-        if (this->m_input_language != shader_language::GLSL) {
-            // todo: convert shader to GLSL
-        }
         this->process_file(source_copy, path);
     }
-    void shader_parser::process_file(const std::string& source, std::optional<std::filesystem::path> path) {
+    void shader_parser::process_file(const std::string& source, std::optional<fs::path> path) {
         std::stringstream file(source);
         std::map<shader_type, std::stringstream> sources;
         std::string line, shader_declaration = "#type";
@@ -57,8 +55,8 @@ namespace bve {
     }
     class shader_parser_internals {
     public:
-        static void include(std::string& source, std::optional<std::filesystem::path> path, shader_type type, const std::list<std::string>& arguments, shader_parser* parser) {
-            std::filesystem::path included_path, argument_path;
+        static void include(std::string& source, std::optional<fs::path> path, shader_type type, const std::list<std::string>& arguments, shader_parser* parser) {
+            fs::path included_path, argument_path;
             for (const auto& arg : arguments) {
                 if (arg == *arguments.begin()) {
                     continue;
@@ -87,10 +85,10 @@ namespace bve {
             source += parsed_source;
         }
     };
-    static std::map<std::string, std::function<void(std::string&, std::optional<std::filesystem::path>, shader_type type, const std::list<std::string>&, shader_parser*)>> preprocessor_functions = {
+    static std::map<std::string, std::function<void(std::string&, std::optional<fs::path>, shader_type type, const std::list<std::string>&, shader_parser*)>> preprocessor_functions = {
         { "include", shader_parser_internals::include }
     };
-    void shader_parser::process_source(const std::string& source, std::optional<std::filesystem::path> path, shader_type type) {
+    void shader_parser::process_source(const std::string& source, std::optional<fs::path> path, shader_type type) {
         std::stringstream source_stream(source);
         std::string line, parsed_source;
         while (std::getline(source_stream, line)) {
@@ -129,18 +127,21 @@ namespace bve {
         }
         return types;
     }
+    static void convert(shader_language input, shader_language output, std::string& source) {
+        const char* src = source.c_str();
+    }
     std::string shader_parser::get_shader(shader_type type) const {
         auto it = this->m_sources.find(type);
         if (it == this->m_sources.end()) {
             throw std::runtime_error("[shader parser] a shader of this type was not parsed");
         }
         std::string source = it->second.first;
-        if (this->m_output_language != shader_language::GLSL) {
-            // todo: convert shader source to something like HLSL
+        if (this->m_output_language != this->m_input_language) {
+            convert(this->m_input_language, this->m_output_language, source);
         }
         return source;
     }
-    std::optional<std::filesystem::path> shader_parser::get_shader_path(shader_type type) {
+    std::optional<fs::path> shader_parser::get_shader_path(shader_type type) {
         if (this->m_sources.find(type) == this->m_sources.end()) {
             throw std::runtime_error("[shader parser] a shader of this type was not parsed");
         }

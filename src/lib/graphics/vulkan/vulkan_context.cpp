@@ -181,6 +181,8 @@ namespace bve {
                 // todo: resize
             }
             void vulkan_context::init_imgui_backends() {
+                // broken atm - not enough stuff implemented
+                /*
                 ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
                 ImGui_ImplVulkan_InitInfo info;
                 info.Instance = this->m_instance;
@@ -192,10 +194,13 @@ namespace bve {
                 info.MinImageCount = this->m_min_image_count;
                 
                 ImGui_ImplVulkan_Init(&info, nullptr);
+                */
             }
             void vulkan_context::shutdown_imgui_backends() {
+                /*
                 ImGui_ImplVulkan_Shutdown();
                 ImGui_ImplGlfw_Shutdown();
+                */
             }
             void vulkan_context::call_imgui_backend_newframe() {
                 ImGui_ImplVulkan_NewFrame();

@@ -20,6 +20,9 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 - [stb](https://github.com/nothings/stb)\*
 - [mono](https://www.mono-project.com/download/stable)\*\*
 - [Vulkan](#installing-vulkan)
+- [shaderc](https://github.com/google/shaderc)\*
+- [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)\*
+- [Python 3](https://www.python.org/downloads/)
 
 \* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.  
 \*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR and `mono-msbuild` from the Community repository instead.
@@ -27,4 +30,3 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 ## Installing Vulkan
 
 On Windows, MacOS X, and Ubuntu, run [this Python script](scripts/setup_vulkan.py) to install Vulkan. Otherwise, install Vulkan from [here](https://vulkan.lunarg.com/sdk/home).
-

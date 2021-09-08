@@ -276,7 +276,7 @@ namespace bve {
     MonoDomain* code_host::get_domain() {
         return this->m_domain;
     }
-    void code_host::load_assembly(const std::filesystem::path& path, bool ref_only) {
+    void code_host::load_assembly(const fs::path& path, bool ref_only) {
         std::string string_path = path.string();
         // old-fashioned c-style file reading
         FILE* f = fopen(string_path.c_str(), "rb");

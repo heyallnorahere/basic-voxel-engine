@@ -130,7 +130,7 @@ namespace bve {
         code_host& operator=(const code_host&) = delete;
         void make_current();
         MonoDomain* get_domain();
-        void load_assembly(const std::filesystem::path& path, bool ref_only = false);
+        void load_assembly(const fs::path& path, bool ref_only = false);
         std::vector<ref<managed::assembly>> get_loaded_assemblies();
         template<typename T> void register_function(const std::string& name, const T& func) {
             mono_add_internal_call(name.c_str(), (void*)func);

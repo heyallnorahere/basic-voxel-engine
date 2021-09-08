@@ -6,7 +6,7 @@ namespace bve {
         namespace vulkan {
             class vulkan_shader : public shader {
             public:
-                vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<std::filesystem::path>& sources);
+                vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<fs::path>& sources);
                 virtual ~vulkan_shader() override;
                 virtual void reload() override;
                 virtual void bind() override;
@@ -34,7 +34,7 @@ namespace bve {
                 VkShaderModule compile_shader(shader_type type, const shader_parser& parser);
                 void cleanup();
                 ref<vulkan_object_factory> m_factory;
-                std::vector<std::filesystem::path> m_sources;
+                std::vector<fs::path> m_sources;
                 VkDevice m_device;
                 std::vector<VkPipelineShaderStageCreateInfo> m_pipeline_create_info;
             };

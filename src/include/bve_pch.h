@@ -35,7 +35,13 @@
 #include <typeinfo>
 #include <stdexcept>
 #include <functional>
+#ifdef EXPERIMENTAL_FILESYSTEM
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
 #include <filesystem>
+namespace fs = std::filesystem;
+#endif
 #include <initializer_list>
 #include <utility>
 #include <tuple>

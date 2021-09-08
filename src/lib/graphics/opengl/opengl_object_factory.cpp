@@ -20,7 +20,7 @@ namespace bve {
             ref<context> opengl_object_factory::create_context() {
                 return ref<opengl_context>::create();
             }
-            ref<shader> opengl_object_factory::create_shader(const std::vector<std::filesystem::path>& sources) {
+            ref<shader> opengl_object_factory::create_shader(const std::vector<fs::path>& sources) {
                 return ref<opengl_shader>::create(sources);
             }
             ref<texture> opengl_object_factory::create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) {

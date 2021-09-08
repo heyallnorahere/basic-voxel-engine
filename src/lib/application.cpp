@@ -44,7 +44,7 @@ namespace bve {
         return this->m_shaders[name];
     }
     application::application() {
-        spdlog::info("[application] starting BVE, working directory: {0}", std::filesystem::current_path().string());
+        spdlog::info("[application] starting BVE, working directory: {0}", fs::current_path().string());
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         block::register_all();
@@ -55,7 +55,7 @@ namespace bve {
         }
         this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::VULKAN);
         asset_manager& asset_manager_ = asset_manager::get();
-        asset_manager_.reload({ std::filesystem::current_path() / "assets" });
+        asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
@@ -107,9 +107,9 @@ namespace bve {
         this->m_window->swap_buffers();
     }
     void application::load_assemblies() {
-        std::vector<std::filesystem::path> assembly_paths = {
-            std::filesystem::current_path() / "BasicVoxelEngine.dll",
-            std::filesystem::current_path() / "BasicVoxelEngine.Content.dll",
+        std::vector<fs::path> assembly_paths = {
+            fs::current_path() / "BasicVoxelEngine.dll",
+            fs::current_path() / "BasicVoxelEngine.Content.dll",
         };
         for (const auto& path : assembly_paths) {
             this->m_code_host->load_assembly(path);

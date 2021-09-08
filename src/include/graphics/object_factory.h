@@ -24,8 +24,8 @@ namespace bve {
             virtual ref<buffer> create_vbo(const void* data, size_t size) = 0;
             virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) = 0;
             virtual ref<context> create_context() = 0;
-            virtual ref<shader> create_shader(const std::vector<std::filesystem::path>& sources) = 0;
-            ref<texture> create_texture(std::filesystem::path path) {
+            virtual ref<shader> create_shader(const std::vector<fs::path>& sources) = 0;
+            ref<texture> create_texture(fs::path path) {
                 int32_t width, height, channels;
                 std::vector<uint8_t> data;
                 texture::load_image(path, data, width, height, channels);

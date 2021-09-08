@@ -12,15 +12,15 @@ namespace bve {
         asset_manager& operator=(const asset_manager&) = delete;
 
         // Reload all of the data from the resource_pack directory.
-        void reload(const std::vector<std::filesystem::path>& resource_packs);
+        void reload(const std::vector<fs::path>& resource_packs);
 
         // Get the filesystem path for an asset based on the name of the asset
-        std::filesystem::path get_asset_path(const std::string& asset_name);
+        fs::path get_asset_path(const std::string& asset_name);
 
         // Create a texture atlas
         ref<texture_atlas> create_texture_atlas(ref<graphics::object_factory> object_factory);
     private:
         asset_manager() = default;
-        std::filesystem::path m_asset_directory;
+        fs::path m_asset_directory;
     };
 }

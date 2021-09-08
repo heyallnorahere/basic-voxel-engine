@@ -89,7 +89,7 @@ namespace bve {
                 glGetUniformfv(this->m_program, this->get_location(name), &value[0][0]);
                 return value;
             }
-            opengl_shader::opengl_shader(const std::vector<std::filesystem::path>& sources) {
+            opengl_shader::opengl_shader(const std::vector<fs::path>& sources) {
                 this->m_sources = sources;
                 this->create();
             }
@@ -140,7 +140,7 @@ namespace bve {
             void opengl_shader::destroy() {
                 glDeleteProgram(this->m_program);
             }
-            GLuint opengl_shader::create_shader(const std::string& source, GLenum type, std::optional<std::filesystem::path> path) {
+            GLuint opengl_shader::create_shader(const std::string& source, GLenum type, std::optional<fs::path> path) {
                 std::string shader_type;
                 switch (type) {
                 case GL_VERTEX_SHADER:
