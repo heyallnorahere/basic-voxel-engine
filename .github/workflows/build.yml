@@ -33,8 +33,12 @@ jobs:
         run: |
           curl -L https://download.mono-project.com/archive/6.12.0/macos-10-universal/MonoFramework-MDK-6.12.0.122.macos10.xamarin.universal.pkg -o mono.pkg
           sudo installer -pkg mono.pkg -target /
+      - name: install python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.x
       - name: build!
         shell: bash
         run: |
-          cmake . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake . -B build -DCMAKE_BUILD_TYPE=Release $(python scripts/cmake_options.py)
           cmake --build build --config Release -j 8
