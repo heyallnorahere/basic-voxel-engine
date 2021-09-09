@@ -9,7 +9,7 @@ extraction:
         - libxcursor-dev
         - libxi-dev
         - mono-complete
-        - python3.9
+        - python3
     configure:
       command:
         - cmake $LGTM_SRC -B $LGTM_SRC/build -DBVE_BUILD_MANAGED_CODE=OFF $(python3 $LGTM_SRC/scripts/cmake_options.py)
