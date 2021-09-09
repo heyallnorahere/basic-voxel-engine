@@ -48,5 +48,5 @@ jobs:
           VULKAN_SDK: ${{ steps.install-vulkan.outputs.VULKAN_SDK_VALUE }}
         shell: bash
         run: |
-          cmake . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake . -B build -DCMAKE_BUILD_TYPE=Release $(python scripts/cmake_options.py)
           cmake --build build --config Release -j 8

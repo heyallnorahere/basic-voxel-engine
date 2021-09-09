@@ -1,3 +1,4 @@
 {
-    "omnisharp.useGlobalMono": "always"
+    "omnisharp.useGlobalMono": "always",
+    "cmake.configureOnOpen": true
 }
