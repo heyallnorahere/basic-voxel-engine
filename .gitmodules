@@ -23,3 +23,6 @@
 [submodule "vendor/assimp"]
 	path = vendor/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "vendor/FastNoiseLite"]
+	path = vendor/FastNoiseLite
+	url = https://github.com/Auburn/FastNoiseLite.git

@@ -44,6 +44,7 @@
   <ItemGroup>
     <Compile Include="**\*.cs" />
     <Compile Remove="obj\**\*.cs" />
+    <Compile Include="..\vendor\FastNoiseLite\CSharp\FastNoiseLite.cs" />
   </ItemGroup>
 
   <Import Project="..\ManagedCode.targets" />
