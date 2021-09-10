@@ -18,6 +18,12 @@ namespace BasicVoxelEngine
             Name = new NamespacedName(namespaceName, localName);
         }
         public NamespacedName Name { get; }
+        public int PreferredIndex
+        {
+            get => mPreferredIndex ?? -1;
+            set => mPreferredIndex = value;
+        }
+        internal int? mPreferredIndex = null;
     }
     [StructLayout(LayoutKind.Sequential)]
     public struct NamespacedName
@@ -83,6 +89,35 @@ namespace BasicVoxelEngine
         }
         public int? Index => mIndex;
         private int? mIndex;
+        public override bool Equals(object? obj)
+        {
+            if (obj is RegisteredObject<T> registeredObject)
+            {
+                if (NativeAddress != null)
+                {
+                    if (registeredObject.NativeAddress != null)
+                    {
+                        return NativeAddress == registeredObject.NativeAddress;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            }
+            return base.Equals(obj);
+        }
+        public override int GetHashCode()
+        {
+            if (NativeAddress != null)
+            {
+                return NativeAddress.GetHashCode();
+            }
+            else
+            {
+                return base.GetHashCode();
+            }
+        }
     }
     public sealed class Register<T> : RegisteredObject<Register<T>>, IReadOnlyList<T> where T : RegisteredObject<T>, new()
     {

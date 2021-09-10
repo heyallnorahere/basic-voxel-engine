@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -22,6 +23,7 @@ namespace BasicVoxelEngine
         internal static void LoadContent()
         {
             // a whole lot of reflection. not great, i know.
+            var autoRegisteredObjects = new Dictionary<Type, Dictionary<object, AutoRegisterAttribute>>(); 
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
             {
@@ -34,19 +36,86 @@ namespace BasicVoxelEngine
                     {
                         if (derivedBase != null)
                         {
-                            var getRegister = typeof(Registry).GetMethod("GetRegister")?.MakeGenericMethod(new Type[] { derivedBase })
-                                ?? throw new NullReferenceException();
-                            var registerType = Helpers.GetGenericType(typeof(Register<>), new Type[] { derivedBase });
-                            var registerMethod = registerType.GetMethod("RegisterObject", new Type[] { derivedBase, typeof(NamespacedName) })
-                                ?? throw new NullReferenceException();
-                            var register = getRegister.Invoke(null, null);
                             var constructor = type.GetConstructor(new Type[] { }) ?? throw new NullReferenceException($"Could not find a viable constructor for type: {type}");
-                            var instance = constructor.Invoke(null);
-                            registerMethod.Invoke(register, new object?[] { instance, attribute.Name });
+                            object instance = constructor.Invoke(null);
+                            if (!autoRegisteredObjects.ContainsKey(derivedBase))
+                            {
+                                autoRegisteredObjects.Add(derivedBase, new Dictionary<object, AutoRegisterAttribute>());
+                            }
+                            autoRegisteredObjects[derivedBase].Add(instance, attribute);
                         }
                     }
                 }
             }
+            foreach (var pair in autoRegisteredObjects)
+            {
+                var getRegister = typeof(Registry).GetMethod("GetRegister")?.MakeGenericMethod(new Type[] { pair.Key })
+                    ?? throw new NullReferenceException();
+                var registerType = Helpers.GetGenericType(typeof(Register<>), new Type[] { pair.Key });
+                var registerMethod = registerType.GetMethod("RegisterObject", new Type[] { pair.Key, typeof(NamespacedName) })
+                    ?? throw new NullReferenceException();
+                var register = getRegister.Invoke(null, null);
+                var countProperty = registerType.GetProperty("Count");
+                int count = (int)countProperty.GetValue(register);
+                var toRegister = new List<KeyValuePair<object, NamespacedName>?>();
+                foreach (var @object in pair.Value)
+                {
+                    var toAdd = new KeyValuePair<object, NamespacedName>(@object.Key, @object.Value.Name);
+                    int index = @object.Value.PreferredIndex;
+                    if (index < 0)
+                    {
+                        index = 99; // a good starting point
+                    }
+                    if (index < count + toRegister.Count)
+                    {
+                        if (toRegister[index - count] != null)
+                        {
+                            int insertionIndex = FindFirstAvailableIndex(toRegister, index);
+                            if (insertionIndex != -1)
+                            {
+                                toRegister[insertionIndex] = toAdd;
+                            }
+                            else
+                            {
+                                toRegister.Add(toAdd);
+                            }
+                        }
+                        else
+                        {
+                            toRegister[index] = toAdd;
+                        }
+                    }
+                    else
+                    {
+                        for (int i = count + toRegister.Count; i < index; i++)
+                        {
+                            toRegister.Add(null);
+                        }
+                        toRegister.Add(toAdd);
+                    }
+                }
+                foreach (var pairToRegister in toRegister)
+                {
+                    if (pairToRegister == null)
+                    {
+                        continue;
+                    }
+                    var verifiedPair = (KeyValuePair<object, NamespacedName>)pairToRegister;
+                    registerMethod.Invoke(register, new object[] { verifiedPair.Key, verifiedPair.Value });
+                }
+            }
+        }
+        private static int FindFirstAvailableIndex<T>(IReadOnlyList<T?> list, int preferred = 0)
+        {
+            // to avoid a very large list
+            for (int i = preferred; i >= 0; i--)
+            {
+                if (list[i] == null)
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
         private static bool IsDerived(Type baseType, Type derivedType, out Type? derivedBase)
         {

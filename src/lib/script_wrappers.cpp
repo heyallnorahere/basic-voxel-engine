@@ -38,6 +38,9 @@ namespace bve {
             virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
                 auto _class = this->get_class();
                 auto load = _class->get_method("*:Load");
+                if (!load) {
+                    return;
+                }
                 NamespacedName managed_register_name = get_managed(register_name);
                 ref<managed::object> factory = this->create_factory_object(object_factory);
                 this->m_object->invoke(load, factory->get(), &managed_register_name);
@@ -81,7 +84,7 @@ namespace bve {
                 return factory_class->instantiate(&pointer);
             }
             ref<model> get_model(ref<managed::object> object) {
-                if (!object->get()) {
+                if (!object || !object->get()) {
                     return nullptr;
                 }
                 // very hacky but i had no other choice
