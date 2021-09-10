@@ -105,7 +105,7 @@ namespace BasicVoxelEngine
                 }
             }
         }
-        private static int FindFirstAvailableIndex<T>(IReadOnlyList<T?> list, int preferred = 0)
+        private static int FindFirstAvailableIndex<T>(IReadOnlyList<T?> list, int preferred = 0) where T : struct
         {
             // to avoid a very large list
             for (int i = preferred; i >= 0; i--)
