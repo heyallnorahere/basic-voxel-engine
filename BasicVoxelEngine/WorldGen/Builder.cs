@@ -21,9 +21,9 @@ namespace BasicVoxelEngine.WorldGen
             }
             return parameters[0].ParameterType == typeof(Builder);
         }
-        public static void Generate(World world)
+        public static void Generate(World world, int seed = -1)
         {
-            var builder = new Builder(world);
+            var builder = new Builder(world, seed);
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
             {
@@ -62,16 +62,64 @@ namespace BasicVoxelEngine.WorldGen
                     }
                 }
             }
+            builder.Execute();
         }
-        private Builder(World world)
+        private Builder(World world, int givenSeed)
         {
+            int seed = givenSeed;
+            if (seed < 0)
+            {
+                seed = new Random().Next();
+            }
+            Seed = seed;
             mWorld = world;
-            mSteps = new List<Step>();
+            mStages = new List<List<Step>>();
+            for (int i = 0; i < Enum.GetValues(typeof(GenerationStage)).Length; i++)
+            {
+                mStages.Add(new List<Step>());
+            }
             mSetBlocks = new Dictionary<Vector3I, Block>();
         }
         private void AddStep(Step step)
         {
-            mSteps.Add(step);
+            mStages[(int)step.GenerationStage].Add(step);
+        }
+        private void Execute()
+        {
+            Logger.Print(Logger.Severity.Info, "starting world generation");
+            var steps = Compile();
+            foreach (var step in steps)
+            {
+                Logger.Print(Logger.Severity.Info, "executing {0}", step.Name ?? "unnamed step");
+                step.Callback(this);
+            }
+        }
+        private List<Step> Compile()
+        {
+            var steps = new List<Step>();
+            var registeredTypes = new List<Type>();
+            foreach (var stage in mStages)
+            {
+                foreach (var step in stage)
+                {
+                    Type type = step.Callback.Method.DeclaringType;
+                    if (!registeredTypes.Contains(type))
+                    {
+                        registeredTypes.Add(type);
+                    }
+                    steps.Add(step);
+                }
+            }
+            foreach (var type in registeredTypes)
+            {
+                var methodInfo = type.GetMethod("RearrangeSteps", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(List<Step>) }, null);
+                if (methodInfo == null)
+                {
+                    continue;
+                }
+                methodInfo.Invoke(null, new object[] { steps });
+            }
+            return steps;
         }
         public void SetBlock(Vector3I position, Block block)
         {
@@ -89,7 +137,8 @@ namespace BasicVoxelEngine.WorldGen
             mSetBlocks[position] = Registry.GetRegister<Block>()[namespacedName];
         }
         public IReadOnlyDictionary<Vector3I, Block> SetBlocks => mSetBlocks;
-        private readonly List<Step> mSteps;
+        public int Seed { get; }
+        private readonly List<List<Step>> mStages;
         private readonly World mWorld;
         private readonly Dictionary<Vector3I, Block> mSetBlocks;
     }

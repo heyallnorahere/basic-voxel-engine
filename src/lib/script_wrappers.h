@@ -63,6 +63,7 @@ namespace bve {
         void BasicVoxelEngine_Lighting_PointLight_SetLinear(IntPtr address, float linear);
         void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic);
 
+        void BasicVoxelEngine_World_Destroy(IntPtr address);
         int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position);
         void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index);
         void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback);

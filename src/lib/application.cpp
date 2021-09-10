@@ -56,6 +56,7 @@ namespace bve {
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ std::filesystem::current_path() / "assets" });
         this->m_world = ref<world>::create();
+        this->m_world->generate();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
         this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") });

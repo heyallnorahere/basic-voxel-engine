@@ -9,6 +9,10 @@ namespace BasicVoxelEngine
         {
             mAddress = address;
         }
+        ~World()
+        {
+            Destroy_Native(mAddress);
+        }
         public Block GetBlock(Vector3I position)
         {
             int index;
@@ -50,6 +54,8 @@ namespace BasicVoxelEngine
         {
             AddOnBlockChangedCallback_Native(mAddress, callback);
         }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern void Destroy_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern int GetBlock_Native(IntPtr address, Vector3I position);
         [MethodImpl(MethodImplOptions.InternalCall)]

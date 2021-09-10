@@ -4,9 +4,9 @@ namespace BasicVoxelEngine.WorldGen
 {
     public enum GenerationStage
     {
-        DontCare,
-        WorldStructure,
+        World,
         Shinies,
+        Structures
     }
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class GenerationStepAttribute : Attribute
@@ -20,6 +20,6 @@ namespace BasicVoxelEngine.WorldGen
             Name = name;
         }
         public string? Name { get; }
-        public GenerationStage GenerationStage { get; set; } = GenerationStage.DontCare;
+        public GenerationStage GenerationStage { get; set; } = GenerationStage.World;
     }
 }

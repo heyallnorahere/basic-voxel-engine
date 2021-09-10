@@ -431,6 +431,9 @@ namespace bve {
         ref<world> get_world_ref(void* address) {
             return *(ref<world>*)address;
         }
+        void BasicVoxelEngine_World_Destroy(IntPtr address) {
+            delete (ref<world>*)address;
+        }
         int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position) {
             auto _world = get_world_ref(address);
             size_t block_type;

@@ -269,6 +269,7 @@ namespace bve {
             pair("BasicVoxelEngine.Lighting.PointLight::SetLinear_Native", BasicVoxelEngine_Lighting_PointLight_SetLinear),
             pair("BasicVoxelEngine.Lighting.PointLight::SetQuadratic_Native", BasicVoxelEngine_Lighting_PointLight_SetQuadratic),
 
+            pair("BasicVoxelEngine.World::Destroy_Native", BasicVoxelEngine_World_Destroy),
             pair("BasicVoxelEngine.World::GetBlock_Native", BasicVoxelEngine_World_GetBlock),
             pair("BasicVoxelEngine.World::SetBlock_Native", BasicVoxelEngine_World_SetBlock),
             pair("BasicVoxelEngine.World::AddOnBlockChangedCallback_Native", BasicVoxelEngine_World_AddOnBlockChangedCallback),
