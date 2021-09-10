@@ -107,6 +107,21 @@ namespace bve {
             MonoClass* _class = mono_object_get_class(_object);
             return mono_class_get_image(_class);
         }
+        delegate::delegate(ref<object> _object) : delegate(_object->get(), _object->get_domain()) { }
+        delegate::delegate(void* _delegate, MonoDomain* domain) : wrapper(domain) {
+            this->m_handle = mono_gchandle_new((MonoObject*)_delegate, false);
+        }
+        delegate::~delegate() {
+            mono_gchandle_free(this->m_handle);
+        }
+        void* delegate::get() {
+            return mono_gchandle_get_target(this->m_handle);
+        }
+        MonoImage* delegate::get_image() {
+            MonoObject* _object = mono_gchandle_get_target(this->m_handle);
+            MonoClass* _class = mono_object_get_class(_object);
+            return mono_class_get_image(_class);
+        }
         ref<class_> class_::get_class(ref<object> _object) {
             auto object_ptr = (MonoObject*)_object->get();
             MonoClass* class_ptr = mono_object_get_class(object_ptr);
@@ -205,6 +220,7 @@ namespace bve {
         using namespace script_wrappers;
         return {
             pair("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
+            pair("BasicVoxelEngine.Application::GetWorld_Native", BasicVoxelEngine_Application_GetWorld),
 
             pair("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
             pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
@@ -252,6 +268,10 @@ namespace bve {
             pair("BasicVoxelEngine.Lighting.PointLight::SetConstant_Native", BasicVoxelEngine_Lighting_PointLight_SetConstant),
             pair("BasicVoxelEngine.Lighting.PointLight::SetLinear_Native", BasicVoxelEngine_Lighting_PointLight_SetLinear),
             pair("BasicVoxelEngine.Lighting.PointLight::SetQuadratic_Native", BasicVoxelEngine_Lighting_PointLight_SetQuadratic),
+
+            pair("BasicVoxelEngine.World::GetBlock_Native", BasicVoxelEngine_World_GetBlock),
+            pair("BasicVoxelEngine.World::SetBlock_Native", BasicVoxelEngine_World_SetBlock),
+            pair("BasicVoxelEngine.World::AddOnBlockChangedCallback_Native", BasicVoxelEngine_World_AddOnBlockChangedCallback),
         };
     }
     static ref<code_host> current_code_host;

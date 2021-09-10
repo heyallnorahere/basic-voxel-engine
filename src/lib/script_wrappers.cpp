@@ -234,6 +234,10 @@ namespace bve {
             auto& app = application::get();
             return app.get_delta_time();
         }
+        IntPtr BasicVoxelEngine_Application_GetWorld() {
+            auto& app = application::get();
+            return new ref<world>(app.get_world());
+        }
 
         void BasicVoxelEngine_Logger_PrintDebug(string message) {
             spdlog::debug(get_log_message(message));
@@ -419,6 +423,31 @@ namespace bve {
         void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic) {
             auto light = get_point_light_ref(address);
             light->set_quadratic(quadratic);
+        }
+        
+        ref<world> get_world_ref(void* address) {
+            return *(ref<world>*)address;
+        }
+        int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position) {
+            auto _world = get_world_ref(address);
+            size_t block_type;
+            _world->get_block(position, block_type);
+            return (int32_t)block_type;
+        }
+        void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index) {
+            auto _world = get_world_ref(address);
+            _world->set_block(position, (size_t)index);
+        }
+        void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback) {
+            auto _world = get_world_ref(address);
+            auto delegate_ref = ref<managed::delegate>::create(callback, mono_domain_get());
+            _world->on_block_changed([delegate_ref](glm::ivec3 position, ref<world> world_) {
+                auto host = code_host::current();
+                auto world_class = host->find_class("BasicVoxelEngine.World");
+                auto instance = world_class->instantiate(new ref<world>(world_));
+                ref<managed::delegate> delegate_copy = delegate_ref;
+                delegate_copy->invoke(&position, instance->get());
+            });
         }
     }
 }

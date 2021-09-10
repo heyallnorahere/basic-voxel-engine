@@ -8,6 +8,7 @@ namespace BasicVoxelEngine
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern double GetDeltaTime();
+        public static World World => new World(GetWorld_Native());
         public static void TestMethod()
         {
             Register<Block> blockRegister = Registry.GetRegister<Block>();
@@ -71,5 +72,7 @@ namespace BasicVoxelEngine
             derivedBase = null;
             return false;
         }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr GetWorld_Native();
     }
 }

@@ -10,7 +10,7 @@ else()
         message(FATAL_ERROR "Could not find MSBuild. Is mono installed?")
     endif()
     add_custom_target(managed-code ALL
-        COMMAND mono ${MSBUILD_ASSEMBLY} -v:q
+        COMMAND mono ${MSBUILD_ASSEMBLY} -v:q -p:Configuration=$<CONFIG>
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set(MANAGED_TARGET_NAMES managed-code)
 endif()

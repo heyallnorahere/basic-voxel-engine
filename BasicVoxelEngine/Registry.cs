@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -76,9 +77,47 @@ namespace BasicVoxelEngine
         }
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr nativeAddress);
+        internal void SetIndex(int index)
+        {
+            mIndex = index;
+        }
+        public int? Index => mIndex;
+        private int? mIndex;
     }
-    public sealed class Register<T> : RegisteredObject<Register<T>> where T : RegisteredObject<T>, new()
+    public sealed class Register<T> : RegisteredObject<Register<T>>, IReadOnlyList<T> where T : RegisteredObject<T>, new()
     {
+        private struct Enumerator : IEnumerator<T>
+        {
+            public Enumerator(Register<T> register)
+            {
+                mRegistry = register;
+                mCurrentIndex = -1;
+            }
+            public T Current => mRegistry[mCurrentIndex];
+            object IEnumerator.Current => Current;
+            public void Dispose()
+            {
+                GC.SuppressFinalize(this);
+            }
+            public bool MoveNext()
+            {
+                if (mCurrentIndex < mRegistry.Count - 1)
+                {
+                    mCurrentIndex++;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            public void Reset()
+            {
+                mCurrentIndex = -1;
+            }
+            private readonly Register<T> mRegistry;
+            private int mCurrentIndex;
+        }
         internal Register(IntPtr nativeAddress)
         {
             base.NativeAddress = nativeAddress;
@@ -120,7 +159,9 @@ namespace BasicVoxelEngine
         }
         public int RegisterObject(T @object, NamespacedName namespacedName)
         {
-            return RegisterObject_Native(@object, namespacedName, typeof(T), NativeAddress);
+            int index = RegisterObject_Native(@object, namespacedName, typeof(T), NativeAddress);
+            @object.SetIndex(index);
+            return index;
         }
         public int? GetIndex(NamespacedName namespacedName)
         {
@@ -146,6 +187,11 @@ namespace BasicVoxelEngine
                 return null;
             }
         }
+        public IEnumerator<T> GetEnumerator()
+        {
+            return new Enumerator(this);
+        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public int Count => GetCount_Native(typeof(T), NativeAddress);
         private new IntPtr NativeAddress => base.NativeAddress ?? throw new NullReferenceException();
         [MethodImpl(MethodImplOptions.InternalCall)]
