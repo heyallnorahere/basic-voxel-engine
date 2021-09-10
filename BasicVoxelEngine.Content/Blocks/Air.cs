@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BasicVoxelEngine.Content.Blocks
+﻿namespace BasicVoxelEngine.Content.Blocks
 {
     [AutoRegister("bve:air", PreferredIndex = 0)]
     public class Air : Block

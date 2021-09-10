@@ -1,9 +1,4 @@
 ﻿using BasicVoxelEngine.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BasicVoxelEngine.Content.Blocks
 {
@@ -15,7 +10,7 @@ namespace BasicVoxelEngine.Content.Blocks
             string modelPath = AssetManager.GetAssetPath($"model:{namespacedName}.obj");
             mModel = Model.LoadModel(modelPath, factory);
         }
-        public override string FriendlyName => "Model Block";
+        public override string FriendlyName => "Model block";
         public override Model? Model => mModel;
         private Model? mModel;
     }
