@@ -13,7 +13,7 @@ namespace bve {
         mesh_factory(ref<world> _world);
         std::vector<std::vector<processed_voxel>> get_clusters(std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights);
         ref<mesh> create_mesh(std::vector<processed_voxel> voxels);
-        std::vector<graphics::vertex_attribute> get_vertex_attributes();
+        static std::vector<graphics::vertex_attribute> get_vertex_attributes();
     private:
         ref<world> m_world;
     };
