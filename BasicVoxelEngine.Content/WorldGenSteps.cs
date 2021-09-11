@@ -24,7 +24,7 @@ namespace BasicVoxelEngine.Content.WorldGen
                 }
             }
             var blockRegister = Registry.GetRegister<Block>();
-            Block testBlock = blockRegister["bve:test_block"];
+            Block testBlock = blockRegister["bve:grass_block"];
             for (int x = 0; x < chunkSize.X; x++)
             {
                 for (int z = 0; z < chunkSize.Z; z++)
