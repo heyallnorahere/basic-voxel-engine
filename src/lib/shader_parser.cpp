@@ -1,6 +1,6 @@
 #include "bve_pch.h"
 #include "shader_parser.h"
-#include <shaderc/shaderc.hpp>
+#include "shader_compiler.h"
 namespace bve {
     static std::string read_file(const fs::path& path) {
         std::ifstream file = std::ifstream(path);
@@ -127,9 +127,6 @@ namespace bve {
         }
         return types;
     }
-    static void convert(shader_language input, shader_language output, std::string& source) {
-        const char* src = source.c_str();
-    }
     std::string shader_parser::get_shader(shader_type type) const {
         auto it = this->m_sources.find(type);
         if (it == this->m_sources.end()) {
@@ -137,7 +134,8 @@ namespace bve {
         }
         std::string source = it->second.first;
         if (this->m_output_language != this->m_input_language) {
-            convert(this->m_input_language, this->m_output_language, source);
+            shader_compiler compiler;
+            source = compiler.convert(source, this->m_input_language, this->m_output_language, type);
         }
         return source;
     }

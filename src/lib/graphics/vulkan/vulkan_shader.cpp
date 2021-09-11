@@ -1,7 +1,7 @@
 #include "bve_pch.h"
 #include "vulkan_shader.h"
 #include "vulkan_context.h"
-#include <shaderc/shaderc.hpp>
+#include "../../shader_compiler.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -112,38 +112,10 @@ namespace bve {
                     this->m_pipeline_create_info.push_back(create_info);
                 }
             }
-            std::vector<uint32_t> glsl_to_spirv(shader_type type, const std::string& source) {
-                // we should probably cache shaders
-                shaderc::Compiler compiler;
-                shaderc::CompileOptions options;
-                options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
-                const bool optimize = false; // we need to change this in release mode!
-                if (optimize) {
-                    options.SetOptimizationLevel(shaderc_optimization_level_performance);
-                }
-                shaderc_shader_kind kind;
-                switch (type) {
-                case shader_type::VERTEX:
-                    kind = shaderc_glsl_vertex_shader;
-                    break;
-                case shader_type::FRAGMENT:
-                    kind = shaderc_glsl_fragment_shader;
-                    break;
-                case shader_type::GEOMETRY:
-                    kind = shaderc_glsl_geometry_shader;
-                    break;
-                default:
-                    throw std::runtime_error("[vulkan shader] the specified shader type is not supported yet");
-                }
-                auto result = compiler.CompileGlslToSpv(source, kind, "not provided");
-                if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-                    throw std::runtime_error("[vulkan shader] could not compile shader: " + result.GetErrorMessage());
-                }
-                return std::vector<uint32_t>(result.cbegin(), result.cend());
-            }
             VkShaderModule vulkan_shader::compile_shader(shader_type type, const shader_parser& parser) {
                 std::string source = parser.get_shader(type);
-                auto spirv = glsl_to_spirv(type, source);
+                shader_compiler compiler;
+                auto spirv = compiler.compile(source, shader_language::GLSL, type);
                 VkShaderModuleCreateInfo create_info;
                 memset(&create_info, 0, sizeof(VkShaderModuleCreateInfo));
                 create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
