@@ -9,6 +9,9 @@ namespace bve {
         static application instance;
         return instance;
     }
+    application::~application() {
+        shader_compiler::cleanup_compiler();
+    }
     void application::run() {
         auto& block_register = registry::get().get_register<block>();
         for (const auto& name : block_register.get_names()) {
@@ -46,6 +49,7 @@ namespace bve {
     }
     application::application() {
         spdlog::info("[application] starting BVE, working directory: {0}", fs::current_path().string());
+        shader_compiler::initialize_compiler();
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         block::register_all();

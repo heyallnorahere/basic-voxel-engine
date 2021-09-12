@@ -1,40 +1,100 @@
 #include "bve_pch.h"
 #include "shader_compiler.h"
-#include <shaderc/shaderc.hpp>
+#include <StandAlone/ResourceLimits.h>
+#include <glslang/Public/ShaderLang.h>
 #include <spirv_glsl.hpp>
 #include <spirv_hlsl.hpp>
+#include <SPIRV/GlslangToSpv.h>
+#include <spirv-tools/optimizer.hpp>
 namespace bve {
-    static std::vector<uint32_t> compile(const std::string& source, shader_type type, shaderc::CompileOptions compile_options) {
-        // we should probably cache shaders
-        shaderc::Compiler compiler;
-        shaderc::CompileOptions options = compile_options;
-        const bool optimize = false; // we need to change this in release mode!
-        if (optimize) {
-            options.SetOptimizationLevel(shaderc_optimization_level_performance);
+    void shader_compiler::initialize_compiler() {
+        if (!glslang::InitializeProcess()) {
+            throw std::runtime_error("[shader compiler] could not initialize glslang!");
         }
-        shaderc_shader_kind kind;
+    }
+    void shader_compiler::cleanup_compiler() {
+        glslang::FinalizeProcess();
+    }
+    struct compiler_options {
+        glslang::EShSource language;
+        glslang::EShClient client;
+        glslang::EShTargetClientVersion client_version;
+    };
+    static void throw_compilation_error(const std::string& message, const std::string& shader_name) {
+        throw std::runtime_error("[shader compiler] could not compile " + shader_name + " shader: " + message);
+    }
+    static std::vector<uint32_t> compile(const std::string& source, shader_type type, const compiler_options& options) {
+        // we should probably cache shaders
+        EShLanguage shader_type;
         std::string shader_name;
         switch (type) {
         case shader_type::VERTEX:
-            kind = shaderc_glsl_vertex_shader;
+            shader_type = EShLangVertex;
             shader_name = "vertex";
             break;
         case shader_type::FRAGMENT:
-            kind = shaderc_glsl_fragment_shader;
+            shader_type = EShLangFragment;
             shader_name = "fragment";
             break;
         case shader_type::GEOMETRY:
-            kind = shaderc_glsl_geometry_shader;
+            shader_type = EShLangGeometry;
             shader_name = "geometry";
             break;
         default:
             throw std::runtime_error("[shader compiler] the specified shader type is not supported yet");
         }
-        auto result = compiler.CompileGlslToSpv(source, kind, "<not found>", "main", options);
-        if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
-            throw std::runtime_error("[shader compiler] could not compile " + shader_name + " shader: " + result.GetErrorMessage());
+        auto program = std::make_shared<glslang::TProgram>();
+        auto shader = std::make_shared<glslang::TShader>(shader_type);
+        const char* src = source.c_str();
+        shader->setStrings(&src, 1);
+        glslang::EShTargetLanguage target_language = glslang::EShTargetSpv;
+        glslang::EShTargetLanguageVersion target_language_version;
+        switch (options.client_version) {
+        case glslang::EShTargetVulkan_1_0:
+            target_language_version = glslang::EShTargetSpv_1_0;
+            break;
+        case glslang::EShTargetVulkan_1_1:
+            target_language_version = glslang::EShTargetSpv_1_3;
+            break;
+        case glslang::EShTargetVulkan_1_2:
+            target_language_version = glslang::EShTargetSpv_1_5;
+            break;
+        case glslang::EShTargetOpenGL_450:
+            target_language_version = glslang::EShTargetSpv_1_0;
+            break;
+        default:
+            throw std::runtime_error("[shader compiler] invalid client version");
         }
-        return std::vector<uint32_t>(result.cbegin(), result.cend());
+        shader->setEnvTarget(target_language, target_language_version);
+        shader->setEnvInput(options.language, shader_type, options.client, options.client_version);
+        shader->setEnvClient(options.client, options.client_version);
+        EShMessages messages = EShMsgDefault;
+        if (options.language == glslang::EShSourceHlsl) {
+            (uint32_t&)messages |= EShMsgReadHlsl;
+        }
+        if (!shader->parse(&glslang::DefaultTBuiltInResource, 330, true, messages)) throw_compilation_error(shader->getInfoLog(), shader_name);
+        program->addShader(shader.get());
+        if (!program->link(messages)) throw_compilation_error(shader->getInfoLog(), shader_name);
+        auto intermediate = program->getIntermediate(shader_type);
+        if (intermediate) {
+            std::vector<uint32_t> spirv;
+            spv::SpvBuildLogger logger;
+            glslang::SpvOptions spirv_options;
+            constexpr bool optimize = false; // we need to change this in release mode!
+            if (optimize) {
+                spirv_options.optimizeSize = true;
+                spirv_options.stripDebugInfo = true;
+            } else {
+                spirv_options.disableOptimizer = true;
+                spirv_options.generateDebugInfo = true;
+            }
+            spirv_options.disassemble = false;
+            spirv_options.validate = true;
+            glslang::GlslangToSpv(*intermediate, spirv, &spirv_options);
+            return spirv;
+        } else {
+            return { };
+        }
     }
     template<typename T = spirv_cross::CompilerGLSL> static std::string decompile(const std::vector<uint32_t>& spirv, const spirv_cross::CompilerGLSL::Options& options) {
         std::shared_ptr<spirv_cross::CompilerGLSL> compiler = std::make_shared<T>(std::move(spirv));
@@ -68,21 +128,31 @@ namespace bve {
         return decompile<spirv_cross::CompilerHLSL>(spirv, options);
     }
     std::vector<uint32_t> shader_compiler::compile(const std::string& source, shader_language input_language, shader_type type) {
-        shaderc::CompileOptions options;
+        compiler_options options;
         switch (input_language) {
         case shader_language::GLSL:
-            options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
+            options.client = glslang::EShClientVulkan;
+            options.client_version = glslang::EShTargetVulkan_1_0; // we're using vulkan 1.0 in graphics/vulkan/vulkan_context.cpp
+            options.language = glslang::EShSourceGlsl;
             break;
         case shader_language::OpenGLGLSL:
-            options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
+            options.client = glslang::EShClientOpenGL;
+            options.client_version = glslang::EShTargetOpenGL_450;
+            options.language = glslang::EShSourceGlsl;
             break;
         case shader_language::HLSL:
-            options.SetSourceLanguage(shaderc_source_language_hlsl);
+            options.client = glslang::EShClientVulkan;
+            options.client_version = glslang::EShTargetVulkan_1_0;
+            options.language = glslang::EShSourceHlsl;
             break;
         default:
             throw std::runtime_error("[shader compiler] cannot compile shaders of this language");
         }
-        return ::bve::compile(source, type, options);
+        auto spirv = ::bve::compile(source, type, options);
+        if (spirv.empty()) {
+            throw std::runtime_error("[shader compiler] no spirv was returned!");
+        }
+        return spirv;
     }
     std::string shader_compiler::decompile(const std::vector<uint32_t>& spirv, shader_language output_language) {
         std::function<std::string(const std::vector<uint32_t>&)> decompile;
