@@ -33,7 +33,7 @@ static void quick_sort(std::vector<namespaced_name>& names, int32_t low, int32_t
     }
 }
 void player::on_attach() {
-    this->get_component<components::transform_component>().translation = glm::vec3(5.f);
+    this->get_component<components::transform_component>().translation = glm::vec3(5.f, 64.f, 5.f);
     this->add_component<components::camera_component>().direction = glm::vec3(-1.f);
 }
 void player::update() {
