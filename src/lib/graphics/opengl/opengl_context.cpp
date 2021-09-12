@@ -5,6 +5,12 @@
 namespace bve {
     namespace graphics {
         namespace opengl {
+            double opengl_context::get_version() {
+                const char* string = (char*)glGetString(GL_VERSION);
+                int32_t major, minor;
+                sscanf(string, "%d.%d", &major, &minor);
+                return (double)major + ((double)minor / 10);
+            }
             static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param) {
                 std::string message_ = "[opengl context] " + std::string(message);
                 switch (severity) {
@@ -57,20 +63,16 @@ namespace bve {
                 glCullFace(GL_BACK);
                 glEnable(GL_BLEND);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                const char* gl_version = (char*)glGetString(GL_VERSION);
-                int32_t major, minor;
-                sscanf(gl_version, "%d.%d", &major, &minor);
-                double numerical_version = major + (minor / 10.0);
+                double context_version = get_version();
                 int32_t context_flags;
                 glGetIntegerv(GL_CONTEXT_FLAGS, &context_flags);
-                if (context_flags & GL_CONTEXT_FLAG_DEBUG_BIT && numerical_version >= 4.3) {
+                if (context_flags & GL_CONTEXT_FLAG_DEBUG_BIT && context_version >= 4.3) {
                     glEnable(GL_DEBUG_OUTPUT);
                     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
                     glDebugMessageCallback(debug_callback, nullptr);
                     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
                 }
-                spdlog::info("[opengl context] created opengl context with version {}", numerical_version);
-                
+                spdlog::info("[opengl context] created opengl context with version {}", context_version);
             }
             void opengl_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 glViewport(x, y, width, height);

@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "opengl_shader.h"
-#include "shader_parser.h"
+#include "opengl_context.h"
+#include "../../shader_compiler.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
@@ -99,24 +100,10 @@ namespace bve {
                     parser.parse(source);
                 }
                 std::vector<GLuint> shaders;
-                for (const auto& type : parser.get_parsed_shader_types()) {
-                    GLenum shader_type_;
-                    switch (type) {
-                    case shader_type::VERTEX:
-                        shader_type_ = GL_VERTEX_SHADER;
-                        break;
-                    case shader_type::FRAGMENT:
-                        shader_type_ = GL_FRAGMENT_SHADER;
-                        break;
-                    case shader_type::GEOMETRY:
-                        shader_type_ = GL_GEOMETRY_SHADER;
-                        break;
-                    default:
-                        throw std::runtime_error("[opengl shader] invalid shader type");
-                    }
+                for (shader_type type : parser.get_parsed_shader_types()) {
                     std::string source = parser.get_shader(type);
                     auto path = parser.get_shader_path(type);
-                    shaders.push_back(this->create_shader(source, shader_type_, path));
+                    shaders.push_back(this->create_shader(source, type, path));
                 }
                 spdlog::info("[opengl shader] linking shader program...");
                 this->m_program = glCreateProgram();
@@ -140,23 +127,34 @@ namespace bve {
             void opengl_shader::destroy() {
                 glDeleteProgram(this->m_program);
             }
-            GLuint opengl_shader::create_shader(const std::string& source, GLenum type, std::optional<fs::path> path) {
+            GLuint opengl_shader::create_shader(const std::string& source, shader_type type, std::optional<fs::path> path) {
+                if (opengl_context::get_version() < 4.1) {
+                    throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
+                }
                 std::string shader_type;
+                GLenum gl_type;
                 switch (type) {
-                case GL_VERTEX_SHADER:
+                case shader_type::VERTEX:
                     shader_type = "vertex";
+                    gl_type = GL_VERTEX_SHADER;
                     break;
-                case GL_FRAGMENT_SHADER:
+                case shader_type::FRAGMENT:
                     shader_type = "fragment";
+                    gl_type = GL_FRAGMENT_SHADER;
                     break;
+                case shader_type::GEOMETRY:
+                    shader_type = "geometry";
+                    gl_type = GL_GEOMETRY_SHADER;
                 default:
-                    shader_type = "other";
+                    throw std::runtime_error("[opengl shader] this shader type is not supported yet");
                     break;
                 }
+                spdlog::info(source);
                 spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
-                const char* src = source.c_str();
-                GLuint id = glCreateShader(type);
-                glShaderSource(id, 1, &src, nullptr);
+                shader_compiler compiler;
+                std::vector<uint32_t> spirv = compiler.compile(source, shader_language::OpenGLGLSL, type);
+                GLuint id = glCreateShader(gl_type);
+                glShaderBinary(1, &id, GL_SPIR_V_BINARY, spirv.data(), spirv.size() * sizeof(uint32_t));
                 glCompileShader(id);
                 GLint status;
                 glGetShaderiv(id, GL_COMPILE_STATUS, &status);
@@ -164,8 +162,7 @@ namespace bve {
                     GLchar info_log[512];
                     glGetShaderInfoLog(id, 512, nullptr, info_log);
                     spdlog::warn("[opengl shader] error compiling " + shader_type + " shader: " + info_log);
-                }
-                else {
+                } else {
                     spdlog::info("[opengl shader] successfully compiled " + shader_type + " shader");
                 }
                 return id;

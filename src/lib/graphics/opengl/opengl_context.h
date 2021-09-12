@@ -5,6 +5,7 @@ namespace bve {
         namespace opengl {
             class opengl_context : public context {
             public:
+                static double get_version();
                 virtual void clear() override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;

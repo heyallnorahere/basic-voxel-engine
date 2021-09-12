@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/shader.h"
+#include "shader_parser.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
@@ -31,7 +32,7 @@ namespace bve {
             private:
                 void create();
                 void destroy();
-                GLuint create_shader(const std::string& source, GLenum type, std::optional<fs::path> path);
+                GLuint create_shader(const std::string& source, shader_type type, std::optional<fs::path> path);
                 GLint get_location(const std::string& name);
                 GLuint m_program;
                 std::vector<fs::path> m_sources;

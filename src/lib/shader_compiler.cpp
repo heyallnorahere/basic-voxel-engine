@@ -68,6 +68,7 @@ namespace bve {
         shader->setEnvTarget(target_language, target_language_version);
         shader->setEnvInput(options.language, shader_type, options.client, options.client_version);
         shader->setEnvClient(options.client, options.client_version);
+        shader->setEntryPoint("main");
         EShMessages messages = EShMsgDefault;
         if (options.language == glslang::EShSourceHlsl) {
             (uint32_t&)messages |= EShMsgReadHlsl;
@@ -118,7 +119,7 @@ namespace bve {
     static std::string decompile_opengl_glsl(const std::vector<uint32_t>& spirv) {
         spirv_cross::CompilerGLSL::Options options;
         options.vulkan_semantics = false;
-        options.version = 330;
+        options.version = 410;
         options.es = false;
         return decompile(spirv, options);
     }
