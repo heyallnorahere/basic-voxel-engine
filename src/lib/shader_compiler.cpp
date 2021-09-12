@@ -30,7 +30,7 @@ namespace bve {
         default:
             throw std::runtime_error("[shader compiler] the specified shader type is not supported yet");
         }
-        auto result = compiler.CompileGlslToSpv(source, kind, "not provided", "main", options);
+        auto result = compiler.CompileGlslToSpv(source, kind, "<not found>", "main", options);
         if (result.GetCompilationStatus() != shaderc_compilation_status_success) {
             throw std::runtime_error("[shader compiler] could not compile " + shader_name + " shader: " + result.GetErrorMessage());
         }
@@ -71,14 +71,13 @@ namespace bve {
         shaderc::CompileOptions options;
         switch (input_language) {
         case shader_language::GLSL:
-            options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_0);
+            options.SetTargetEnvironment(shaderc_target_env_vulkan, shaderc_env_version_vulkan_1_2);
             break;
         case shader_language::OpenGLGLSL:
-            options.SetTargetEnvironment(shaderc_target_env_opengl_compat, shaderc_env_version_opengl_4_5);
+            options.SetTargetEnvironment(shaderc_target_env_opengl, shaderc_env_version_opengl_4_5);
             break;
         case shader_language::HLSL:
             options.SetSourceLanguage(shaderc_source_language_hlsl);
-            options.SetTargetEnvironment(shaderc_target_env_default, 0);
             break;
         default:
             throw std::runtime_error("[shader compiler] cannot compile shaders of this language");

@@ -24,7 +24,7 @@ VERTEX_OUT main(VERTEX_IN input) {
     output.normal = normalize(input.normal);
     return output;
 }
-#type fragment
+#type pixel
 struct PIXEL_IN {
     float4 position : POSITION;
     float2 uv : TEXCOORD;
@@ -41,18 +41,22 @@ struct light {
     // point light fields (apparently linear is a keyword in hlsl??????)
     float constant, linear_, quadratic;
 };
-struct texture_dimensions_struct {
+struct texture_dimensions_t {
     int2 atlas_position, texture_dimensions;
 };
-struct texture_atlas {
-    Texture2D texture_;
-    int2 texture_size, atlas_size;
-    texture_dimensions_struct texture_dimensions_array[64]; // im gonna increase the size of this array once i add more blocks
-};
-light lights[30];
-int light_count;
-texture_atlas atlas;
-float3 camera_position;
+uniform light lights[30];
+uniform int light_count;
+uniform sampler2D texture_atlas;
+uniform int2 texture_atlas_size, grid_size;
+uniform texture_dimensions_t texture_dimensions_array[64]; // im gonna increase the size of this array once i add more blocks
+uniform float3 camera_position;
+float4 get_fragment_color(int block_id, float2 input_uv_coords) {
+    texture_dimensions_t dimensions = texture_dimensions_array[block_id];
+    float2 uv_offset = float2(dimensions.atlas_position) / float2(grid_size);
+    float2 uv_scale = float2(dimensions.texture_dimensions) / float2(texture_atlas_size);
+    float2 uv = (input_uv_coords * uv_scale) + uv_offset;
+    return tex2D(texture_atlas, uv);
+}
 float4 main(PIXEL_IN input) : COLOR {
-    return 0.f;
+    return get_fragment_color(input.block_id, input.uv);
 }

@@ -15,6 +15,7 @@ namespace bve {
     static std::map<std::string, shader_type> shader_type_map = {
         { "vertex", shader_type::VERTEX },
         { "fragment", shader_type::FRAGMENT },
+        { "pixel", shader_type::FRAGMENT },
         { "geometry", shader_type::GEOMETRY }
     };
     static std::string to_lower(const std::string& original) {

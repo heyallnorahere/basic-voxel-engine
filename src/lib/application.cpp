@@ -3,6 +3,7 @@
 #include "block.h"
 #include "asset_manager.h"
 #include "components.h"
+#include "shader_compiler.h"
 namespace bve {
     application& application::get() {
         static application instance;
@@ -53,7 +54,7 @@ namespace bve {
             auto load_content = app_class->get_method("*:LoadContent");
             app_class->invoke(load_content);
         }
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::VULKAN);
+        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL);
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
