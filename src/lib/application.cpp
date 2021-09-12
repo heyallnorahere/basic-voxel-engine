@@ -54,7 +54,7 @@ namespace bve {
             auto load_content = app_class->get_method("*:LoadContent");
             app_class->invoke(load_content);
         }
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL);
+        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::VULKAN);
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
