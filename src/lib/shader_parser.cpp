@@ -17,6 +17,42 @@ namespace bve {
         { "fragment", shader_type::FRAGMENT },
         { "geometry", shader_type::GEOMETRY }
     };
+    static std::string to_lower(const std::string& original) {
+        std::string lower;
+        for (char c : original) {
+            lower.push_back((char)tolower(c));
+        }
+        return lower;
+    }
+    static std::unordered_map<std::string, shader_language> extension_languages = {
+        { "glsl", shader_language::GLSL },
+        { "hlsl", shader_language::HLSL },
+    };
+    static shader_language determine_language(const fs::path& path) {
+        std::string string = path.string();
+        size_t extension_separator_pos = string.find_last_of('.');
+        if (extension_separator_pos == std::string::npos) {
+            throw std::runtime_error("[shader parser] cannot determine a shader language from no extension");
+        }
+        std::string extension = to_lower(string.substr(extension_separator_pos + 1));
+        if (extension_languages.find(extension) == extension_languages.end()) {
+            throw std::runtime_error("[shader parser] cannot determine a shader language from extension: " + extension);
+        }
+        return extension_languages[extension];
+    }
+    shader_language shader_parser::get_language(const std::vector<fs::path>& paths) {
+        if (paths.empty()) {
+            throw std::runtime_error("[shader parser] cannot determine a shader language from no paths");
+        }
+        shader_language language = determine_language(paths[0]);
+        // lets just make sure the languages are the same across every shader file
+        for (size_t i = 0; i < paths.size(); i++) {
+            if (language != determine_language(paths[i])) {
+                throw std::runtime_error("[shader parser] path " + std::to_string(i + 1) + " does not match the language of the first path");
+            }
+        }
+        return language;
+    }
     shader_parser::shader_parser(shader_language input, shader_language output) {
         this->m_input_language = input;
         this->m_output_language = output;

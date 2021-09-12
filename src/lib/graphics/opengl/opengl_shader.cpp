@@ -94,7 +94,7 @@ namespace bve {
                 this->create();
             }
             void opengl_shader::create() {
-                auto parser = shader_parser(shader_language::GLSL, shader_language::GLSL);
+                auto parser = shader_parser(shader_parser::get_language(this->m_sources), shader_language::OpenGLGLSL);
                 for (const auto& source : this->m_sources) {
                     parser.parse(source);
                 }

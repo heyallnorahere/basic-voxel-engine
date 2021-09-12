@@ -14,7 +14,7 @@ namespace bve {
         void point_light::set_uniforms(ref<graphics::shader> shader, const std::string& uniform_name) {
             this->set_universal_values(shader, uniform_name);
             shader->set_float(uniform_name + ".constant", this->m_constant);
-            shader->set_float(uniform_name + ".linear", this->m_linear);
+            shader->set_float(uniform_name + ".linear_", this->m_linear);
             shader->set_float(uniform_name + ".quadratic", this->m_quadratic);
         }
         light_type point_light::get_type() {

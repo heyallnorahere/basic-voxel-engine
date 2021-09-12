@@ -2,6 +2,7 @@
 namespace bve {
     enum class shader_language {
         GLSL,
+        OpenGLGLSL,
         HLSL
     };
     enum class shader_type {
@@ -12,6 +13,7 @@ namespace bve {
     class shader_parser_internals;
     class shader_parser {
     public:
+        static shader_language get_language(const std::vector<fs::path>& paths);
         shader_parser(shader_language input, shader_language output);
         void parse(const fs::path& path);
         void parse(const std::string& source, std::optional<fs::path> path = std::optional<fs::path>());

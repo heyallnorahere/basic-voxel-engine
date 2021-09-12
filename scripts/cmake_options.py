@@ -24,6 +24,7 @@ OPTIONS = [
     Option("RE2_BUILD_TESTING", "OFF"),
     Option("ENABLE_CTEST", "OFF"),
     Option("SKIP_GLSLANG_INSTALL", "ON"),
+    Option("ENABLE_HLSL", "ON"),
 ]
 def main():
     output = ""

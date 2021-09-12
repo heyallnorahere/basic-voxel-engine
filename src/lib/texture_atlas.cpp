@@ -8,7 +8,7 @@ namespace bve {
             return uniform_name + "." + field_name;
         };
         shader_->bind();
-        shader_->set_int(get_uniform_name("texture"), texture_slot);
+        shader_->set_int(get_uniform_name("texture_"), texture_slot);
         shader_->set_ivec2(get_uniform_name("texture_size"), this->m_texture_size);
         shader_->set_ivec2(get_uniform_name("atlas_size"), this->m_atlas_size);
         auto& block_register = registry::get().get_register<block>();

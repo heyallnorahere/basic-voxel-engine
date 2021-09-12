@@ -81,7 +81,7 @@ namespace bve {
             void vulkan_shader::compile() {
                 ref<vulkan_context> context_ = this->m_factory->get_current_context();
                 this->m_device = context_->get_device();
-                auto parser = shader_parser(shader_language::GLSL, shader_language::GLSL);
+                auto parser = shader_parser(shader_parser::get_language(this->m_sources), shader_language::GLSL);
                 for (const auto& source : this->m_sources) {
                     parser.parse(source);
                 }
