@@ -38,6 +38,9 @@ namespace bve {
             virtual void load(ref<graphics::object_factory> object_factory, const namespaced_name& register_name) override {
                 auto _class = this->get_class();
                 auto load = _class->get_method("*:Load");
+                if (!load) {
+                    return;
+                }
                 NamespacedName managed_register_name = get_managed(register_name);
                 ref<managed::object> factory = this->create_factory_object(object_factory);
                 this->m_object->invoke(load, factory->get(), &managed_register_name);
@@ -81,7 +84,7 @@ namespace bve {
                 return factory_class->instantiate(&pointer);
             }
             ref<model> get_model(ref<managed::object> object) {
-                if (!object->get()) {
+                if (!object || !object->get()) {
                     return nullptr;
                 }
                 // very hacky but i had no other choice
@@ -233,6 +236,10 @@ namespace bve {
         double BasicVoxelEngine_Application_GetDeltaTime() {
             auto& app = application::get();
             return app.get_delta_time();
+        }
+        IntPtr BasicVoxelEngine_Application_GetWorld() {
+            auto& app = application::get();
+            return new ref<world>(app.get_world());
         }
 
         void BasicVoxelEngine_Logger_PrintDebug(string message) {
@@ -419,6 +426,34 @@ namespace bve {
         void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic) {
             auto light = get_point_light_ref(address);
             light->set_quadratic(quadratic);
+        }
+        
+        ref<world> get_world_ref(void* address) {
+            return *(ref<world>*)address;
+        }
+        void BasicVoxelEngine_World_Destroy(IntPtr address) {
+            delete (ref<world>*)address;
+        }
+        int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position) {
+            auto _world = get_world_ref(address);
+            size_t block_type;
+            _world->get_block(position, block_type);
+            return (int32_t)block_type;
+        }
+        void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index) {
+            auto _world = get_world_ref(address);
+            _world->set_block(position, (size_t)index);
+        }
+        void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback) {
+            auto _world = get_world_ref(address);
+            auto delegate_ref = ref<managed::delegate>::create(callback, mono_domain_get());
+            _world->on_block_changed([delegate_ref](glm::ivec3 position, ref<world> world_) {
+                auto host = code_host::current();
+                auto world_class = host->find_class("BasicVoxelEngine.World");
+                auto instance = world_class->instantiate(new ref<world>(world_));
+                ref<managed::delegate> delegate_copy = delegate_ref;
+                delegate_copy->invoke(&position, instance->get());
+            });
         }
     }
 }

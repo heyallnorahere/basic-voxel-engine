@@ -29,3 +29,6 @@
 [submodule "vendor/glslang"]
 	path = vendor/glslang
 	url = https://github.com/KhronosGroup/glslang.git
+[submodule "vendor/FastNoiseLite"]
+	path = vendor/FastNoiseLite
+	url = https://github.com/Auburn/FastNoiseLite.git

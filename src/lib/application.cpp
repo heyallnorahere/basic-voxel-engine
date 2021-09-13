@@ -25,8 +25,16 @@ namespace bve {
             app_class->invoke(testmethod);
         }
 #endif
-        this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights);
-        this->m_world->on_block_changed([this](glm::ivec3, ref<world>) { this->m_clusters = mesh_factory(this->m_world).get_clusters(this->m_lights); });
+        auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
+            mesh_factory factory(world_);
+            this->m_meshes.clear();
+            auto clusters = factory.get_clusters(this->m_lights);
+            for (const auto& cluster : clusters) {
+                this->m_meshes.push_back(factory.create_mesh(cluster));
+            }
+        };
+        on_block_changed(glm::ivec3(0), this->m_world);
+        this->m_world->on_block_changed(on_block_changed);
         this->m_running = true;
         while (!this->m_window->should_close() && this->m_running) {
             this->m_window->new_frame();
@@ -52,7 +60,6 @@ namespace bve {
         shader_compiler::initialize_compiler();
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
-        block::register_all();
         {
             auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
             auto load_content = app_class->get_method("*:LoadContent");
@@ -62,6 +69,7 @@ namespace bve {
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
+        this->m_world->generate();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
         this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.hlsl") });
@@ -81,13 +89,11 @@ namespace bve {
     void application::render() {
         this->m_window->get_context()->clear();
         auto cmdlist = this->m_renderer->create_command_list();
-        mesh_factory factory(this->m_world);
-        for (auto& cluster : this->m_clusters) {
-            auto mesh_ = factory.create_mesh(cluster);
+        for (auto& mesh_ : this->m_meshes) {
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
         this->m_renderer->add_lights(cmdlist, this->m_lights);
-        this->m_renderer->close_command_list(cmdlist, factory.get_vertex_attributes(), this->m_object_factory);
+        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes(), this->m_object_factory);
 
         // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();

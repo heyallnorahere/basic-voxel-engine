@@ -31,9 +31,10 @@ namespace bve {
     class world : public ref_counted {
     public:
         using on_block_changed_callback = std::function<void(glm::ivec3, ref<world>)>;
-        world();
+        world() = default;
         world(const world&) = delete;
         world& operator=(const world&) = delete;
+        void generate();
         void update();
         entity create();
         void on_block_changed(on_block_changed_callback callback);
