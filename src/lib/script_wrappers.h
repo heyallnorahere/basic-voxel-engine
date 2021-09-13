@@ -10,9 +10,11 @@ namespace bve {
         using IntPtr = void*;
         using string = MonoString*;
         using Vector3 = glm::vec3;
+        using Vector3I = glm::ivec3;
         using LightType = lighting::light_type;
 
         double BasicVoxelEngine_Application_GetDeltaTime();
+        IntPtr BasicVoxelEngine_Application_GetWorld();
 
         void BasicVoxelEngine_Logger_PrintDebug(string message);
         void BasicVoxelEngine_Logger_PrintInfo(string message);
@@ -60,5 +62,10 @@ namespace bve {
         void BasicVoxelEngine_Lighting_PointLight_SetConstant(IntPtr address, float constant);
         void BasicVoxelEngine_Lighting_PointLight_SetLinear(IntPtr address, float linear);
         void BasicVoxelEngine_Lighting_PointLight_SetQuadratic(IntPtr address, float quadratic);
+
+        void BasicVoxelEngine_World_Destroy(IntPtr address);
+        int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position);
+        void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index);
+        void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback);
     }
 }

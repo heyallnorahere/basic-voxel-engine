@@ -7,11 +7,14 @@ namespace bve {
     public:
         texture_atlas(const texture_atlas&) = delete;
         texture_atlas& operator=(const texture_atlas&) = delete;
+
+        
         void set_uniform(ref<graphics::shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
         glm::ivec2 get_texture_size();
         glm::ivec2 get_atlas_size();
         ref<graphics::texture> get_texture();
         std::vector<namespaced_name> get_included_block_names();
+
     private:
         struct texture_data {
             std::vector<uint8_t> data;

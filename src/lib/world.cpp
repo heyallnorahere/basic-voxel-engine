@@ -2,39 +2,21 @@
 #include "world.h"
 #include "block.h"
 #include "components.h"
+#include "code_host.h"
 namespace bve {
     entity::entity(entt::entity handle, world* world_) {
         this->m_handle = handle;
         this->m_world = world_;
     }
-    world::world() {
-        // temporary
-        auto& block_register = registry::get().get_register<block>();
-        uint8_t test_block = (uint8_t)*block_register.get_index("bve:test_block");
-        uint8_t test_block_2 = (uint8_t)*block_register.get_index("bve:test_block_2");
-        uint8_t model_block = (uint8_t)*block_register.get_index("bve:model_block");
-        uint8_t managed_block = (uint8_t)*block_register.get_index("bve:managed_block");
-        for (int32_t x_offset_factor = 0; x_offset_factor < 3; x_offset_factor++) {
-            int32_t x_offset = x_offset_factor * 3;
-            for (int32_t z_offset_factor = 0; z_offset_factor < 3; z_offset_factor++) {
-                int32_t z_offset = z_offset_factor * 3;
-                for (int32_t x = 0; x < 3; x++) {
-                    for (int32_t z = 0; z < 3; z++) {
-                        glm::ivec3 block_position = glm::ivec3(x + x_offset, 0, z + z_offset);
-                        if (x == 1 && z == 1) {
-                            glm::ivec3 temp_position = block_position;
-                            this->m_voxel_types[temp_position] = test_block;
-                            temp_position.y += 2;
-                            this->m_voxel_types[temp_position] = test_block_2;
-                            temp_position.y++;
-                            this->m_voxel_types[temp_position] = managed_block;
-                        } else {
-                            this->m_voxel_types[block_position] = model_block;
-                        }
-                    }
-                }
-            }
-        }
+    void world::generate() {
+        ref<code_host> host = code_host::current();
+        ref<managed::class_> world_class = host->find_class("BasicVoxelEngine.World");
+        ref<world>* pointer = new ref<world>(this);
+        ref<managed::object> world_instance = world_class->instantiate(&pointer);
+        ref<managed::class_> builder_class = host->find_class("BasicVoxelEngine.WorldGen.Builder");
+        auto generate = builder_class->get_method("*:Generate");
+        int32_t seed = -1;
+        builder_class->invoke(generate, world_instance->get(), &seed);
     }
     void world::update() {
         auto script_view = this->m_registry.view<components::script_component>();

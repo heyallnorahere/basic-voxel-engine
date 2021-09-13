@@ -32,6 +32,10 @@ namespace BasicVoxelEngine
                 return length * length;
             }
         }
+        public override int GetHashCode()
+        {
+            return (X.GetHashCode() << 2) ^ (Y.GetHashCode() << 1) ^ Z.GetHashCode();
+        }
         public float TaxicabLength => Math.Abs(X) + Math.Abs(Y) + Math.Abs(Z);
         public Vector3 Dot(Vector3 vector) => new Vector3(X * vector.X, Y * vector.Y, Z * vector.Z);
         public static Vector3 operator+(Vector3 vector1, Vector3 vector2) => new Vector3(vector1.X + vector2.X, vector1.Y + vector2.Y, vector1.Z + vector2.Z);
@@ -77,7 +81,11 @@ namespace BasicVoxelEngine
                 return length * length;
             }
         }
-        public float TaxicabLength => Math.Abs(X) + Math.Abs(Y) + Math.Abs(Z);
+        public override int GetHashCode()
+        {
+            return (X.GetHashCode() << 2) ^ (Y.GetHashCode() << 1) ^ Z.GetHashCode();
+        }
+        public int TaxicabLength => Math.Abs(X) + Math.Abs(Y) + Math.Abs(Z);
         public Vector3I Dot(Vector3I vector) => new Vector3I(X * vector.X, Y * vector.Y, Z * vector.Z);
         public static Vector3I operator+(Vector3I vector1, Vector3I vector2) => new Vector3I(vector1.X + vector2.X, vector1.Y + vector2.Y, vector1.Z + vector2.Z);
         public static Vector3I operator+(Vector3I vector, int scalar) => vector + new Vector3I(scalar);

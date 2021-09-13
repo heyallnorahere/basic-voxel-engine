@@ -15,6 +15,5 @@ namespace bve {
         virtual std::string friendly_name() = 0;
         virtual bool managed();
         // todo: add more properties
-        static void register_all();
     };
 }

@@ -22,7 +22,7 @@ namespace bve {
             void set(MonoClassField* field, void* value);
             void set(MonoProperty* property, void* value);
             std::string get_string();
-            template<typename T> T unbox() {
+            template<typename T> const T& unbox() {
                 MonoObject* _object = mono_gchandle_get_target(this->m_handle);
                 void* pointer = mono_object_unbox(_object);
                 return *(T*)pointer;
@@ -39,6 +39,32 @@ namespace bve {
                 if (exc) {
                     ref<object> exception = ref<object>::create(exc, this->get_domain());
                     handle_exception(exception);
+                }
+                ref<object> returned_object;
+                if (returned) {
+                    returned_object = ref<object>::create(returned, this->get_domain());
+                }
+                return returned_object;
+            }
+            virtual void* get() override;
+            virtual MonoImage* get_image() override;
+        private:
+            uint32_t m_handle;
+        };
+        class delegate : public wrapper {
+        public:
+            delegate(ref<object> _object);
+            delegate(void* _delegate, MonoDomain* domain);
+            virtual ~delegate() override;
+            template<typename... Args> ref<object> invoke(Args*... args) {
+                MonoObject* _delegate = mono_gchandle_get_target(this->m_handle);
+                std::vector<void*> args_vector = { std::forward<Args*>(args)... };
+                MonoObject* exc = nullptr;
+                void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
+                MonoObject* returned = mono_runtime_delegate_invoke(_delegate, args_ptr, &exc);
+                if (exc) {
+                    ref<object> exception = ref<object>::create(exc, this->get_domain());
+                    object::handle_exception(exception);
                 }
                 ref<object> returned_object;
                 if (returned) {
