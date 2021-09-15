@@ -1,4 +1,7 @@
 {
     "omnisharp.useGlobalMono": "always",
-    "cmake.configureOnOpen": true
+    "cmake.configureOnOpen": true,
+    "files.associations": {
+        "stdexcept": "cpp"
+    }
 }

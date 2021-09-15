@@ -128,9 +128,6 @@ namespace bve {
                 glDeleteProgram(this->m_program);
             }
             GLuint opengl_shader::create_shader(const std::string& source, shader_type type, std::optional<fs::path> path) {
-                if (opengl_context::get_version() < 4.1) {
-                    throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
-                }
                 std::string shader_type;
                 GLenum gl_type;
                 switch (type) {
@@ -149,13 +146,19 @@ namespace bve {
                     throw std::runtime_error("[opengl shader] this shader type is not supported yet");
                     break;
                 }
-                spdlog::info(source);
                 spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
                 shader_compiler compiler;
                 std::vector<uint32_t> spirv = compiler.compile(source, shader_language::OpenGLGLSL, type);
                 GLuint id = glCreateShader(gl_type);
-                glShaderBinary(1, &id, GL_SPIR_V_BINARY, spirv.data(), spirv.size() * sizeof(uint32_t));
-                glCompileShader(id);
+                if (opengl_context::get_version() < 4.1) {
+                    throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
+                }
+                glShaderBinary(1, &id, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(), (GLsizei)(spirv.size() * sizeof(uint32_t)));
+                if (opengl_context::get_version() < 4.6) {
+                    throw std::runtime_error("[opengl shader] glSpecializeShader is unavailable");
+                }
+                // for some reason this isnt on docs.gl??????
+                glSpecializeShader(id, "main", 0, nullptr, nullptr);
                 GLint status;
                 glGetShaderiv(id, GL_COMPILE_STATUS, &status);
                 if (!status) {

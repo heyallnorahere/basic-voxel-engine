@@ -65,14 +65,14 @@ namespace bve {
             auto load_content = app_class->get_method("*:LoadContent");
             app_class->invoke(load_content);
         }
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::VULKAN);
+        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL);
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
         this->m_world->generate();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
-        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.hlsl") });
+        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") }); // todo: revert back to hlsl
         this->m_renderer = ref<renderer>::create();
         this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;

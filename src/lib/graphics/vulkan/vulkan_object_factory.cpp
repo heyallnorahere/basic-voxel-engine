@@ -27,6 +27,10 @@ namespace bve {
                 // todo: create texture
                 return nullptr;
             }
+            ref<uniform_buffer> vulkan_object_factory::create_uniform_buffer(size_t size, uint32_t binding) {
+                // todo: create uniform buffer
+                return nullptr;
+            }
             ref<context> vulkan_object_factory::get_current_context() {
                 return this->m_current_context;
             }

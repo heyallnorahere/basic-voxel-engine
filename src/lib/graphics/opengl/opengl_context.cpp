@@ -50,7 +50,7 @@ namespace bve {
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 #else
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 #ifndef NDEBUG
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 #endif
