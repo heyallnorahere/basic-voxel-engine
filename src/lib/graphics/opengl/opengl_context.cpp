@@ -12,7 +12,7 @@ namespace bve {
                 return (double)major + ((double)minor / 10);
             }
             static void debug_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* user_param) {
-                std::string message_ = "[opengl context] " + std::string(message);
+                std::string message_ = "[opengl context] OpenGL: " + std::string(message);
                 switch (severity) {
                 case GL_DEBUG_SEVERITY_HIGH:
                     spdlog::error(message_);
@@ -44,16 +44,12 @@ namespace bve {
             }
             void opengl_context::setup_glfw() {
 #ifdef BVE_PLATFORM_MACOSX
-                glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
-                glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-                glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-#else
+                throw std::runtime_error("[opengl context] OpenGL version 4.6 is not available on this platform!");
+#endif
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
                 glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 #ifndef NDEBUG
                 glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-#endif
 #endif
             }
             void opengl_context::setup_context() {
