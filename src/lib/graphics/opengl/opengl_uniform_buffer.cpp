@@ -6,9 +6,9 @@ namespace bve {
         namespace opengl {
             opengl_uniform_buffer::opengl_uniform_buffer(size_t size, uint32_t binding) {
                 if (opengl_context::get_version() < 4.5) {
-                    throw std::runtime_error("[opengl uniform buffer] glNamedBufferData is only supported in version 4.5 and later");
+                    throw std::runtime_error("[opengl uniform buffer] glNamedBufferData and glCreateBuffers are only supported in version 4.5 and later");
                 }
-                glGenBuffers(1, &this->m_id);
+                glCreateBuffers(1, &this->m_id);
                 glNamedBufferData(this->m_id, (GLsizeiptr)size, nullptr, GL_DYNAMIC_DRAW);
                 glBindBufferBase(GL_UNIFORM_BUFFER, binding, this->m_id);
             }

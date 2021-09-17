@@ -10,6 +10,21 @@ namespace bve {
         size_t index_count;
         bool open;
     };
+    // see /src/assets/shaders/static.glsl
+    struct vertex_uniform_buffer_t {
+        glm::mat4 projection, view;
+    };
+    struct fragment_uniform_buffer_t {
+        lighting::light::uniform_data lights[30];
+        int32_t light_count;
+        texture_atlas::uniform_data texture_atlas_;
+        glm::vec3 camera_position;
+    };
+    renderer::renderer(ref<graphics::object_factory> factory) {
+        this->m_factory = factory;
+        this->m_vertex_uniform_buffer = this->m_factory->create_uniform_buffer(sizeof(vertex_uniform_buffer_t), 0);
+        this->m_fragment_uniform_buffer = this->m_factory->create_uniform_buffer(sizeof(fragment_uniform_buffer_t), 1);
+    }
     command_list* renderer::create_command_list() {
         auto cmdlist = new command_list;
         cmdlist->open = true;
@@ -68,30 +83,33 @@ namespace bve {
     }
     void renderer::render(command_list* cmdlist, ref<graphics::shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas) {
         shader_->bind();
-        shader_->set_mat4("projection", this->m_projection);
-        shader_->set_mat4("view", this->m_view);
-        shader_->set_vec3("camera_position", this->m_camera_position);
+        this->m_vertex_uniform_buffer->set_data(vertex_uniform_buffer_t{
+            this->m_projection,
+            this->m_view
+        });
+        fragment_uniform_buffer_t fragment_uniform_data;
+        fragment_uniform_data.camera_position = this->m_camera_position;
         if (atlas) {
-            atlas->set_uniform(shader_, "atlas");
+            fragment_uniform_data.texture_atlas_ = atlas->get_uniform_data();
         }
         if (cmdlist->lights.size() > 30) {
-            throw std::runtime_error("[renderer] scene cannot contain more than 100 lights!");
+            throw std::runtime_error("[renderer] scene cannot contain more than 30 lights!");
         }
-        shader_->set_int("light_count", (int32_t)cmdlist->lights.size());
+        fragment_uniform_data.light_count = (int32_t)cmdlist->lights.size();
         for (size_t i = 0; i < cmdlist->lights.size(); i++) {
-            std::string uniform_name = "lights[" + std::to_string(i) + "]";
             ref<lighting::light> light = cmdlist->lights[i].second;
-            shader_->set_int(uniform_name + ".type", (int32_t)light->get_type());
-            shader_->set_vec3(uniform_name + ".position", cmdlist->lights[i].first);
-            light->set_uniforms(shader_, uniform_name);
+            lighting::light::uniform_data data = light->get_uniform_data();
+            data.position = cmdlist->lights[i].first;
+            fragment_uniform_data.lights[i] = data;
         }
+        this->m_fragment_uniform_buffer->set_data(fragment_uniform_data);
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
         cmdlist->vao->unbind();
         shader_->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
-        this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane); // todo: add more arguments to function argument list
+        this->m_projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);
         this->m_view = glm::lookAt(position, position + direction, up);
         this->m_camera_position = position;
     }

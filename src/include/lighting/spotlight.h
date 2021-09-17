@@ -9,8 +9,9 @@ namespace bve {
             spotlight& operator=(const spotlight&) = delete;
             void set_direction(glm::vec3 direction);
             void set_cutoff(float cutoff);
-            virtual void set_uniforms(ref<graphics::shader> shader, const std::string& uniform_name) override;
             virtual light_type get_type() override;
+        protected:
+            virtual void get_uniform_data(uniform_data& data) override;
         private:
             glm::vec3 m_direction;
             float m_cutoff;

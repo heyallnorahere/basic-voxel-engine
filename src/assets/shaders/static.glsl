@@ -34,27 +34,27 @@ struct light {
     vec3 direction;
     float cutoff;
     // point light fields
-    float constant, linear, quadratic;
+    float constant, linear_, quadratic;
 };
-struct texture_dimensions_struct {
-    ivec2 atlas_position, texture_dimensions;
+struct texture_dimensions_t {
+    ivec2 grid_position, texture_dimensions;
 };
 struct texture_atlas_t {
-    ivec2 texture_size, atlas_size;
-    texture_dimensions_struct texture_dimensions_array[64]; // im gonna increase the size of this array once i add more blocks
+    ivec2 texture_size, grid_size;
+    texture_dimensions_t texture_dimensions[64]; // im gonna increase the size of this array once i add more blocks
 };
-layout(binding = 0) uniform fragment_uniform_buffer_t {
+layout(binding = 1) uniform fragment_uniform_buffer_t {
     light lights[30];
     int light_count;
     texture_atlas_t texture_atlas;
     vec3 camera_position;
 } fragment_uniform_buffer;
-layout(binding = 1) uniform sampler2D texture_atlas_data;
+layout(binding = 2) uniform sampler2D texture_atlas_data;
 layout(location = 0) out vec4 fragment_color;
 vec4 get_texture() {
     texture_atlas_t atlas = fragment_uniform_buffer.texture_atlas;
-    texture_dimensions_struct dimensions = atlas.texture_dimensions_array[block_id];
-    vec2 uv_offset = vec2(dimensions.atlas_position) / vec2(atlas.atlas_size);
+    texture_dimensions_t dimensions = atlas.texture_dimensions[block_id];
+    vec2 uv_offset = vec2(dimensions.grid_position) / vec2(atlas.grid_size);
     vec2 uv_scale = vec2(dimensions.texture_dimensions) / vec2(atlas.texture_size);
     vec2 uv_coordinates = (uv * uv_scale) + uv_offset;
     return texture(texture_atlas_data, uv_coordinates);
@@ -86,7 +86,7 @@ vec3 calculate_spotlight(light l, vec3 color, vec3 ambient_color) {
 vec3 calculate_point_light(light l, vec3 color) {
     float distance_ = length(l.position - fragment_position);
     float distance_squared = distance_ * distance_;
-    float attenuation = 1.0 / (l.constant + l.linear * distance_ + l.quadratic * distance_squared);
+    float attenuation = 1.0 / (l.constant + l.linear_ * distance_ + l.quadratic * distance_squared);
     return color * attenuation;
 }
 vec3 calculate_light(int index, vec3 _fragment_color) {

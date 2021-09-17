@@ -18,7 +18,7 @@ namespace bve {
         struct stats {
             uint32_t rendercalls;
         };
-        renderer() = default;
+        renderer(ref<graphics::object_factory> factory);
         renderer(const renderer&) = delete;
         renderer& operator=(const renderer&) = delete;
         command_list* create_command_list();
@@ -30,6 +30,8 @@ namespace bve {
         void set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float near_plane = 0.1f, float far_plane = 100.f);
         void set_camera_data(entity camera_entity, float aspect_ratio);
     private:
+        ref<graphics::object_factory> m_factory;
+        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer;
         glm::mat4 m_projection = glm::mat4(1.f);
         glm::mat4 m_view = glm::mat4(1.f);
         glm::vec3 m_camera_position = glm::vec3(0.f);
