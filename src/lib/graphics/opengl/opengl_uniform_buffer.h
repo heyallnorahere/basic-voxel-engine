@@ -9,7 +9,7 @@ namespace bve {
                 virtual ~opengl_uniform_buffer() override;
                 virtual void set_data(const void* data, size_t size, size_t offset) override;
             private:
-                uint32_t m_id;
+                GLuint m_id;
             };
         }
     }

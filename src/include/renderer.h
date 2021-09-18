@@ -3,6 +3,7 @@
 #include "texture_atlas.h"
 #include "graphics/object_factory.h"
 #include "lighting/light.h"
+#include "buffer.h"
 namespace bve {
     struct command_list;
     class mesh : public ref_counted {
@@ -15,9 +16,6 @@ namespace bve {
     };
     class renderer : public ref_counted {
     public:
-        struct stats {
-            uint32_t rendercalls;
-        };
         renderer(ref<graphics::object_factory> factory);
         renderer(const renderer&) = delete;
         renderer& operator=(const renderer&) = delete;
@@ -25,15 +23,13 @@ namespace bve {
         void destroy_command_list(command_list* cmdlist);
         void add_mesh(command_list* cmdlist, ref<mesh> mesh_);
         void add_lights(command_list* cmdlist, const std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights);
-        void close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes, ref<graphics::object_factory> object_factory);
+        void close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes);
         void render(command_list* cmdlist, ref<graphics::shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas = nullptr);
         void set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float near_plane = 0.1f, float far_plane = 100.f);
         void set_camera_data(entity camera_entity, float aspect_ratio);
     private:
         ref<graphics::object_factory> m_factory;
         ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer;
-        glm::mat4 m_projection = glm::mat4(1.f);
-        glm::mat4 m_view = glm::mat4(1.f);
-        glm::vec3 m_camera_position = glm::vec3(0.f);
+        buffer m_vertex_uniform_data, m_fragment_uniform_data;
     };
 }

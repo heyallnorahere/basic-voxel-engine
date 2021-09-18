@@ -25,7 +25,7 @@ namespace bve {
                 return ref<opengl_shader>::create(sources);
             }
             ref<texture> opengl_object_factory::create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) {
-                return ref<opengl_texture>::create(data, width, height, channels, opengl_texture_settings{ });
+                return ref<opengl_texture>::create(data, width, height, channels);
             }
             ref<uniform_buffer> opengl_object_factory::create_uniform_buffer(size_t size, uint32_t binding) {
                 return ref<opengl_uniform_buffer>::create(size, binding);

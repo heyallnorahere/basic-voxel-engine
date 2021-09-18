@@ -93,7 +93,7 @@ namespace bve {
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
         this->m_renderer->add_lights(cmdlist, this->m_lights);
-        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes(), this->m_object_factory);
+        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes());
 
         // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();
