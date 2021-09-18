@@ -5,6 +5,7 @@
 namespace bve {
     texture_atlas::uniform_data texture_atlas::get_uniform_data() {
         uniform_data data;
+        data.image = 0; // lets just hardcode this, shall we?
         data.texture_size = this->m_texture_size;
         data.grid_size = this->m_atlas_size;
         auto& block_register = registry::get().get_register<block>();

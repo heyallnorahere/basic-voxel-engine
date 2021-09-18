@@ -20,7 +20,7 @@ namespace bve {
                 for (size_t i = 0; i < attributes.size(); i++) {
                     const auto& attrib = attributes[i];
                     bool integer;
-                    GLint element_count;
+                    int32_t element_count;
                     switch (attrib.type) {
                     case vertex_attribute_type::FLOAT:
                         integer = false;

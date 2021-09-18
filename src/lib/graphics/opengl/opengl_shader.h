@@ -32,9 +32,9 @@ namespace bve {
             private:
                 void create();
                 void destroy();
-                GLuint create_shader(const std::string& source, shader_type type, std::optional<fs::path> path);
-                GLint get_location(const std::string& name);
-                GLuint m_program;
+                uint32_t create_shader(const std::string& source, shader_type type, std::optional<fs::path> path);
+                int32_t get_location(const std::string& name);
+                uint32_t m_program;
                 std::vector<fs::path> m_sources;
             };
         }

@@ -9,7 +9,7 @@ namespace bve {
             virtual ~texture() = default;
             texture(const texture&) = delete;
             texture& operator=(const texture&) = delete;
-            virtual void bind(GLint slot = 0) = 0;
+            virtual void bind(uint32_t slot = 0) = 0;
             virtual glm::ivec2 get_size() = 0;
             virtual int32_t get_channels() = 0;
             virtual void* get_id() = 0;

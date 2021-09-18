@@ -26,10 +26,12 @@ namespace bve {
             virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) = 0;
             virtual ref<context> create_context() = 0;
             virtual ref<shader> create_shader(const std::vector<fs::path>& sources) = 0;
-            ref<texture> create_texture(fs::path path) {
+            ref<texture> create_texture(const fs::path& path) {
                 int32_t width, height, channels;
                 std::vector<uint8_t> data;
-                texture::load_image(path, data, width, height, channels);
+                if (!texture::load_image(path, data, width, height, channels)) {
+                    throw std::runtime_error("[object factory] could not load image from file: " + path.string());
+                }
                 return this->create_texture(data, width, height, channels);
             }
             virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) = 0;

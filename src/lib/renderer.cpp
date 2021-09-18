@@ -2,6 +2,7 @@
 #include "renderer.h"
 #include "components.h"
 #include "lighting/light.h"
+#include "asset_manager.h"
 namespace bve {
     struct command_list {
         ref<graphics::buffer> vao, vbo, ebo;
@@ -28,6 +29,13 @@ namespace bve {
         this->m_fragment_uniform_buffer = this->m_factory->create_uniform_buffer(sizeof(fragment_uniform_buffer_t), 1);
         this->m_fragment_uniform_data.alloc(sizeof(fragment_uniform_buffer_t));
         this->m_fragment_uniform_data.zero();
+        size_t sampler_buffer_size = sizeof(int32_t) * max_texture_units;
+        this->m_texture_buffer = this->m_factory->create_uniform_buffer(sampler_buffer_size, 2);
+        this->m_sampler_data.alloc(sampler_buffer_size);
+        this->m_sampler_data.zero();
+        auto& asset_manager_ = asset_manager::get();
+        fs::path placeholder_path = asset_manager_.get_asset_path("block:bve:placeholder.png");
+        this->m_placeholder_texture = this->m_factory->create_texture(placeholder_path);
     }
     command_list* renderer::create_command_list() {
         auto cmdlist = new command_list;
@@ -90,7 +98,7 @@ namespace bve {
         fragment_uniform_buffer_t& fud = this->m_fragment_uniform_data;
         if (atlas) {
             fud.texture_atlas_ = atlas->get_uniform_data();
-            atlas->get_texture()->bind(0);
+            this->m_textures[fud.texture_atlas_.image] = atlas->get_texture();
         }
         if (cmdlist->lights.size() > 30) {
             throw std::runtime_error("[renderer] scene cannot contain more than 30 lights!");
@@ -103,6 +111,18 @@ namespace bve {
             fud.lights[i] = data;
         }
         this->m_fragment_uniform_buffer->set_data(this->m_fragment_uniform_data);
+        int32_t* sampler_data = this->m_sampler_data;
+        for (size_t i = 0; i < max_texture_units; i++) {
+            ref<graphics::texture> texture = this->m_textures[i];
+            uint32_t texture_slot = (uint32_t)i;
+            if (texture) {
+                texture->bind(texture_slot);
+            } else {
+                this->m_placeholder_texture->bind(texture_slot);
+            }
+            sampler_data[i] = (int32_t)i;
+        }
+        this->m_texture_buffer->set_data(this->m_sampler_data);
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
         cmdlist->vao->unbind();

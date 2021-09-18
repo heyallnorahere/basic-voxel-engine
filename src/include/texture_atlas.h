@@ -9,6 +9,7 @@ namespace bve {
             glm::ivec2 grid_position, texture_dimensions;
         };
         struct uniform_data {
+            int32_t image;
             glm::ivec2 texture_size, grid_size;
             texture_dimensions_t texture_dimensions[64];
         };

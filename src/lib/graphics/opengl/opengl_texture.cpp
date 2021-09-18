@@ -10,13 +10,13 @@ namespace bve {
             opengl_texture::~opengl_texture() {
                 glDeleteTextures(1, &this->m_id);
             }
-            void opengl_texture::bind(GLint slot) {
-                GLint max_texture_image_units;
+            void opengl_texture::bind(uint32_t slot) {
+                int32_t max_texture_image_units;
                 glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_texture_image_units);
-                if (slot >= max_texture_image_units) {
+                if (slot >= (uint32_t)max_texture_image_units) {
                     throw std::runtime_error("[opengl texture] attempted to bind a texture to a nonexistent texture slot");
                 }
-                glBindTextureUnit((GLuint)slot, this->m_id);
+                glBindTextureUnit(slot, this->m_id);
             }
             glm::ivec2 opengl_texture::get_size() {
                 return this->m_size;

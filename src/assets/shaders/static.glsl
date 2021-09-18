@@ -5,7 +5,7 @@ layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in vec3 in_voxel_position;
 layout(location = 4) in int in_block_id;
-layout(std140, binding = 0) uniform vertex_uniform_buffer_t {
+layout(binding = 0) uniform vertex_uniform_buffer_t {
     mat4 projection;
     mat4 view;
 } vertex_uniform_buffer;
@@ -40,24 +40,24 @@ struct texture_dimensions_t {
     ivec2 grid_position, texture_dimensions;
 };
 struct texture_atlas_t {
+    int image;
     ivec2 texture_size, grid_size;
     texture_dimensions_t texture_dimensions[64]; // im gonna increase the size of this array once i add more blocks
 };
-layout(std140, binding = 1) uniform fragment_uniform_buffer_t {
+layout(binding = 1) uniform fragment_uniform_buffer_t {
     light lights[30];
     int light_count;
     texture_atlas_t texture_atlas;
     vec3 camera_position;
 } fragment_uniform_buffer;
-layout(binding = 2) uniform sampler2D texture_atlas_data;
+layout(binding = 2) uniform sampler2D textures[30];
 layout(location = 0) out vec4 fragment_color;
 vec4 get_texture() {
-    texture_atlas_t atlas = fragment_uniform_buffer.texture_atlas;
-    texture_dimensions_t dimensions = atlas.texture_dimensions[block_id];
-    vec2 uv_offset = vec2(dimensions.grid_position) / vec2(atlas.grid_size);
-    vec2 uv_scale = vec2(dimensions.texture_dimensions) / vec2(atlas.texture_size);
+    texture_dimensions_t dimensions = fragment_uniform_buffer.texture_atlas.texture_dimensions[block_id];
+    vec2 uv_offset = vec2(dimensions.grid_position) / vec2(fragment_uniform_buffer.texture_atlas.grid_size);
+    vec2 uv_scale = vec2(dimensions.texture_dimensions) / vec2(fragment_uniform_buffer.texture_atlas.texture_size);
     vec2 uv_coordinates = (uv * uv_scale) + uv_offset;
-    return texture(texture_atlas_data, uv_coordinates);
+    return texture(textures[fragment_uniform_buffer.texture_atlas.image], uv_coordinates);
 }
 vec3 calculate_ambient(light l) {
     return l.ambient_strength * l.color;
@@ -106,11 +106,10 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
 }
 void main() {
     // commented out in favor of placeholder
-    /*vec4 color = get_texture();
-    vec3 output_color = vec3(0.0);
+    vec4 color = get_texture();
+    /*vec3 output_color = vec3(0.0);
     for (int i = 0; i < fragment_uniform_buffer.light_count; i++) {
         output_color += calculate_light(i, vec3(color));
-    }
-    fragment_color = vec4(output_color, color.a);*/
-    fragment_color = vec4(0.0, 1.0, 0.0, 1.0);
+    }*/
+    fragment_color = color;
 }

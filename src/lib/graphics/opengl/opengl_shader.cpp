@@ -99,7 +99,7 @@ namespace bve {
                 for (const auto& source : this->m_sources) {
                     parser.parse(source);
                 }
-                std::vector<GLuint> shaders;
+                std::vector<uint32_t> shaders;
                 for (shader_type type : parser.get_parsed_shader_types()) {
                     std::string source = parser.get_shader(type);
                     auto path = parser.get_shader_path(type);
@@ -107,14 +107,14 @@ namespace bve {
                 }
                 spdlog::info("[opengl shader] linking shader program...");
                 this->m_program = glCreateProgram();
-                for (GLuint shader_ : shaders) {
+                for (uint32_t shader_ : shaders) {
                     glAttachShader(this->m_program, shader_);
                 }
                 glLinkProgram(this->m_program);
-                for (GLuint shader_ : shaders) {
+                for (uint32_t shader_ : shaders) {
                     glDeleteShader(shader_);
                 }
-                GLint status;
+                int32_t status;
                 glGetProgramiv(this->m_program, GL_LINK_STATUS, &status);
                 if (!status) {
                     GLchar info_log[512];
@@ -127,7 +127,7 @@ namespace bve {
             void opengl_shader::destroy() {
                 glDeleteProgram(this->m_program);
             }
-            GLuint opengl_shader::create_shader(const std::string& source, shader_type type, std::optional<fs::path> path) {
+            uint32_t opengl_shader::create_shader(const std::string& source, shader_type type, std::optional<fs::path> path) {
                 std::string shader_type;
                 GLenum gl_type;
                 switch (type) {
@@ -149,7 +149,7 @@ namespace bve {
                 spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
                 shader_compiler compiler;
                 std::vector<uint32_t> spirv = compiler.compile(source, shader_language::OpenGLGLSL, type);
-                GLuint id = glCreateShader(gl_type);
+                uint32_t id = glCreateShader(gl_type);
                 if (opengl_context::get_version() < 4.1) {
                     throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
                 }
@@ -159,7 +159,7 @@ namespace bve {
                 }
                 // for some reason this isnt on docs.gl??????
                 glSpecializeShader(id, "main", 0, nullptr, nullptr);
-                GLint status;
+                int32_t status;
                 glGetShaderiv(id, GL_COMPILE_STATUS, &status);
                 if (!status) {
                     GLchar info_log[512];
@@ -170,7 +170,7 @@ namespace bve {
                 }
                 return id;
             }
-            GLint opengl_shader::get_location(const std::string& name) {
+            int32_t opengl_shader::get_location(const std::string& name) {
                 return glGetUniformLocation(this->m_program, name.c_str());
             }
         }

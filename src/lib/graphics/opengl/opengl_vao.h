@@ -11,7 +11,7 @@ namespace bve {
                 virtual void unbind() override;
                 virtual void set_vertex_attributes(const std::vector<vertex_attribute>& attributes) override;
             private:
-                GLuint m_id;
+                uint32_t m_id;
             };
         }
     }

@@ -16,6 +16,7 @@ namespace bve {
     };
     class renderer : public ref_counted {
     public:
+        static const size_t max_texture_units = 30;
         renderer(ref<graphics::object_factory> factory);
         renderer(const renderer&) = delete;
         renderer& operator=(const renderer&) = delete;
@@ -29,7 +30,9 @@ namespace bve {
         void set_camera_data(entity camera_entity, float aspect_ratio);
     private:
         ref<graphics::object_factory> m_factory;
-        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer;
-        buffer m_vertex_uniform_data, m_fragment_uniform_data;
+        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer, m_texture_buffer;
+        buffer m_vertex_uniform_data, m_fragment_uniform_data, m_sampler_data;
+        std::array<ref<graphics::texture>, max_texture_units> m_textures;
+        ref<graphics::texture> m_placeholder_texture;
     };
 }
