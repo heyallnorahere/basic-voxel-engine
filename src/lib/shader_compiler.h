@@ -1,5 +1,6 @@
 #pragma once
 #include "shader_parser.h"
+#include "graphics/shader.h"
 namespace bve {
     class shader_compiler {
     public:
@@ -8,5 +9,6 @@ namespace bve {
         std::vector<uint32_t> compile(const std::string& source, shader_language input_language, shader_type type);
         std::string decompile(const std::vector<uint32_t>& spirv, shader_language output_language);
         std::string convert(const std::string& source, shader_language input_language, shader_language output_language, shader_type type);
+        void reflect(const std::vector<uint32_t>& spirv, graphics::reflection_output& output);
     };
 }

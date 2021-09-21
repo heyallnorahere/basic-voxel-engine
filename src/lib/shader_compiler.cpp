@@ -176,4 +176,55 @@ namespace bve {
         std::vector<uint32_t> spirv = this->compile(source, input_language, type);
         return this->decompile(spirv, output_language);
     }
+    static std::map<spirv_cross::TypeID, std::shared_ptr<graphics::struct_data>> defined_structs;
+    static size_t get_size(const spirv_cross::SPIRType& type, const spirv_cross::Compiler& compiler) {
+        using BaseType = spirv_cross::SPIRType::BaseType;
+        switch (type.basetype) {
+        case BaseType::Boolean:
+        case BaseType::Char:
+            return 1;
+        case BaseType::Float:
+        case BaseType::Int:
+        case BaseType::UInt:
+            return 4;
+        case BaseType::Int64:
+        case BaseType::Double:
+        case BaseType::UInt64:
+            return 8;
+        case BaseType::Struct:
+            return compiler.get_declared_struct_size(type);
+        default:
+            throw std::runtime_error("[shader compiler] invalid base type");
+        }
+        return 0;
+    }
+    static std::shared_ptr<graphics::struct_data> get_type(const spirv_cross::Compiler& compiler, spirv_cross::TypeID id) {
+        if (defined_structs.find(id) != defined_structs.end()) {
+            return defined_structs[id];
+        }
+        auto data = std::make_shared<graphics::struct_data>();
+        defined_structs.insert({ id, data });
+        const auto& spirv_type = compiler.get_type(id);
+        data->size = get_size(spirv_type, compiler);
+        size_t current_offset = 0;
+        for (size_t i = 0; i < spirv_type.member_types.size(); i++) {
+            std::string name = compiler.get_member_name(id, (uint32_t)i);
+            graphics::field_data& field = data->fields[name];
+            field.type = get_type(compiler, spirv_type.member_types[i]).get();
+            field.offset = current_offset;
+            current_offset += field.type->size;
+        }
+        return data;
+    }
+    void shader_compiler::reflect(const std::vector<uint32_t>& spirv, graphics::reflection_output& output) {
+        spirv_cross::Compiler compiler(spirv);
+        auto resources = compiler.get_shader_resources();
+        for (const auto& resource : resources.uniform_buffers) {
+            uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+            graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
+            ubd.name = resource.name;
+            ubd.type = get_type(compiler, resource.type_id);
+        }
+        defined_structs.clear();
+    }
 }

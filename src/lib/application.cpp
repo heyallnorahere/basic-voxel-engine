@@ -72,7 +72,7 @@ namespace bve {
         this->m_world->generate();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
-        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") }); // todo: revert back to hlsl
+        this->m_shaders["static"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") }); // todo: revert back to hlsl
         this->m_renderer = ref<renderer>::create(this->m_object_factory);
         this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;
@@ -112,7 +112,7 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
-        this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_window->get_context(), this->m_atlas);
+        this->m_renderer->render(cmdlist, this->m_shaders["static"], this->m_window->get_context(), this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
     }

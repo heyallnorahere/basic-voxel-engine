@@ -116,6 +116,7 @@ namespace bve {
                 std::string source = parser.get_shader(type);
                 shader_compiler compiler;
                 auto spirv = compiler.compile(source, shader_language::GLSL, type);
+                this->reflect(type, spirv);
                 VkShaderModuleCreateInfo create_info;
                 memset(&create_info, 0, sizeof(VkShaderModuleCreateInfo));
                 create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;

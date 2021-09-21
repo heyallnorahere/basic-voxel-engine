@@ -2,6 +2,7 @@
 #include "graphics/object_factory.h"
 #include "opengl/opengl_object_factory.h"
 #include "vulkan/vulkan_object_factory.h"
+#include "../shader_compiler.h"
 // todo: add check to see if stb_image was already implemented
 #define STBI_NO_SIMD
 #define STB_IMAGE_IMPLEMENTATION
@@ -35,6 +36,33 @@ namespace bve {
             std::copy(data_pointer, data_pointer + buffer_size, data.begin());
             stbi_image_free(data_pointer);
             return true;
+        }
+        size_t struct_data::find_offset(const std::string& field_name) {
+            size_t separator_pos = field_name.find('.');
+            std::string name, subname;
+            if (separator_pos != std::string::npos) {
+                name = field_name.substr(0, separator_pos);
+                subname = field_name.substr(separator_pos + 1);
+                if (subname.empty()) {
+                    throw std::runtime_error("[shader compiler] invalid field name");
+                }
+            } else {
+                name = field_name;
+            }
+            if (this->fields.find(name) == this->fields.end()) {
+                throw std::runtime_error("[shader compiler] " + name + " is not the name of a field");
+            }
+            const auto& field = this->fields[name];
+            size_t offset = field.offset;
+            if (subname.empty()) {
+                return offset;
+            } else {
+                return offset + field.type->find_offset(subname);
+            }
+        }
+        void shader::reflect(shader_type type, const std::vector<uint32_t>& spirv) {
+            shader_compiler compiler;
+            compiler.reflect(spirv, this->m_reflection_data[type]);
         }
     }
 }

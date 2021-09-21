@@ -149,6 +149,7 @@ namespace bve {
                 spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
                 shader_compiler compiler;
                 std::vector<uint32_t> spirv = compiler.compile(source, shader_language::OpenGLGLSL, type);
+                this->reflect(type, spirv);
                 uint32_t id = glCreateShader(gl_type);
                 if (opengl_context::get_version() < 4.1) {
                     throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
