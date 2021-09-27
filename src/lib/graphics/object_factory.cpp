@@ -52,8 +52,23 @@ namespace bve {
             if (this->fields.find(name) == this->fields.end()) {
                 throw std::runtime_error("[shader compiler] " + name + " is not the name of a field");
             }
+            int32_t index = 0;
+            size_t open_bracket = name.find('[');
+            if (open_bracket != std::string::npos) {
+                size_t close_bracket = name.find(']');
+                if (close_bracket <= open_bracket + 1 || close_bracket >= name.length() || close_bracket < name.length() - 1) {
+                    throw std::runtime_error("[shader compiler] invalid index operator call");
+                }
+                size_t index_start = open_bracket + 1;
+                std::string index_string = name.substr(index_start, close_bracket - index_start);
+                name = name.substr(0, open_bracket);
+                index = atoi(index_string.c_str());
+            }
             const auto& field = this->fields[name];
-            size_t offset = field.offset;
+            if (index > 0 && field.type->array_size <= 1) {
+                throw std::runtime_error("[shader compiler] attempted to index into a non-array field");
+            }
+            size_t offset = field.offset + (index * field.type->size);
             if (subname.empty()) {
                 return offset;
             } else {

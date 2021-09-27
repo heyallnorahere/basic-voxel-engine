@@ -88,6 +88,7 @@ namespace bve {
     }
     void application::render() {
         this->m_window->get_context()->clear();
+        this->m_renderer->set_shader(this->m_shaders["static"]);
         auto cmdlist = this->m_renderer->create_command_list();
         for (auto& mesh_ : this->m_meshes) {
             this->m_renderer->add_mesh(cmdlist, mesh_);
@@ -112,7 +113,7 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
-        this->m_renderer->render(cmdlist, this->m_shaders["static"], this->m_window->get_context(), this->m_atlas);
+        this->m_renderer->render(cmdlist, this->m_window->get_context(), this->m_atlas);
         this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
     }

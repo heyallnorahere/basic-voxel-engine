@@ -8,7 +8,9 @@ namespace bve {
             struct_data* type;
         };
         struct struct_data {
+            std::string name;
             size_t size;
+            uint32_t array_size;
             std::map<std::string, field_data> fields;
             size_t find_offset(const std::string& field_name);
         };

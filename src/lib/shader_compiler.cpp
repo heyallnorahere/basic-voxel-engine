@@ -205,14 +205,24 @@ namespace bve {
         auto data = std::make_shared<graphics::struct_data>();
         defined_structs.insert({ id, data });
         const auto& spirv_type = compiler.get_type(id);
+        data->name = compiler.get_name(id);
         data->size = get_size(spirv_type, compiler);
+        if (spirv_type.array.empty()) {
+            data->array_size = 1;
+        } else {
+            data->array_size = spirv_type.array[0];
+        }
         size_t current_offset = 0;
         for (size_t i = 0; i < spirv_type.member_types.size(); i++) {
             std::string name = compiler.get_member_name(id, (uint32_t)i);
             graphics::field_data& field = data->fields[name];
             field.type = get_type(compiler, spirv_type.member_types[i]).get();
             field.offset = current_offset;
-            current_offset += field.type->size;
+            size_t field_size = field.type->size;
+            if (field_size < 16) {
+                field_size = 16;
+            }
+            current_offset += field_size;
         }
         return data;
     }
@@ -223,7 +233,7 @@ namespace bve {
             uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
             graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
             ubd.name = resource.name;
-            ubd.type = get_type(compiler, resource.type_id);
+            ubd.type = get_type(compiler, resource.base_type_id);
         }
         defined_structs.clear();
     }

@@ -11,24 +11,8 @@ namespace bve {
         size_t index_count;
         bool open;
     };
-    // see /src/assets/shaders/static.glsl
-    struct vertex_uniform_buffer_t {
-        glm::mat4 projection, view;
-    };
-    struct fragment_uniform_buffer_t {
-        lighting::light::uniform_data lights[30];
-        int32_t light_count;
-        texture_atlas::uniform_data texture_atlas_;
-        glm::vec3 camera_position;
-    };
     renderer::renderer(ref<graphics::object_factory> factory) {
         this->m_factory = factory;
-        this->m_vertex_uniform_buffer = this->m_factory->create_uniform_buffer(sizeof(vertex_uniform_buffer_t), 0);
-        this->m_vertex_uniform_data.alloc(sizeof(vertex_uniform_buffer_t));
-        this->m_vertex_uniform_data.zero();
-        this->m_fragment_uniform_buffer = this->m_factory->create_uniform_buffer(sizeof(fragment_uniform_buffer_t), 1);
-        this->m_fragment_uniform_data.alloc(sizeof(fragment_uniform_buffer_t));
-        this->m_fragment_uniform_data.zero();
         size_t sampler_buffer_size = sizeof(int32_t) * max_texture_units;
         this->m_texture_buffer = this->m_factory->create_uniform_buffer(sampler_buffer_size, 2);
         this->m_sampler_data.alloc(sampler_buffer_size);
@@ -92,8 +76,8 @@ namespace bve {
         cmdlist->ebo = this->m_factory->create_ebo(indices);
         vao->set_vertex_attributes(attributes);
     }
-    void renderer::render(command_list* cmdlist, ref<graphics::shader> shader_, ref<graphics::context> context, ref<texture_atlas> atlas) {
-        shader_->bind();
+    void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {
+        this->m_current_shader->bind();
         this->m_vertex_uniform_buffer->set_data(this->m_vertex_uniform_data);
         fragment_uniform_buffer_t& fud = this->m_fragment_uniform_data;
         if (atlas) {
@@ -126,13 +110,12 @@ namespace bve {
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
         cmdlist->vao->unbind();
-        shader_->unbind();
+        this->m_current_shader->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
-        vertex_uniform_buffer_t& vud = this->m_vertex_uniform_data;
-        vud.projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);
-        vud.view = glm::lookAt(position, position + direction, up);
-        this->m_fragment_uniform_data.get<fragment_uniform_buffer_t>()->camera_position = position;
+        this->m_vub_data.projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);
+        this->m_vub_data.view = glm::lookAt(position, position + direction, up);
+        this->m_fub_data.camera_position = position;
     }
     void renderer::set_camera_data(entity camera_entity, float aspect_ratio) {
         if (!camera_entity.has_component<components::camera_component>()) {
@@ -141,5 +124,41 @@ namespace bve {
         const auto& transform = camera_entity.get_component<components::transform_component>();
         const auto& camera = camera_entity.get_component<components::camera_component>();
         this->set_camera_data(transform.translation, camera.direction, aspect_ratio, camera.up, camera.near_plane, camera.far_plane);
+    }
+    void renderer::set_shader(ref<graphics::shader> shader_) {
+        if (shader_ != this->m_current_shader) {
+            auto reflection_data = shader_->get_reflection_data();
+            size_t size = reflection_data.uniform_buffers[0].type->size;
+            this->m_vertex_uniform_buffer = this->m_factory->create_uniform_buffer(size, 0);
+            this->m_vertex_uniform_data.alloc(size);
+            this->m_vertex_uniform_data.zero();
+            size = reflection_data.uniform_buffers[1].type->size;
+            this->m_fragment_uniform_buffer = this->m_factory->create_uniform_buffer(size, 1);
+            this->m_fragment_uniform_data.alloc(size);
+            this->m_fragment_uniform_data.zero();
+        }
+        this->m_current_shader = shader_;
+    }
+    void renderer::set_uniform_data() {
+        auto set_field = [this](const std::string& name, void* data, size_t size, uint32_t uniform_buffer, buffer& memory) {
+            auto reflection_data = this->m_current_shader->get_reflection_data();
+            auto type = reflection_data.uniform_buffers[uniform_buffer].type;
+            size_t offset = type->find_offset(name);
+            memory.copy(data, size, offset);
+        };
+        set_field("projection", &this->m_vub_data.projection, sizeof(glm::mat4), 0, this->m_vertex_uniform_data);
+        set_field("view", &this->m_vub_data.view, sizeof(glm::mat4), 0, this->m_vertex_uniform_data);
+        set_field("light_count", &this->m_fub_data.light_count, sizeof(int32_t), 1, this->m_fragment_uniform_data);
+        for (int32_t i = 0; i < this->m_fub_data.light_count; i++) {
+            std::string light_name = "lights[" + std::to_string(i) + "]";
+            auto light_data = this->m_fub_data.lights[i];
+            set_field(light_name + ".type", &light_data.type, sizeof(int32_t), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".position", &light_data.position, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".color", &light_data.color, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".ambient_strength", &light_data.ambient_strength, sizeof(float), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".specular_strength", &light_data.specular_strength, sizeof(float), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1, this->m_fragment_uniform_data);
+        }
     }
 }
