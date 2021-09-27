@@ -10,6 +10,10 @@ OPTIONS = [
     Option("GLFW_BUILD_DOCS", "OFF"),
     Option("GLFW_INSTALL", "OFF"),
     Option("INJECT_DEBUG_POSTFIX", "OFF"),
+    Option("ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT", "OFF"),
+    Option("ASSIMP_BUILD_OBJ_IMPORTER", "ON"),
+    Option("ASSIMP_BUILD_FBX_IMPORTER", "ON"),
+    Option("ASSIMP_NO_EXPORT", "ON"),
     Option("ASSIMP_BUILD_TESTS", "OFF"),
     Option("ASSIMP_BUILD_ASSIMP_TOOLS", "OFF")
 ]
