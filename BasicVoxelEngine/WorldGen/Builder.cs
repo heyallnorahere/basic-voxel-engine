@@ -128,13 +128,15 @@ namespace BasicVoxelEngine.WorldGen
         }
         public void SetBlock(Vector3I position, int index)
         {
-            mWorld.SetBlock(position, index);
-            mSetBlocks[position] = Registry.GetRegister<Block>()[index];
+            Block block = Registry.GetRegister<Block>()[index];
+            mWorld.SetBlock(position, block);
+            mSetBlocks[position] = block;
         }
         public void SetBlock(Vector3I position, NamespacedName namespacedName)
         {
-            mWorld.SetBlock(position, namespacedName);
-            mSetBlocks[position] = Registry.GetRegister<Block>()[namespacedName];
+            Block block = Registry.GetRegister<Block>()[namespacedName];
+            mWorld.SetBlock(position, block);
+            mSetBlocks[position] = block;
         }
         public IReadOnlyDictionary<Vector3I, Block> SetBlocks => mSetBlocks;
         public int Seed { get; }

@@ -4,9 +4,9 @@ namespace BasicVoxelEngine.WorldGen
 {
     public enum GenerationStage
     {
-        World,
-        Shinies,
-        Structures
+        World = 0,
+        Shinies = 1,
+        Structures = 2
     }
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class GenerationStepAttribute : Attribute

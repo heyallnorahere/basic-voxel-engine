@@ -1,8 +1,9 @@
-﻿using BasicVoxelEngine.WorldGen;
+﻿using BasicVoxelEngine.Content.Blocks;
+using BasicVoxelEngine.WorldGen;
 using System;
 using System.Collections.Generic;
 
-namespace BasicVoxelEngine.Content.WorldGen
+namespace BasicVoxelEngine.Content
 {
     public static class WorldGenSteps
     {
@@ -24,7 +25,7 @@ namespace BasicVoxelEngine.Content.WorldGen
                 }
             }
             var blockRegister = Registry.GetRegister<Block>();
-            Block testBlock = blockRegister["bve:grass_block"];
+            int grassBlock = blockRegister.GetIndex<Grass>();
             for (int x = 0; x < chunkSize.X; x++)
             {
                 for (int z = 0; z < chunkSize.Z; z++)
@@ -32,7 +33,7 @@ namespace BasicVoxelEngine.Content.WorldGen
                     float height = heightMap[(z * chunkSize.X) + x];
                     int y = (int)Math.Floor(height * chunkSize.Y);
                     var position = new Vector3I(x, y, z);
-                    builder.SetBlock(position, testBlock);
+                    builder.SetBlock(position, grassBlock);
                 }
             }
         }
@@ -48,10 +49,10 @@ namespace BasicVoxelEngine.Content.WorldGen
                 new Vector3I(0, chunkSize.Y - 1, chunkSize.Z - 1)
             };
             var blockRegister = Registry.GetRegister<Block>();
-            Block testBlock2 = blockRegister["bve:test_block_2"];
+            int testLight = blockRegister.GetIndex<TestLight>();
             foreach (var position in positions)
             {
-                builder.SetBlock(position, testBlock2);
+                builder.SetBlock(position, testLight);
             }
         }
     }

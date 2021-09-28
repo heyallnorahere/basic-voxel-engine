@@ -198,6 +198,35 @@ namespace BasicVoxelEngine
             @object.SetIndex(index);
             return index;
         }
+        public bool GetInstance<T2>(out T2? instance) where T2 : T
+        {
+            if (typeof(T2) == typeof(T))
+            {
+                throw new ArgumentException("Cannot get an instance of the base class!");
+            }
+            foreach (T element in this)
+            {
+                if (element is T2 casted)
+                {
+                    instance = casted;
+                    return true;
+                }
+            }
+            instance = null;
+            return false;
+        }
+        public T2 GetInstance<T2>() where T2 : T
+        {
+            T2? instance;
+            if (GetInstance(out instance))
+            {
+                return instance ?? throw new NullReferenceException();
+            }
+            else
+            {
+                throw new ArgumentException("No block of the given type was registered!");
+            }
+        }
         public int? GetIndex(NamespacedName namespacedName)
         {
             int index;
@@ -210,6 +239,22 @@ namespace BasicVoxelEngine
                 return null;
             }
         }
+        public int GetIndex<T2>() where T2 : T
+        {
+            if (typeof(T2) == typeof(T))
+            {
+                throw new ArgumentException("Cannot determine an index based off of base type!");
+            }
+            for (int i = 0; i < Count; i++)
+            {
+                T element = this[i];
+                if (element is T2)
+                {
+                    return i;
+                }
+            }
+            return -1;
+        }
         public NamespacedName? GetNamespacedName(int index)
         {
             NamespacedName namespacedName;
@@ -220,6 +265,32 @@ namespace BasicVoxelEngine
             else
             {
                 return null;
+            }
+        }
+        public bool GetNamespacedName<T2>(out NamespacedName? namespacedName) where T2 : T
+        {
+            int index = GetIndex<T2>();
+            if (index != -1)
+            {
+                namespacedName = GetNamespacedName(index);
+                return true;
+            }
+            else
+            {
+                namespacedName = null;
+                return false;
+            }
+        }
+        public NamespacedName GetNamespacedName<T2>() where T2 : T
+        {
+            NamespacedName? namespacedName;
+            if (GetNamespacedName<T2>(out namespacedName))
+            {
+                return (NamespacedName)(namespacedName ?? throw new NullReferenceException());
+            }
+            else
+            {
+                throw new ArgumentException("Cannot find the name for an unregistered object!");
             }
         }
         public IEnumerator<T> GetEnumerator()
