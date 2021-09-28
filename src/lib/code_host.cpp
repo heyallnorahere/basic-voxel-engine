@@ -288,6 +288,24 @@ namespace bve {
             pair("BasicVoxelEngine.Entity::HasComponent_Native", BasicVoxelEngine_Entity_HasComponent),
             pair("BasicVoxelEngine.Entity::RemoveComponent_Native", BasicVoxelEngine_Entity_RemoveComponent),
             pair("BasicVoxelEngine.Entity::RegisterComponents_Native", BasicVoxelEngine_Entity_RegisterComponents),
+
+            pair("BasicVoxelEngine.Components.TransformComponent::GetTranslation_Native", BasicVoxelEngine_Components_TransformComponent_GetTranslation),
+            pair("BasicVoxelEngine.Components.TransformComponent::SetTranslation_Native", BasicVoxelEngine_Components_TransformComponent_SetTranslation),
+            pair("BasicVoxelEngine.Components.TransformComponent::GetRotation_Native", BasicVoxelEngine_Components_TransformComponent_GetRotation),
+            pair("BasicVoxelEngine.Components.TransformComponent::SetRotation_Native", BasicVoxelEngine_Components_TransformComponent_SetRotation),
+            pair("BasicVoxelEngine.Components.TransformComponent::GetScale_Native", BasicVoxelEngine_Components_TransformComponent_GetScale),
+            pair("BasicVoxelEngine.Components.TransformComponent::SetScale_Native", BasicVoxelEngine_Components_TransformComponent_SetScale),
+
+            pair("BasicVoxelEngine.Components.CameraComponent::GetDirection_Native", BasicVoxelEngine_Components_CameraComponent_GetDirection),
+            pair("BasicVoxelEngine.Components.CameraComponent::SetDirection_Native", BasicVoxelEngine_Components_CameraComponent_SetDirection),
+            pair("BasicVoxelEngine.Components.CameraComponent::GetUp_Native", BasicVoxelEngine_Components_CameraComponent_GetUp),
+            pair("BasicVoxelEngine.Components.CameraComponent::SetUp_Native", BasicVoxelEngine_Components_CameraComponent_SetUp),
+            pair("BasicVoxelEngine.Components.CameraComponent::GetPrimary_Native", BasicVoxelEngine_Components_CameraComponent_GetPrimary),
+            pair("BasicVoxelEngine.Components.CameraComponent::SetPrimary_Native", BasicVoxelEngine_Components_CameraComponent_SetPrimary),
+            pair("BasicVoxelEngine.Components.CameraComponent::GetNearPlane_Native", BasicVoxelEngine_Components_CameraComponent_GetNearPlane),
+            pair("BasicVoxelEngine.Components.CameraComponent::SetNearPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetNearPlane),
+            pair("BasicVoxelEngine.Components.CameraComponent::GetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_GetFarPlane),
+            pair("BasicVoxelEngine.Components.CameraComponent::SetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetFarPlane),
         };
     }
     static ref<code_host> current_code_host;

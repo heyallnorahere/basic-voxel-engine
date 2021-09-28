@@ -491,7 +491,8 @@ namespace bve {
             } });
         }
         static entity get_entity(uint32_t id, void* world_) {
-            return entity((entt::entity)id, (world*)world_);
+            ref<world> _ref = *(ref<world>*)world_;
+            return entity((entt::entity)id, _ref.raw());
         }
         object BasicVoxelEngine_Entity_AddComponent(uint id, IntPtr world, Type type) {
             entity ent = get_entity(id, world);
@@ -521,22 +522,54 @@ namespace bve {
             register_component_type<components::camera_component>(host, "BasicVoxelEngine.Components.CameraComponent");
         }
 
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address);
-        void BasicVoxelEngine_Components_TransformComponent_SetTranslation(IntPtr address, Vector3 value);
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address);
-        void BasicVoxelEngine_Components_TransformComponent_SetRotation(IntPtr address, Vector3 value);
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address);
-        void BasicVoxelEngine_Components_TransformComponent_SetScale(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address) {
+            return ((components::transform_component*)address)->translation;
+        }
+        void BasicVoxelEngine_Components_TransformComponent_SetTranslation(IntPtr address, Vector3 value) {
+            ((components::transform_component*)address)->translation = value;
+        }
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address) {
+            return ((components::transform_component*)address)->rotation;
+        }
+        void BasicVoxelEngine_Components_TransformComponent_SetRotation(IntPtr address, Vector3 value) {
+            ((components::transform_component*)address)->rotation = value;
+        }
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address) {
+            return ((components::transform_component*)address)->scale;
+        }
+        void BasicVoxelEngine_Components_TransformComponent_SetScale(IntPtr address, Vector3 value) {
+            ((components::transform_component*)address)->scale = value;
+        }
 
-        Vector3 BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address);
-        void BasicVoxelEngine_Components_CameraComponent_SetDirection(IntPtr address, Vector3 value);
-        Vector3 BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address);
-        void BasicVoxelEngine_Components_CameraComponent_SetUp(IntPtr address, Vector3 value);
-        bool BasicVoxelEngine_Components_CameraComponent_GetPrimary(IntPtr address);
-        void BasicVoxelEngine_Components_CameraComponent_SetPrimary(IntPtr address, bool value);
-        float BasicVoxelEngine_Components_CameraComponent_GetNearPlane(IntPtr address);
-        void BasicVoxelEngine_Components_CameraComponent_SetNearPlane(IntPtr address, float value);
-        float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
-        void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address) {
+            return ((components::camera_component*)address)->direction;
+        }
+        void BasicVoxelEngine_Components_CameraComponent_SetDirection(IntPtr address, Vector3 value) {
+            ((components::camera_component*)address)->direction = value;
+        }
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address) {
+            return ((components::camera_component*)address)->up;
+        }
+        void BasicVoxelEngine_Components_CameraComponent_SetUp(IntPtr address, Vector3 value) {
+            ((components::camera_component*)address)->up = value;
+        }
+        bool BasicVoxelEngine_Components_CameraComponent_GetPrimary(IntPtr address) {
+            return ((components::camera_component*)address)->primary;
+        }
+        void BasicVoxelEngine_Components_CameraComponent_SetPrimary(IntPtr address, bool value) {
+            ((components::camera_component*)address)->primary = value;
+        }
+        float BasicVoxelEngine_Components_CameraComponent_GetNearPlane(IntPtr address) {
+            return ((components::camera_component*)address)->near_plane;
+        }
+        void BasicVoxelEngine_Components_CameraComponent_SetNearPlane(IntPtr address, float value) {
+            ((components::camera_component*)address)->near_plane = value;
+        }
+        float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address) {
+            return ((components::camera_component*)address)->far_plane;
+        }
+        void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value) {
+            ((components::camera_component*)address)->far_plane = value;
+        }
     }
 }

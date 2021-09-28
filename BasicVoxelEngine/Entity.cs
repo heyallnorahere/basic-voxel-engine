@@ -9,15 +9,15 @@ namespace BasicVoxelEngine
         {
             RegisterComponents_Native();
         }
-        public Entity()
-        {
-            ID = uint.MaxValue;
-            mWorld = null;
-        }
         public Entity(uint id, World world)
         {
             ID = id;
             mWorld = world;
+        }
+        public Entity()
+        {
+            ID = uint.MaxValue;
+            mWorld = null;
         }
         public uint ID { get; }
         public World World => mWorld ?? throw new NullReferenceException();
