@@ -44,6 +44,7 @@ namespace BasicVoxelEngine
                 return length * length;
             }
         }
+        public Vector3 Normalized => this / Length;
         public override int GetHashCode()
         {
             return (X.GetHashCode() << 2) ^ (Y.GetHashCode() << 1) ^ Z.GetHashCode();
@@ -77,11 +78,20 @@ namespace BasicVoxelEngine
         public Vector2 YZ => new Vector2(Y, Z);
         public Vector2 XZ => new Vector2(X, Z);
         public Vector3 Dot(Vector3 vector) => new Vector3(X * vector.X, Y * vector.Y, Z * vector.Z);
+        public Vector3 Cross(Vector3 vector)
+        {
+            return new Vector3
+            {
+                X = Y * vector.Z - Z * vector.Y,
+                Y = Z * vector.X - X * vector.Z,
+                Z = X * vector.Y - Y * vector.X
+            };
+        }
         public static Vector3 operator+(Vector3 vector1, Vector3 vector2) => new Vector3(vector1.X + vector2.X, vector1.Y + vector2.Y, vector1.Z + vector2.Z);
         public static Vector3 operator+(Vector3 vector, float scalar) => vector + new Vector3(scalar);
         public static Vector3 operator+(float scalar, Vector3 vector) => new Vector3(scalar) + vector;
         public static Vector3 operator-(Vector3 vector) => new Vector3(-vector.X, -vector.Y, -vector.Z);
-        public static Vector3 operator-(Vector3 vector1, Vector3 vector2) => vector1 + -vector1;
+        public static Vector3 operator-(Vector3 vector1, Vector3 vector2) => vector1 + -vector2;
         public static Vector3 operator-(Vector3 vector, float scalar) => vector - new Vector3(scalar);
         public static Vector3 operator-(float scalar, Vector3 vector) => new Vector3(scalar) - vector;
         public static Vector3 operator*(Vector3 vector1, Vector3 vector2) => vector1.Dot(vector2);
@@ -146,7 +156,7 @@ namespace BasicVoxelEngine
         public static Vector3I operator+(Vector3I vector, int scalar) => vector + new Vector3I(scalar);
         public static Vector3I operator+(int scalar, Vector3I vector) => new Vector3I(scalar) + vector;
         public static Vector3I operator-(Vector3I vector) => new Vector3I(-vector.X, -vector.Y, -vector.Z);
-        public static Vector3I operator-(Vector3I vector1, Vector3I vector2) => vector1 + -vector1;
+        public static Vector3I operator-(Vector3I vector1, Vector3I vector2) => vector1 + -vector2;
         public static Vector3I operator-(Vector3I vector, int scalar) => vector - new Vector3I(scalar);
         public static Vector3I operator-(int scalar, Vector3I vector) => new Vector3I(scalar) - vector;
         public static Vector3I operator*(Vector3I vector1, Vector3I vector2) => vector1.Dot(vector2);

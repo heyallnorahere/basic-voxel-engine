@@ -30,6 +30,7 @@ namespace BasicVoxelEngine
                 return length * length;
             }
         }
+        public Vector2 Normalized => this / Length;
         public override int GetHashCode()
         {
             return (X.GetHashCode() << 1) ^ Y.GetHashCode();
@@ -62,7 +63,7 @@ namespace BasicVoxelEngine
         public static Vector2 operator+(Vector2 vector, float scalar) => vector + new Vector2(scalar);
         public static Vector2 operator+(float scalar, Vector2 vector) => new Vector2(scalar) + vector;
         public static Vector2 operator-(Vector2 vector) => new Vector2(-vector.X, -vector.Y);
-        public static Vector2 operator-(Vector2 vector1, Vector2 vector2) => vector1 + -vector1;
+        public static Vector2 operator-(Vector2 vector1, Vector2 vector2) => vector1 + -vector2;
         public static Vector2 operator-(Vector2 vector, float scalar) => vector - new Vector2(scalar);
         public static Vector2 operator-(float scalar, Vector2 vector) => new Vector2(scalar) - vector;
         public static Vector2 operator*(Vector2 vector1, Vector2 vector2) => vector1.Dot(vector2);
@@ -109,7 +110,7 @@ namespace BasicVoxelEngine
         public static Vector2I operator+(Vector2I vector, int scalar) => vector + new Vector2I(scalar);
         public static Vector2I operator+(int scalar, Vector2I vector) => new Vector2I(scalar) + vector;
         public static Vector2I operator-(Vector2I vector) => new Vector2I(-vector.X, -vector.Y);
-        public static Vector2I operator-(Vector2I vector1, Vector2I vector2) => vector1 + -vector1;
+        public static Vector2I operator-(Vector2I vector1, Vector2I vector2) => vector1 + -vector2;
         public static Vector2I operator-(Vector2I vector, int scalar) => vector - new Vector2I(scalar);
         public static Vector2I operator-(int scalar, Vector2I vector) => new Vector2I(scalar) - vector;
         public static Vector2I operator*(Vector2I vector1, Vector2I vector2) => vector1.Dot(vector2);

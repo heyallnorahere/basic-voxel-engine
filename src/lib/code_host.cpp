@@ -228,6 +228,7 @@ namespace bve {
     std::unordered_map<std::string, void*> code_host::get_script_wrappers() {
         using namespace script_wrappers;
         return {
+            pair("BasicVoxelEngine.Application::Quit", BasicVoxelEngine_Application_Quit),
             pair("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
             pair("BasicVoxelEngine.Application::GetWorld_Native", BasicVoxelEngine_Application_GetWorld),
             pair("BasicVoxelEngine.Application::GetInputManager_Native", BasicVoxelEngine_Application_GetInputManager),

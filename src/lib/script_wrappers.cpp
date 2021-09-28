@@ -234,6 +234,10 @@ namespace bve {
             ref_destruction_callbacks[get_register_type(type)->get()] = delete_ref<object_register<T>>;
         }
 
+        void BasicVoxelEngine_Application_Quit() {
+            auto& app = application::get();
+            app.quit();
+        }
         double BasicVoxelEngine_Application_GetDeltaTime() {
             auto& app = application::get();
             return app.get_delta_time();

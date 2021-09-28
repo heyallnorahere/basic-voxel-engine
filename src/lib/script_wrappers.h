@@ -17,6 +17,7 @@ namespace bve {
         using object = MonoObject*;
         using Vector2 = glm::vec2;
 
+        void BasicVoxelEngine_Application_Quit();
         double BasicVoxelEngine_Application_GetDeltaTime();
         IntPtr BasicVoxelEngine_Application_GetWorld();
         IntPtr BasicVoxelEngine_Application_GetInputManager();

@@ -8,6 +8,8 @@ namespace BasicVoxelEngine
     public static class Application
     {
         [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern void Quit();
+        [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern double GetDeltaTime();
         public static World World => new World(GetWorld_Native());
         public static InputManager InputManager => new InputManager(GetInputManager_Native());
