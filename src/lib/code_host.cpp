@@ -230,6 +230,7 @@ namespace bve {
         return {
             pair("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
             pair("BasicVoxelEngine.Application::GetWorld_Native", BasicVoxelEngine_Application_GetWorld),
+            pair("BasicVoxelEngine.Application::GetInputManager_Native", BasicVoxelEngine_Application_GetInputManager),
 
             pair("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
             pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
@@ -306,6 +307,12 @@ namespace bve {
             pair("BasicVoxelEngine.Components.CameraComponent::SetNearPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetNearPlane),
             pair("BasicVoxelEngine.Components.CameraComponent::GetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_GetFarPlane),
             pair("BasicVoxelEngine.Components.CameraComponent::SetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetFarPlane),
+
+            pair("BasicVoxelEngine.InputManager::DestroyRef_Native", BasicVoxelEngine_InputManager_DestroyRef),
+            pair("BasicVoxelEngine.InputManager::GetMouseEnabled_Native", BasicVoxelEngine_InputManager_GetMouseEnabled),
+            pair("BasicVoxelEngine.InputManager::SetMouseEnabled_Native", BasicVoxelEngine_InputManager_SetMouseEnabled),
+            pair("BasicVoxelEngine.InputManager::GetMouse_Native", BasicVoxelEngine_InputManager_GetMouse),
+            pair("BasicVoxelEngine.InputManager::GetKey_Native", BasicVoxelEngine_InputManager_GetKey),
         };
     }
     static ref<code_host> current_code_host;

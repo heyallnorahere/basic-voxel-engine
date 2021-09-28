@@ -1,5 +1,6 @@
 #pragma once
 #include "lighting/light.h"
+#include "input_manager.h"
 namespace bve {
     namespace script_wrappers {
         struct NamespacedName {
@@ -14,9 +15,11 @@ namespace bve {
         using LightType = lighting::light_type;
         using uint = uint32_t;
         using object = MonoObject*;
+        using Vector2 = glm::vec2;
 
         double BasicVoxelEngine_Application_GetDeltaTime();
         IntPtr BasicVoxelEngine_Application_GetWorld();
+        IntPtr BasicVoxelEngine_Application_GetInputManager();
 
         void BasicVoxelEngine_Logger_PrintDebug(string message);
         void BasicVoxelEngine_Logger_PrintInfo(string message);
@@ -93,5 +96,11 @@ namespace bve {
         void BasicVoxelEngine_Components_CameraComponent_SetNearPlane(IntPtr address, float value);
         float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
         void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
+
+        void BasicVoxelEngine_InputManager_DestroyRef(IntPtr address);
+        bool BasicVoxelEngine_InputManager_GetMouseEnabled(IntPtr address);
+        void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value);
+        Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address);
+        input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key);
     }
 }

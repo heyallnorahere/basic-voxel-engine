@@ -242,6 +242,10 @@ namespace bve {
             auto& app = application::get();
             return new ref<world>(app.get_world());
         }
+        IntPtr BasicVoxelEngine_Application_GetInputManager() {
+            auto& app = application::get();
+            return new ref<input_manager>(app.get_input_manager());
+        }
 
         void BasicVoxelEngine_Logger_PrintDebug(string message) {
             spdlog::debug(get_log_message(message));
@@ -570,6 +574,29 @@ namespace bve {
         }
         void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value) {
             ((components::camera_component*)address)->far_plane = value;
+        }
+
+        static ref<input_manager> get_input_manager(void* address) {
+            return *(ref<input_manager>*)address;
+        }
+        void BasicVoxelEngine_InputManager_DestroyRef(IntPtr address) {
+            delete (ref<input_manager>*)address;
+        }
+        bool BasicVoxelEngine_InputManager_GetMouseEnabled(IntPtr address) {
+            auto im = get_input_manager(address);
+            return im->mouse_enabled();
+        }
+        void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value) {
+            auto im = get_input_manager(address);
+            im->mouse_enabled() = value;
+        }
+        Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address) {
+            auto im = get_input_manager(address);
+            return im->get_mouse();
+        }
+        input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key) {
+            auto im = get_input_manager(address);
+            return im->get_key(key);
         }
     }
 }
