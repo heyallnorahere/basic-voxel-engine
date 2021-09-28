@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace BasicVoxelEngine
 {
     /// <summary>
-    /// This class is for managed helpers to native code, i.e. getting generic types
+    /// This class is for helpers and extensions.
     /// </summary>
     public static class Helpers
     {
@@ -34,5 +34,22 @@ namespace BasicVoxelEngine
             }
             return false;
         }
+        public static float ToRadians(this float value)
+        {
+            return value / (float)Factor;
+        }
+        public static float ToDegrees(this float value)
+        {
+            return value * (float)Factor;
+        }
+        public static double ToRadians(this double value)
+        {
+            return value / Factor;
+        }
+        public static double ToDegrees(this double value)
+        {
+            return value * Factor;
+        }
+        private const double Factor = 180D / Math.PI;
     }
 }
