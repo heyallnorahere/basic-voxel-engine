@@ -12,6 +12,8 @@ namespace bve {
         using Vector3 = glm::vec3;
         using Vector3I = glm::ivec3;
         using LightType = lighting::light_type;
+        using uint = uint32_t;
+        using object = MonoObject*;
 
         double BasicVoxelEngine_Application_GetDeltaTime();
         IntPtr BasicVoxelEngine_Application_GetWorld();
@@ -67,5 +69,29 @@ namespace bve {
         int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position);
         void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index);
         void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback);
+
+        object BasicVoxelEngine_Entity_AddComponent(uint id, IntPtr world, Type type);
+        object BasicVoxelEngine_Entity_GetComponent(uint id, IntPtr world, Type type);
+        bool BasicVoxelEngine_Entity_HasComponent(uint id, IntPtr world, Type type);
+        void BasicVoxelEngine_Entity_RemoveComponent(uint id, IntPtr world, Type type);
+        void BasicVoxelEngine_Entity_RegisterComponents();
+
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetTranslation(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetRotation(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetScale(IntPtr address, Vector3 value);
+
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetDirection(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetUp(IntPtr address, Vector3 value);
+        bool BasicVoxelEngine_Components_CameraComponent_GetPrimary(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetPrimary(IntPtr address, bool value);
+        float BasicVoxelEngine_Components_CameraComponent_GetNearPlane(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetNearPlane(IntPtr address, float value);
+        float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
     }
 }

@@ -282,6 +282,12 @@ namespace bve {
             pair("BasicVoxelEngine.World::GetBlock_Native", BasicVoxelEngine_World_GetBlock),
             pair("BasicVoxelEngine.World::SetBlock_Native", BasicVoxelEngine_World_SetBlock),
             pair("BasicVoxelEngine.World::AddOnBlockChangedCallback_Native", BasicVoxelEngine_World_AddOnBlockChangedCallback),
+
+            pair("BasicVoxelEngine.Entity::AddComponent_Native", BasicVoxelEngine_Entity_AddComponent),
+            pair("BasicVoxelEngine.Entity::GetComponent_Native", BasicVoxelEngine_Entity_GetComponent),
+            pair("BasicVoxelEngine.Entity::HasComponent_Native", BasicVoxelEngine_Entity_HasComponent),
+            pair("BasicVoxelEngine.Entity::RemoveComponent_Native", BasicVoxelEngine_Entity_RemoveComponent),
+            pair("BasicVoxelEngine.Entity::RegisterComponents_Native", BasicVoxelEngine_Entity_RegisterComponents),
         };
     }
     static ref<code_host> current_code_host;

@@ -6,6 +6,7 @@
 #include "asset_manager.h"
 #include "lighting/spotlight.h"
 #include "lighting/point_light.h"
+#include "components.h"
 namespace bve {
     namespace script_wrappers {
         struct script_ref {
@@ -455,5 +456,87 @@ namespace bve {
                 delegate_copy->invoke(&position, instance->get());
             });
         }
+
+        template<typename T> void* add_component(entity ent) {
+            return &ent.add_component<T>();
+        }
+        template<typename T> void* get_component(entity ent) {
+            return &ent.get_component<T>();
+        }
+        template<typename T> bool has_component(entity ent) {
+            return ent.has_component<T>();
+        }
+        template<typename T> void remove_component(entity ent) {
+            ent.remove_component<T>();
+        }
+        struct managed_component_data {
+            std::function<void*(entity)> add_component, get_component;
+            std::function<bool(entity)> has_component;
+            std::function<void(entity)> remove_component;
+            std::function<ref<managed::object>(void*)> create_object;
+        };
+        std::unordered_map<MonoReflectionType*, managed_component_data> component_data;
+        template<typename T> static void register_component_type(ref<code_host> host, const std::string& type_name) {
+            auto _class = host->find_class(type_name);
+            auto type = managed::type::get_type(_class)->get_object();
+            std::function<ref<managed::object>(void*)> create_object = [_class](void* pointer) mutable {
+                return _class->instantiate(&pointer);
+            };
+            component_data.insert({ type, {
+                add_component<T>,
+                get_component<T>,
+                has_component<T>,
+                remove_component<T>,
+                create_object
+            } });
+        }
+        static entity get_entity(uint32_t id, void* world_) {
+            return entity((entt::entity)id, (world*)world_);
+        }
+        object BasicVoxelEngine_Entity_AddComponent(uint id, IntPtr world, Type type) {
+            entity ent = get_entity(id, world);
+            const auto& data = component_data[type];
+            void* pointer = data.add_component(ent);
+            return (MonoObject*)data.create_object(pointer)->get();
+        }
+        object BasicVoxelEngine_Entity_GetComponent(uint id, IntPtr world, Type type) {
+            entity ent = get_entity(id, world);
+            const auto& data = component_data[type];
+            void* pointer = data.get_component(ent);
+            return (MonoObject*)data.create_object(pointer)->get();
+        }
+        bool BasicVoxelEngine_Entity_HasComponent(uint id, IntPtr world, Type type) {
+            entity ent = get_entity(id, world);
+            const auto& data = component_data[type];
+            return data.has_component(ent);
+        }
+        void BasicVoxelEngine_Entity_RemoveComponent(uint id, IntPtr world, Type type) {
+            entity ent = get_entity(id, world);
+            const auto& data = component_data[type];
+            data.remove_component(ent);
+        }
+        void BasicVoxelEngine_Entity_RegisterComponents() {
+            ref<code_host> host = code_host::current();
+            register_component_type<components::transform_component>(host, "BasicVoxelEngine.Components.TransformComponent");
+            register_component_type<components::camera_component>(host, "BasicVoxelEngine.Components.CameraComponent");
+        }
+
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetTranslation(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetRotation(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address);
+        void BasicVoxelEngine_Components_TransformComponent_SetScale(IntPtr address, Vector3 value);
+
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetDirection(IntPtr address, Vector3 value);
+        Vector3 BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetUp(IntPtr address, Vector3 value);
+        bool BasicVoxelEngine_Components_CameraComponent_GetPrimary(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetPrimary(IntPtr address, bool value);
+        float BasicVoxelEngine_Components_CameraComponent_GetNearPlane(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetNearPlane(IntPtr address, float value);
+        float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
+        void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
     }
 }

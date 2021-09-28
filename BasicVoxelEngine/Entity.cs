@@ -5,6 +5,10 @@ namespace BasicVoxelEngine
 {
     public sealed class Entity
     {
+        static Entity()
+        {
+            RegisterComponents_Native();
+        }
         public Entity()
         {
             ID = uint.MaxValue;
@@ -46,5 +50,7 @@ namespace BasicVoxelEngine
         private static extern bool HasComponent_Native(uint id, IntPtr world, Type type);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void RemoveComponent_Native(uint id, IntPtr world, Type type);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern void RegisterComponents_Native();
     }
 }
