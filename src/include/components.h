@@ -39,6 +39,24 @@ namespace bve {
                     }
                     this->script_object->invoke(method);
                 }
+                void on_attach(entity ent, ref<code_host> host) {
+                    ref<world>* ptr = new ref<world>(ent.get_world());
+                    auto world_class = host->find_class("BasicVoxelEngine.World");
+                    auto world_object = world_class->instantiate(&ptr);
+                    uint32_t handle = ent;
+                    auto entity_class = host->find_class("BasicVoxelEngine.Entity");
+                    auto entity_object = entity_class->instantiate(&handle, world_object->get());
+                    MonoProperty* parent_property = this->script_type->get_property("Parent");
+                    if (!parent_property) {
+                        return;
+                    }
+                    this->script_object->set(parent_property, entity_object->get());
+                    MonoMethod* method = this->script_type->get_method("*:OnAttach()");
+                    if (!method) {
+                        return;
+                    }
+                    this->script_object->invoke(method);
+                }
             };
             script_component(ref<code_host> host) {
                 this->host = host;
@@ -52,7 +70,7 @@ namespace bve {
             ref<code_host> host;
             ref<managed::class_> base_class;
             template<typename... Args> script& bind(ref<managed::class_> script_type, Args*&&... args) {
-                auto& sc = scripts.emplace_back();
+                auto& sc = this->scripts.emplace_back();
                 sc.script_type = script_type;
                 if (!sc.script_type || !sc.script_type->get()) {
                     throw std::runtime_error("[script component] nullptr was passed");
@@ -61,11 +79,12 @@ namespace bve {
                     throw std::runtime_error("[script component] the given type must derive from BasicVoxelEngine.Script");
                 }
                 sc.script_object = sc.script_type->instantiate(std::forward<Args*>(args)...);
+                sc.on_attach(this->parent, this->host);
                 return sc;
             }
             template<typename... Args> script& bind(const std::string& script_name, Args*&&... args) {
                 auto script_type = this->host->find_class(script_name);
-                if (script_type) {
+                if (!script_type) {
                     throw std::runtime_error("[script component] no such class found");
                 }
                 return this->bind(script_type, std::forward<Args*>(args)...);

@@ -16,14 +16,18 @@ namespace bve {
     class entity {
     public:
         entity() = default;
+        entity(entt::entity handle, world* world_);
         entity(const entity& other) = default;
         entity& operator=(const entity& other) = default;
         template<typename T, typename... Args> T& add_component(Args&&... args);
         template<typename T> T& get_component();
         template<typename T> void remove_component();
         template<typename T> bool has_component();
+        operator bool() { return this->m_handle != entt::null && this->m_world; }
+        operator entt::entity() { return this->m_handle; }
+        operator uint32_t() { return (uint32_t)this->m_handle; }
+        world* get_world() { return this->m_world; }
     private:
-        entity(entt::entity handle, world* world_);
         entt::entity m_handle = entt::null;
         world* m_world = nullptr;
         friend class world;

@@ -88,7 +88,7 @@ namespace bve {
         void object::set(MonoProperty* property, void* value) {
             MonoObject* _object = mono_gchandle_get_target(this->m_handle);
             MonoObject* exc = nullptr;
-            mono_property_set_value(property, _object, nullptr, &exc);
+            mono_property_set_value(property, _object, &value, &exc);
             if (exc) {
                 ref<object> exception = ref<object>::create(exc, this->get_domain());
                 handle_exception(exception);
@@ -350,7 +350,7 @@ namespace bve {
     ref<managed::class_> code_host::find_class(const std::string& namespace_name, const std::string& class_name) {
         for (auto assembly : this->m_assemblies) {
             ref<managed::class_> current_class = assembly->get_class(namespace_name, class_name);
-            if (current_class) {
+            if (current_class && current_class->get()) {
                 return current_class;
             }
         }

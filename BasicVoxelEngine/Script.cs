@@ -4,22 +4,22 @@ namespace BasicVoxelEngine
     {
         public virtual void OnAttach() { }
         public abstract void Update();
-        public Entity Entity { get; set; } = new Entity();
+        public Entity Parent { get; internal set; } = new Entity();
         protected T AddComponent<T>()
         {
-            return Entity.AddComponent<T>();
+            return Parent.AddComponent<T>();
         }
         protected T GetComponent<T>()
         {
-            return Entity.GetComponent<T>();
+            return Parent.GetComponent<T>();
         }
         protected bool HasComponent<T>()
         {
-            return Entity.HasComponent<T>();
+            return Parent.HasComponent<T>();
         }
         protected void RemoveComponent<T>()
         {
-            Entity.RemoveComponent<T>();
+            Parent.RemoveComponent<T>();
         }
     }
 }
