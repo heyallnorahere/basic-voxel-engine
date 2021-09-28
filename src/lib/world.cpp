@@ -21,8 +21,8 @@ namespace bve {
     void world::update() {
         auto script_view = this->m_registry.view<components::script_component>();
         script_view.each([](components::script_component& sc) {
-            for (ref<script> script_ : sc.scripts) {
-                script_->update();
+            for (auto& script : sc.scripts) {
+                script.update();
             }
         });
     }

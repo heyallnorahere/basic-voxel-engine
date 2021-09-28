@@ -149,6 +149,15 @@ namespace bve {
         MonoProperty* class_::get_property(const std::string& name) {
             return mono_class_get_property_from_name(this->m_class, name.c_str());
         }
+        bool class_::derives_from(ref<class_> cls) {
+            ref<code_host> host = code_host::current();
+            ref<class_> helpers = host->find_class("BasicVoxelEngine.Helpers");
+            MonoMethod* method = helpers->get_method("*:DerivesFrom");
+            auto reftype = type::get_type(this)->get_object();
+            auto base_reftype = type::get_type(cls)->get_object();
+            auto result = helpers->invoke(method, reftype, base_reftype);
+            return result->unbox<bool>();
+        }
         void* class_::get() {
             return this->m_class;
         }

@@ -1,5 +1,5 @@
 #pragma once
-#include "script.h"
+#include "code_host.h"
 #include "world.h"
 namespace bve {
     namespace components {
@@ -29,15 +29,46 @@ namespace bve {
             camera_component& operator=(const camera_component&) = default;
         };
         struct script_component {
-            std::vector<ref<script>> scripts;
+            struct script {
+                ref<managed::object> script_object;
+                ref<managed::class_> script_type;
+                void update() {
+                    MonoMethod* method = this->script_type->get_method("*:Update()");
+                    if (!method) {
+                        return;
+                    }
+                    this->script_object->invoke(method);
+                }
+            };
+            script_component(ref<code_host> host) {
+                this->host = host;
+                this->base_class = this->host->find_class("BasicVoxelEngine.Script");
+                if (!this->base_class) {
+                    throw std::runtime_error("[script component] the BasicVoxelEngine.Script class does not exist in the given host's domain");
+                }
+            }
+            std::vector<script> scripts;
             entity parent;
-            template<typename T, typename... Args> ref<T> bind(Args&&... args) {
-                static_assert(std::is_base_of_v<script, T>, "[script component] the given type is not a script type");
-                ref<T> script_ = ref<T>::create(std::forward<Args>(args)...);
-                script_->m_entity = this->parent;
-                script_->on_attach();
-                this->scripts.push_back(script_);
-                return script_;
+            ref<code_host> host;
+            ref<managed::class_> base_class;
+            template<typename... Args> script& bind(ref<managed::class_> script_type, Args*&&... args) {
+                auto& sc = scripts.emplace_back();
+                sc.script_type = script_type;
+                if (!sc.script_type || !sc.script_type->get()) {
+                    throw std::runtime_error("[script component] nullptr was passed");
+                }
+                if (!sc.script_type->derives_from(this->base_class)) {
+                    throw std::runtime_error("[script component] the given type must derive from BasicVoxelEngine.Script");
+                }
+                sc.script_object = sc.script_type->instantiate(std::forward<Args*>(args)...);
+                return sc;
+            }
+            template<typename... Args> script& bind(const std::string& script_name, Args*&&... args) {
+                auto script_type = this->host->find_class(script_name);
+                if (script_type) {
+                    throw std::runtime_error("[script component] no such class found");
+                }
+                return this->bind(script_type, std::forward<Args*>(args)...);
             }
         };
     }

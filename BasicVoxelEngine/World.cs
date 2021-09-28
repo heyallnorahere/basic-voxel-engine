@@ -62,6 +62,6 @@ namespace BasicVoxelEngine
         private static extern void SetBlock_Native(IntPtr address, Vector3I position, int index);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void AddOnBlockChangedCallback_Native(IntPtr address, Delegate callback);
-        private readonly IntPtr mAddress;
+        internal readonly IntPtr mAddress;
     }
 }

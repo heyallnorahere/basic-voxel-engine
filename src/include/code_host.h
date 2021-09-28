@@ -86,6 +86,7 @@ namespace bve {
             MonoMethod* get_method(const std::string& descriptor);
             MonoClassField* get_field(const std::string& name);
             MonoProperty* get_property(const std::string& name);
+            bool derives_from(ref<class_> cls);
             template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) {
                 if (!method) {
                     throw std::runtime_error("[managed class] attempted to call nullptr!");
