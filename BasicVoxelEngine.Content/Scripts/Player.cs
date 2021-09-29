@@ -32,7 +32,12 @@ namespace BasicVoxelEngine.Content.Scripts
                 Y = (float)y
             };
             var angle = radians.Degrees;
-            angle += new Vector2(offset.Y, offset.X);
+            Vector2 cameraOffset = new Vector2(offset.Y, offset.X);
+            if (camera.Up.Y < 0f)
+            {
+                cameraOffset *= -1f;
+            }
+            angle += cameraOffset;
             if (angle.X > 89f)
             {
                 angle.X = 89f;
@@ -55,9 +60,11 @@ namespace BasicVoxelEngine.Content.Scripts
             var camera = GetComponent<CameraComponent>();
             var transform = GetComponent<TransformComponent>();
             float playerSpeed = 2.5f * (float)Application.GetDeltaTime();
-            Vector3 forward = camera.Direction * playerSpeed;
+            var horizontal = new Vector3(1f, 0f, 1f);
+            var speed = horizontal * playerSpeed;
+            Vector3 forward = camera.Direction * speed;
             Vector3 up = camera.Up * playerSpeed;
-            Vector3 right = camera.Direction.Cross(camera.Up).Normalized * playerSpeed;
+            Vector3 right = camera.Direction.Cross(camera.Up).Normalized * speed;
             if (inputManager.GetKey(Key.W).Held)
             {
                 transform.Translation += forward;
