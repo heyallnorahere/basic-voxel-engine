@@ -56,7 +56,7 @@ namespace bve {
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         {
-            auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
+            auto app_class = this->m_code_host->find_class("BasicVoxelEngine.ContentLoading.ContentLoader");
             auto load_content = app_class->get_method("*:LoadContent");
             app_class->invoke(load_content);
         }
