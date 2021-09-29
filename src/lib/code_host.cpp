@@ -232,6 +232,7 @@ namespace bve {
             pair("BasicVoxelEngine.Application::GetDeltaTime", BasicVoxelEngine_Application_GetDeltaTime),
             pair("BasicVoxelEngine.Application::GetWorld_Native", BasicVoxelEngine_Application_GetWorld),
             pair("BasicVoxelEngine.Application::GetInputManager_Native", BasicVoxelEngine_Application_GetInputManager),
+            pair("BasicVoxelEngine.Application::GetFactory_Native", BasicVoxelEngine_Application_GetFactory),
 
             pair("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
             pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
@@ -259,9 +260,22 @@ namespace bve {
             pair("BasicVoxelEngine.Block::GetLight_Native", BasicVoxelEngine_Block_GetLight),
 
             pair("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateTexture_Native", BasicVoxelEngine_Graphics_Factory_CreateTexture),
 
             pair("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
             pair("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),
+            pair("BasicVoxelEngine.Model::GetMeshCount_Native", BasicVoxelEngine_Model_GetMeshCount),
+            pair("BasicVoxelEngine.Model::GetMesh_Native", BasicVoxelEngine_Model_GetMesh),
+            pair("BasicVoxelEngine.Model::GetTexture_Native", BasicVoxelEngine_Model_GetTexture),
+            pair("BasicVoxelEngine.Model::GetVertexCount_Native", BasicVoxelEngine_Model_GetVertexCount),
+            pair("BasicVoxelEngine.Model::GetVertex_Native", BasicVoxelEngine_Model_GetVertex),
+            pair("BasicVoxelEngine.Model::GetIndexCount_Native", BasicVoxelEngine_Model_GetIndexCount),
+            pair("BasicVoxelEngine.Model::GetIndex_Native", BasicVoxelEngine_Model_GetIndex),
+
+            pair("BasicVoxelEngine.MeshTextureOffsetData::Destroy_Native", BasicVoxelEngine_MeshTextureOffsetData_Destroy),
+            pair("BasicVoxelEngine.MeshTextureOffsetData::GetCount_Native", BasicVoxelEngine_MeshTextureOffsetData_GetCount),
+            pair("BasicVoxelEngine.MeshTextureOffsetData::GetKey_Native", BasicVoxelEngine_MeshTextureOffsetData_GetKey),
+            pair("BasicVoxelEngine.MeshTextureOffsetData::GetValue_Native", BasicVoxelEngine_MeshTextureOffsetData_GetValue),
 
             pair("BasicVoxelEngine.AssetManager::GetAssetPath", BasicVoxelEngine_AssetManager_GetAssetPath),
 
@@ -314,6 +328,17 @@ namespace bve {
             pair("BasicVoxelEngine.InputManager::SetMouseEnabled_Native", BasicVoxelEngine_InputManager_SetMouseEnabled),
             pair("BasicVoxelEngine.InputManager::GetMouse_Native", BasicVoxelEngine_InputManager_GetMouse),
             pair("BasicVoxelEngine.InputManager::GetKey_Native", BasicVoxelEngine_InputManager_GetKey),
+
+            pair("BasicVoxelEngine.Graphics.ImageData::Load_Native", BasicVoxelEngine_Graphics_ImageData_Load),
+            pair("BasicVoxelEngine.Graphics.ImageData::Destroy_Native", BasicVoxelEngine_Graphics_ImageData_Destroy),
+            pair("BasicVoxelEngine.Graphics.ImageData::GetWidth_Native", BasicVoxelEngine_Graphics_ImageData_GetWidth),
+            pair("BasicVoxelEngine.Graphics.ImageData::GetHeight_Native", BasicVoxelEngine_Graphics_ImageData_GetHeight),
+            pair("BasicVoxelEngine.Graphics.ImageData::GetChannels_Native", BasicVoxelEngine_Graphics_ImageData_GetChannels),
+            pair("BasicVoxelEngine.Graphics.ImageData::GetByte_Native", BasicVoxelEngine_Graphics_ImageData_GetByte),
+
+            pair("BasicVoxelEngine.Graphics.Texture::DestroyRef_Native", BasicVoxelEngine_Graphics_Texture_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.Texture::GetSize_Native", BasicVoxelEngine_Graphics_Texture_GetSize),
+            pair("BasicVoxelEngine.Graphics.Texture::GetChannels_Native", BasicVoxelEngine_Graphics_Texture_GetChannels),
         };
     }
     static ref<code_host> current_code_host;

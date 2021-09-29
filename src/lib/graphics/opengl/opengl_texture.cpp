@@ -38,24 +38,16 @@ namespace bve {
                 texture_parameter(GL_TEXTURE_WRAP_T, wrap_t, GL_CLAMP_TO_EDGE);
 #undef texture_parameter
                 GLint internal_format;
-                switch (channels) {
-                case 1:
-                    internal_format = GL_R8;
-                    break;
-                case 2:
-                    internal_format = GL_RG;
-                    break;
-                case 3:
-                    internal_format = GL_RGB;
-                    break;
-                case 4:
-                    internal_format = GL_RGBA;
-                    break;
-                default:
+                GLenum format;
+                if (channels == 3) {
+                    internal_format = GL_RGB8;
+                    format = GL_RGB;
+                } else if (channels == 4) {
+                    internal_format = GL_RGBA8;
+                    format = GL_RGBA;
+                } else {
                     throw std::runtime_error("[opengl texture] invalid channel count");
-                    break;
                 }
-                GLenum format = settings.format != 0 ? settings.format : (GLenum)internal_format;
                 glTexImage2D(this->m_target, 0, internal_format, (GLsizei)width, (GLsizei)height, 0, format, GL_UNSIGNED_BYTE, data.data());
                 glGenerateMipmap(this->m_target);
                 this->m_size = glm::ivec2(width, height);

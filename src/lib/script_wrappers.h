@@ -1,6 +1,7 @@
 #pragma once
 #include "lighting/light.h"
 #include "input_manager.h"
+#include "model.h"
 namespace bve {
     namespace script_wrappers {
         struct NamespacedName {
@@ -16,11 +17,13 @@ namespace bve {
         using uint = uint32_t;
         using object = MonoObject*;
         using Vector2 = glm::vec2;
+        using Vector2I = glm::ivec2;
 
         void BasicVoxelEngine_Application_Quit();
         double BasicVoxelEngine_Application_GetDeltaTime();
         IntPtr BasicVoxelEngine_Application_GetWorld();
         IntPtr BasicVoxelEngine_Application_GetInputManager();
+        IntPtr BasicVoxelEngine_Application_GetFactory();
 
         void BasicVoxelEngine_Logger_PrintDebug(string message);
         void BasicVoxelEngine_Logger_PrintInfo(string message);
@@ -48,9 +51,22 @@ namespace bve {
         IntPtr BasicVoxelEngine_Block_GetLight(IntPtr nativeAddress, LightType* type);
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateTexture(IntPtr address, MonoObject* imageData);
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory);
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address);
+        int32_t BasicVoxelEngine_Model_GetMeshCount(IntPtr address);
+        MonoObject* BasicVoxelEngine_Model_GetMesh(IntPtr address, int32_t index, int32_t* vertexOffset, int32_t* indexOffset, int32_t* textureCount);
+        IntPtr BasicVoxelEngine_Model_GetTexture(IntPtr address, int32_t meshIndex, int32_t textureIndex);
+        int32_t BasicVoxelEngine_Model_GetVertexCount(IntPtr address);
+        model::vertex BasicVoxelEngine_Model_GetVertex(IntPtr address, int32_t index);
+        int32_t BasicVoxelEngine_Model_GetIndexCount(IntPtr address);
+        uint BasicVoxelEngine_Model_GetIndex(IntPtr address, int32_t index);
+
+        void BasicVoxelEngine_MeshTextureOffsetData_Destroy(IntPtr address);
+        int32_t BasicVoxelEngine_MeshTextureOffsetData_GetCount(IntPtr address);
+        string BasicVoxelEngine_MeshTextureOffsetData_GetKey(IntPtr address, int32_t index);
+        int32_t BasicVoxelEngine_MeshTextureOffsetData_GetValue(IntPtr address, string key);
 
         string BasicVoxelEngine_AssetManager_GetAssetPath(string assetName);
 
@@ -103,5 +119,16 @@ namespace bve {
         void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value);
         Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address);
         input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key);
+
+        IntPtr BasicVoxelEngine_Graphics_ImageData_Load(string path);
+        void BasicVoxelEngine_Graphics_ImageData_Destroy(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetWidth(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetHeight(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetChannels(IntPtr address);
+        uint8_t BasicVoxelEngine_Graphics_ImageData_GetByte(IntPtr address, int32_t index);
+
+        void BasicVoxelEngine_Graphics_Texture_DestroyRef(IntPtr address);
+        Vector2I BasicVoxelEngine_Graphics_Texture_GetSize(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_Texture_GetChannels(IntPtr address);
     }
 }

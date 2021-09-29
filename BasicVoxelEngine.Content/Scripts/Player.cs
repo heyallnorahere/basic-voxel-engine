@@ -1,15 +1,39 @@
 using BasicVoxelEngine.Components;
+using BasicVoxelEngine.Graphics;
 using System;
+using System.Collections.Generic;
 
 namespace BasicVoxelEngine.Content.Scripts
 {
     public sealed class Player : Script
     {
+        private static void PrintTextureData(string name, Texture texture)
+        {
+            Logger.Print(Logger.Severity.Info, "Texture: {0}", name);
+            Vector2I size = texture.Size;
+            Logger.Print(Logger.Severity.Info, "\tWidth: {0}, height: {1}", size.X, size.Y);
+            Logger.Print(Logger.Severity.Info, "\tChannels: {0}", texture.Channels);
+        }
         public override void OnAttach()
         {
             mCameraSensitivity = 0.1f;
             GetComponent<TransformComponent>().Translation = new Vector3(5f, 64f, 5f);
             AddComponent<CameraComponent>().Direction = new Vector3(-1f);
+            Factory factory = Application.Factory;
+            Model model = Model.LoadModel(AssetManager.GetAssetPath("model:bve:model_block.obj"), factory);
+            var textures = new List<Texture>();
+            for (int i = 0; i < model.MeshCount; i++)
+            {
+                MeshData meshData = model.GetMesh(i);
+                textures.AddRange(meshData.Textures);
+            }
+            Logger.Print(Logger.Severity.Info, "{0} vertices, {1} indices, {2} textures", model.Vertices.Count, model.Indices.Count, textures.Count);
+            for (int i = 0; i < textures.Count; i++)
+            {
+                PrintTextureData($"Model texture {i + 1}", textures[i]);
+            }
+            Texture loadedTexture = factory.CreateTexture(AssetManager.GetAssetPath("block:bve:grass_block.png"));
+            PrintTextureData("Loaded texture", loadedTexture);
         }
         public override void Update()
         {

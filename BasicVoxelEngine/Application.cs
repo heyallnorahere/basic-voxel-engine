@@ -1,3 +1,4 @@
+using BasicVoxelEngine.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -13,6 +14,7 @@ namespace BasicVoxelEngine
         public static extern double GetDeltaTime();
         public static World World => new World(GetWorld_Native());
         public static InputManager InputManager => new InputManager(GetInputManager_Native());
+        public static Factory Factory => new Factory(GetFactory_Native());
         public static void TestMethod()
         {
             Register<Block> blockRegister = Registry.GetRegister<Block>();
@@ -148,5 +150,7 @@ namespace BasicVoxelEngine
         private static extern IntPtr GetWorld_Native();
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr GetInputManager_Native();
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr GetFactory_Native();
     }
 }

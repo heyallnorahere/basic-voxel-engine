@@ -111,6 +111,10 @@ namespace bve {
             auto object = ref<managed::object>::create((MonoObject*)string, current);
             return object->get_string();
         }
+        static MonoString* get_string(const std::string& string) {
+            MonoDomain* current = mono_domain_get();
+            return mono_string_new(current, string.c_str());
+        }
         static std::string get_log_message(MonoString* string) {
             return "[managed log] " + get_string(string);
         }
@@ -250,6 +254,10 @@ namespace bve {
             auto& app = application::get();
             return new ref<input_manager>(app.get_input_manager());
         }
+        IntPtr BasicVoxelEngine_Application_GetFactory() {
+            auto& app = application::get();
+            return new ref<graphics::object_factory>(app.get_object_factory());
+        }
 
         void BasicVoxelEngine_Logger_PrintDebug(string message) {
             spdlog::debug(get_log_message(message));
@@ -361,8 +369,31 @@ namespace bve {
             }
         }
 
+        static ref<graphics::object_factory> get_factory_ref(void* address) {
+            return *(ref<graphics::object_factory>*)address;
+        }
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address) {
             delete (ref<graphics::object_factory>*)address;
+        }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateTexture(IntPtr address, MonoObject* imageData) {
+            auto factory = get_factory_ref(address);
+            auto data = ref<managed::object>::create(imageData, mono_domain_get());
+            auto type = managed::class_::get_class(data);
+            MonoProperty* property = type->get_property("Width");
+            int32_t width = data->get(property)->unbox<int32_t>();
+            property = type->get_property("Height");
+            int32_t height = data->get(property)->unbox<int32_t>();
+            property = type->get_property("Channels");
+            int32_t channels = data->get(property)->unbox<int32_t>();
+            MonoMethod* get_byte = type->get_method("*:GetByte");
+            std::vector<uint8_t> image_data;
+            for (int32_t i = 0; i < width * height * channels; i++) {
+                auto return_value = data->invoke(get_byte, &i);
+                uint8_t byte = return_value->unbox<uint8_t>();
+                image_data.push_back(byte);
+            }
+            auto texture = factory->create_texture(image_data, width, height, channels);
+            return new ref<graphics::texture>(texture);
         }
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory) {
@@ -372,6 +403,75 @@ namespace bve {
         }
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address) {
             delete (ref<model>*)address;
+        }
+        static ref<model> get_model_ref(IntPtr address) {
+            return *(ref<model>*)address;
+        }
+        struct mesh_texture_offset_data {
+            std::unordered_map<std::string, size_t> data;
+            std::vector<std::string> keys;
+        };
+        int32_t BasicVoxelEngine_Model_GetMeshCount(IntPtr address) {
+            auto model_ = get_model_ref(address);
+            return (int32_t)model_->get_mesh_count();
+        }
+        MonoObject* BasicVoxelEngine_Model_GetMesh(IntPtr address, int32_t index, int32_t* vertexOffset, int32_t* indexOffset, int32_t* textureCount) {
+            auto model_ = get_model_ref(address);
+            auto mesh_data = model_->get_mesh_data((size_t)index);
+            *vertexOffset = (int32_t)mesh_data.vertex_offset;
+            *indexOffset = (int32_t)mesh_data.index_offset;
+            *textureCount = (int32_t)mesh_data.textures.size();
+            ref<code_host> host = code_host::current();
+            auto offset_data = new mesh_texture_offset_data;
+            for (const auto& [key, value] : mesh_data.texture_offsets) {
+                offset_data->data.insert({ key, value });
+                offset_data->keys.push_back(key);
+            }
+            auto offset_data_class = host->find_class("BasicVoxelEngine.MeshTextureOffsetData");
+            auto return_data = offset_data_class->instantiate(&offset_data);
+            return (MonoObject*)return_data->get();
+        }
+        IntPtr BasicVoxelEngine_Model_GetTexture(IntPtr address, int32_t meshIndex, int32_t textureIndex) {
+            auto model_ = get_model_ref(address);
+            auto mesh_data = model_->get_mesh_data((size_t)meshIndex);
+            auto texture = mesh_data.textures[(size_t)textureIndex];
+            return new ref<graphics::texture>(texture);
+        }
+        int32_t BasicVoxelEngine_Model_GetVertexCount(IntPtr address) {
+            auto model_ = get_model_ref(address);
+            return (int32_t)model_->get_vertices().size();
+        }
+        model::vertex BasicVoxelEngine_Model_GetVertex(IntPtr address, int32_t index) {
+            auto model_ = get_model_ref(address);
+            auto vertices = model_->get_vertices();
+            return vertices[(size_t)index];
+        }
+        int32_t BasicVoxelEngine_Model_GetIndexCount(IntPtr address) {
+            auto model_ = get_model_ref(address);
+            return (int32_t)model_->get_indices().size();
+        }
+        uint BasicVoxelEngine_Model_GetIndex(IntPtr address, int32_t index) {
+            auto model_ = get_model_ref(address);
+            auto indices = model_->get_indices();
+            return indices[(size_t)index];
+        }
+
+        void BasicVoxelEngine_MeshTextureOffsetData_Destroy(IntPtr address) {
+            delete (mesh_texture_offset_data*)address;
+        }
+        int32_t BasicVoxelEngine_MeshTextureOffsetData_GetCount(IntPtr address) {
+            auto data = (mesh_texture_offset_data*)address;
+            return (int32_t)data->keys.size();
+        }
+        string BasicVoxelEngine_MeshTextureOffsetData_GetKey(IntPtr address, int32_t index) {
+            auto data = (mesh_texture_offset_data*)address;
+            std::string key = data->keys[(size_t)index];
+            return get_string(key);
+        }
+        int32_t BasicVoxelEngine_MeshTextureOffsetData_GetValue(IntPtr address, string key) {
+            auto data = (mesh_texture_offset_data*)address;
+            std::string key_ = get_string(key);
+            return (int32_t)data->data[key_];
         }
 
         string BasicVoxelEngine_AssetManager_GetAssetPath(string assetName) {
@@ -601,6 +701,53 @@ namespace bve {
         input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key) {
             auto im = get_input_manager(address);
             return im->get_key(key);
+        }
+
+        struct image_data_t {
+            std::vector<uint8_t> data;
+            int32_t width, height, channels;
+        };
+        IntPtr BasicVoxelEngine_Graphics_ImageData_Load(string path) {
+            auto data = new image_data_t;
+            std::string path_ = get_string(path);
+            if (!graphics::texture::load_image(path_, data->data, data->width, data->height, data->channels)) {
+                throw std::runtime_error("[script wrappers] could not load texture: " + path_);
+            }
+            return data;
+        }
+        void BasicVoxelEngine_Graphics_ImageData_Destroy(IntPtr address) {
+            delete (image_data_t*)address;
+        }
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetWidth(IntPtr address) {
+            auto data = (image_data_t*)address;
+            return data->width;
+        }
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetHeight(IntPtr address) {
+            auto data = (image_data_t*)address;
+            return data->height;
+        }
+        int32_t BasicVoxelEngine_Graphics_ImageData_GetChannels(IntPtr address) {
+            auto data = (image_data_t*)address;
+            return data->channels;
+        }
+        uint8_t BasicVoxelEngine_Graphics_ImageData_GetByte(IntPtr address, int32_t index) {
+            auto data = (image_data_t*)address;
+            return data->data[(size_t)index];
+        }
+
+        static ref<graphics::texture> get_texture_ref(void* address) {
+            return *(ref<graphics::texture>*)address;
+        }
+        void BasicVoxelEngine_Graphics_Texture_DestroyRef(IntPtr address) {
+            delete (ref<graphics::texture>*)address;
+        }
+        Vector2I BasicVoxelEngine_Graphics_Texture_GetSize(IntPtr address) {
+            auto texture = get_texture_ref(address);
+            return texture->get_size();
+        }
+        int32_t BasicVoxelEngine_Graphics_Texture_GetChannels(IntPtr address) {
+            auto texture = get_texture_ref(address);
+            return texture->get_channels();
         }
     }
 }
