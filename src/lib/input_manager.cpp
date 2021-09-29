@@ -23,6 +23,11 @@ namespace bve {
             state.reset();
             this->m_states.insert({ key, state });
         }
+        for (size_t i = 0; i < 8; i++) {
+            key_state state;
+            state.reset();
+            this->m_mouse_buttons.push_back(state);
+        }
     }
     input_manager::~input_manager() {
         window_map.erase(this->m_window->m_window);
@@ -30,8 +35,15 @@ namespace bve {
     input_manager::key_state input_manager::get_key(int32_t glfw_key) {
         return this->m_states[glfw_key];
     }
+    input_manager::key_state input_manager::get_mouse_button(size_t button) {
+        return this->m_mouse_buttons[button];
+    }
     glm::vec2 input_manager::get_mouse() {
         return this->m_current_offset;
+    }
+    static void finalize_state(input_manager::key_state& current, const input_manager::key_state& old) {
+        current.down = current.held && !old.held;
+        current.up = !current.held && old.held;
     }
     void input_manager::update() {
         glfwSetInputMode(this->m_window->m_window, GLFW_CURSOR, this->m_mouse_enabled ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
@@ -42,8 +54,14 @@ namespace bve {
             key_state& state = this->m_states[key];
             state.reset();
             state.held = glfwGetKey(this->m_window->m_window, key) == GLFW_PRESS;
-            state.down = state.held && !old_state.held;
-            state.up = !state.held && old_state.held;
+            finalize_state(state, old_state);
+        }
+        for (size_t i = 0; i < this->m_mouse_buttons.size(); i++) {
+            key_state old_state = this->m_mouse_buttons[i];
+            key_state& state = this->m_mouse_buttons[i];
+            state.reset();
+            state.held = glfwGetMouseButton(this->m_window->m_window, (int32_t)i) == GLFW_PRESS;
+            finalize_state(state, old_state);
         }
     }
     bool& input_manager::mouse_enabled() {

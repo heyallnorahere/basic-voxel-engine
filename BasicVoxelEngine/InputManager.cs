@@ -128,6 +128,9 @@ namespace BasicVoxelEngine
     }
     public sealed class InputManager
     {
+        public const int LeftMouseButton = 0;
+        public const int RightMouseButton = 1;
+        public const int MiddleMouseButton = 2;
         internal InputManager(IntPtr address)
         {
             mAddress = address;
@@ -143,6 +146,7 @@ namespace BasicVoxelEngine
         }
         public Vector2 Mouse => GetMouse_Native(mAddress);
         public KeyState GetKey(Key key) => GetKey_Native(mAddress, key);
+        public KeyState GetMouseButton(int button) => GetMouseButton_Native(mAddress, button);
         private readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
@@ -154,5 +158,7 @@ namespace BasicVoxelEngine
         private static extern Vector2 GetMouse_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern KeyState GetKey_Native(IntPtr address, Key key);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern KeyState GetMouseButton_Native(IntPtr address, int button);
     }
 }

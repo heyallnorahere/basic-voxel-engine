@@ -702,6 +702,10 @@ namespace bve {
             auto im = get_input_manager(address);
             return im->get_key(key);
         }
+        input_manager::key_state BasicVoxelEngine_InputManager_GetMouseButton(IntPtr address, int32_t button) {
+            auto im = get_input_manager(address);
+            return im->get_mouse_button((size_t)button);
+        }
 
         struct image_data_t {
             std::vector<uint8_t> data;

@@ -328,6 +328,7 @@ namespace bve {
             pair("BasicVoxelEngine.InputManager::SetMouseEnabled_Native", BasicVoxelEngine_InputManager_SetMouseEnabled),
             pair("BasicVoxelEngine.InputManager::GetMouse_Native", BasicVoxelEngine_InputManager_GetMouse),
             pair("BasicVoxelEngine.InputManager::GetKey_Native", BasicVoxelEngine_InputManager_GetKey),
+            pair("BasicVoxelEngine.InputManager::GetMouseButton_Native", BasicVoxelEngine_InputManager_GetMouseButton),
 
             pair("BasicVoxelEngine.Graphics.ImageData::Load_Native", BasicVoxelEngine_Graphics_ImageData_Load),
             pair("BasicVoxelEngine.Graphics.ImageData::Destroy_Native", BasicVoxelEngine_Graphics_ImageData_Destroy),

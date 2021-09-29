@@ -119,6 +119,7 @@ namespace bve {
         void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value);
         Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address);
         input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key);
+        input_manager::key_state BasicVoxelEngine_InputManager_GetMouseButton(IntPtr address, int32_t button);
 
         IntPtr BasicVoxelEngine_Graphics_ImageData_Load(string path);
         void BasicVoxelEngine_Graphics_ImageData_Destroy(IntPtr address);

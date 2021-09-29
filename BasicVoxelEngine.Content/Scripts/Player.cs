@@ -86,6 +86,22 @@ namespace BasicVoxelEngine.Content.Scripts
             {
                 Application.Quit();
             }
+            if (inputManager.GetMouseButton(InputManager.LeftMouseButton).Down)
+            {
+                LeftClick();
+            }
+            if (inputManager.GetMouseButton(InputManager.RightMouseButton).Down)
+            {
+                RightClick();
+            }
+        }
+        private void LeftClick()
+        {
+            Logger.Print(Logger.Severity.Info, "left clicked");
+        }
+        private void RightClick()
+        {
+            Logger.Print(Logger.Severity.Info, "right clicked");
         }
         private float mCameraSensitivity;
     }
