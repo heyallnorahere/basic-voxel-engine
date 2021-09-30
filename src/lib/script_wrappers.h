@@ -24,6 +24,7 @@ namespace bve {
         IntPtr BasicVoxelEngine_Application_GetWorld();
         IntPtr BasicVoxelEngine_Application_GetInputManager();
         IntPtr BasicVoxelEngine_Application_GetFactory();
+        IntPtr BasicVoxelEngine_Application_GetWindow();
 
         void BasicVoxelEngine_Logger_PrintDebug(string message);
         void BasicVoxelEngine_Logger_PrintInfo(string message);
@@ -52,6 +53,8 @@ namespace bve {
 
         void BasicVoxelEngine_Graphics_Factory_DestroyRef(IntPtr address);
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateTexture(IntPtr address, MonoObject* imageData);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateContext(IntPtr address);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateShader(IntPtr address, MonoObject* sourceList);
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory);
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address);
@@ -131,5 +134,21 @@ namespace bve {
         void BasicVoxelEngine_Graphics_Texture_DestroyRef(IntPtr address);
         Vector2I BasicVoxelEngine_Graphics_Texture_GetSize(IntPtr address);
         int32_t BasicVoxelEngine_Graphics_Texture_GetChannels(IntPtr address);
+
+        void BasicVoxelEngine_Window_DestroyRef(IntPtr address);
+        IntPtr BasicVoxelEngine_Window_GetContext(IntPtr address);
+        Vector2I BasicVoxelEngine_Window_GetFramebufferSize(IntPtr address);
+
+        void BasicVoxelEngine_Graphics_Shader_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_Shader_Reload(IntPtr address);
+        void BasicVoxelEngine_Graphics_Shader_Bind(IntPtr address);
+        void BasicVoxelEngine_Graphics_Shader_Unbind(IntPtr address);
+        void BasicVoxelEngine_Graphics_Shader_Set(IntPtr address, string name, object value, Type type);
+        void BasicVoxelEngine_Graphics_Shader_Get(IntPtr address, string name, object value, Type type);
+        void BasicVoxelEngine_Graphics_Shader_InitializeUniforms();
+
+        void BasicVoxelEngine_Graphics_Context_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_Context_MakeCurrent(IntPtr address);
+        void BasicVoxelEngine_Graphics_Context_DrawIndexed(IntPtr address, int32_t indexCount);
     }
 }

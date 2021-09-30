@@ -258,6 +258,10 @@ namespace bve {
             auto& app = application::get();
             return new ref<graphics::object_factory>(app.get_object_factory());
         }
+        IntPtr BasicVoxelEngine_Application_GetWindow() {
+            auto& app = application::get();
+            return new ref<window>(app.get_window());
+        }
 
         void BasicVoxelEngine_Logger_PrintDebug(string message) {
             spdlog::debug(get_log_message(message));
@@ -394,6 +398,26 @@ namespace bve {
             }
             auto texture = factory->create_texture(image_data, width, height, channels);
             return new ref<graphics::texture>(texture);
+        }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateContext(IntPtr address) {
+            auto factory = get_factory_ref(address);
+            auto context = factory->create_context();
+            return new ref<graphics::context>(context);
+        }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateShader(IntPtr address, MonoObject* sourceList) {
+            auto factory = get_factory_ref(address);
+            std::vector<std::filesystem::path> sources;
+            auto source_list = ref<managed::object>::create(sourceList, mono_domain_get());
+            auto type = managed::class_::get_class(source_list);
+            MonoProperty* property = type->get_property("Count");
+            int32_t count = source_list->get(property)->unbox<int32_t>();
+            MonoMethod* method = type->get_method("*:GetPath");
+            for (int32_t i = 0; i < count; i++) {
+                auto path = source_list->invoke(method, &i)->get_string();
+                sources.push_back(path);
+            }
+            auto shader = factory->create_shader(sources);
+            return new ref<graphics::shader>(shader);
         }
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory) {
@@ -752,6 +776,111 @@ namespace bve {
         int32_t BasicVoxelEngine_Graphics_Texture_GetChannels(IntPtr address) {
             auto texture = get_texture_ref(address);
             return texture->get_channels();
+        }
+
+        static ref<window> get_window_ref(void* address) {
+            return *(ref<window>*)address;
+        }
+        void BasicVoxelEngine_Window_DestroyRef(IntPtr address) {
+            delete (ref<window>*)address;
+        }
+        IntPtr BasicVoxelEngine_Window_GetContext(IntPtr address) {
+            auto window_ = get_window_ref(address);
+            return new ref<graphics::context>(window_->get_context());
+        }
+        Vector2I BasicVoxelEngine_Window_GetFramebufferSize(IntPtr address) {
+            auto window_ = get_window_ref(address);
+            return window_->get_framebuffer_size();
+        }
+
+        static ref<graphics::shader> get_shader_ref(void* address) {
+            return *(ref<graphics::shader>*)address;
+        }
+        void BasicVoxelEngine_Graphics_Shader_DestroyRef(IntPtr address) {
+            delete (ref<graphics::shader>*)address;
+        }
+        void BasicVoxelEngine_Graphics_Shader_Reload(IntPtr address) {
+            auto shader = get_shader_ref(address);
+            shader->reload();
+        }
+        void BasicVoxelEngine_Graphics_Shader_Bind(IntPtr address) {
+            auto shader = get_shader_ref(address);
+            shader->bind();
+        }
+        void BasicVoxelEngine_Graphics_Shader_Unbind(IntPtr address) {
+            auto shader = get_shader_ref(address);
+            shader->unbind();
+        }
+        struct uniform_callbacks_t {
+            using set_property_callback_t = std::function<void(void*)>;
+            using set_t = std::function<void(ref<graphics::shader>, const std::string&, ref<managed::object>)>;
+            using get_t = std::function<void(ref<graphics::shader>, const std::string&, set_property_callback_t)>;
+            set_t set;
+            get_t get;
+        };
+        std::unordered_map<MonoReflectionType*, uniform_callbacks_t> uniform_callbacks;
+        static void register_uniform_type(const std::string& name, const uniform_callbacks_t::set_t& set, const uniform_callbacks_t::get_t& get) {
+            ref<code_host> host = code_host::current();
+            auto class_ = host->find_class(name);
+            if (!class_ || !class_->get()) {
+                return;
+            }
+            auto type = managed::type::get_type(class_);
+            auto key = type->get_object();
+            uniform_callbacks.insert({ key, {
+                set,
+                get
+            } });
+        }
+        void BasicVoxelEngine_Graphics_Shader_Set(IntPtr address, string name, object value, Type type) {
+            auto shader = get_shader_ref(address);
+            std::string uniform_name = get_string(name);
+            auto object = ref<managed::object>::create(value, mono_domain_get());
+            if (uniform_callbacks.find(type) == uniform_callbacks.end()) {
+                return;
+            }
+            uniform_callbacks[type].set(shader, uniform_name, object);
+        }
+        void BasicVoxelEngine_Graphics_Shader_Get(IntPtr address, string name, object value, Type type) {
+            auto shader = get_shader_ref(address);
+            std::string uniform_name = get_string(name);
+            auto object = ref<managed::object>::create(value, mono_domain_get());
+            uniform_callbacks_t::set_property_callback_t callback = [object](void* ptr) mutable {
+                auto type = managed::class_::get_class(object);
+                MonoProperty* property = type->get_property("Data");
+                object->set(property, ptr);
+            };
+            if (uniform_callbacks.find(type) == uniform_callbacks.end()) {
+                callback(nullptr);
+                return;
+            }
+            uniform_callbacks[type].get(shader, uniform_name, callback);
+        }
+        static void set_int(ref<graphics::shader> shader, const std::string& name, ref<managed::object> value) {
+            shader->set_int(name, value->unbox<int32_t>());
+        }
+        static void get_int(ref<graphics::shader> shader, const std::string& name, uniform_callbacks_t::set_property_callback_t callback) {
+            int32_t value = shader->get_int(name);
+            callback(&value);
+        }
+        void BasicVoxelEngine_Graphics_Shader_InitializeUniforms() {
+            register_uniform_type("System.Int32", set_int, get_int);
+            // todo: add more
+        }
+
+        static ref<graphics::context> get_context_ref(void* address) {
+            return *(ref<graphics::context>*)address;
+        }
+        void BasicVoxelEngine_Graphics_Context_DestroyRef(IntPtr address) {
+            delete (ref<graphics::context>*)address;
+        }
+        void BasicVoxelEngine_Graphics_Context_MakeCurrent(IntPtr address) {
+            auto context = get_context_ref(address);
+            context->make_current();
+        }
+        void BasicVoxelEngine_Graphics_Context_DrawIndexed(IntPtr address, int32_t indexCount) {
+            auto context = get_context_ref(address);
+            context->draw_indexed((size_t)indexCount);
         }
     }
 }

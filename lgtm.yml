@@ -16,3 +16,9 @@ extraction:
     index:
       build_command:
         - cmake --build $LGTM_SRC/build -j 8
+  csharp:
+    index:
+      solution: basic-voxel-engine.sln
+      msbuild:
+        configuration: Release
+        platform: x64

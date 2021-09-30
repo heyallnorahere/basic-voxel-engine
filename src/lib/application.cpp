@@ -117,6 +117,15 @@ namespace bve {
             std::filesystem::current_path() / "BasicVoxelEngine.dll",
             std::filesystem::current_path() / "BasicVoxelEngine.Content.dll",
         };
+        auto mods_dir = std::filesystem::current_path() / "mods";
+        if (std::filesystem::is_directory(mods_dir)) {
+            for (const auto& entry : std::filesystem::directory_iterator(mods_dir)) {
+                const auto& path = entry.path();
+                if (path.extension() == ".dll") {
+                    assembly_paths.push_back(path);
+                }
+            }
+        }
         for (const auto& path : assembly_paths) {
             this->m_code_host->load_assembly(path);
             spdlog::info("[application] loaded assembly: " + path.string());

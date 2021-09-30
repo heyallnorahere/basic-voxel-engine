@@ -233,6 +233,7 @@ namespace bve {
             pair("BasicVoxelEngine.Application::GetWorld_Native", BasicVoxelEngine_Application_GetWorld),
             pair("BasicVoxelEngine.Application::GetInputManager_Native", BasicVoxelEngine_Application_GetInputManager),
             pair("BasicVoxelEngine.Application::GetFactory_Native", BasicVoxelEngine_Application_GetFactory),
+            pair("BasicVoxelEngine.Application::GetWindow_Native", BasicVoxelEngine_Application_GetWindow),
 
             pair("BasicVoxelEngine.Logger::PrintDebug_Native", BasicVoxelEngine_Logger_PrintDebug),
             pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
@@ -261,6 +262,8 @@ namespace bve {
 
             pair("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
             pair("BasicVoxelEngine.Graphics.Factory::CreateTexture_Native", BasicVoxelEngine_Graphics_Factory_CreateTexture),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateContext_Native", BasicVoxelEngine_Graphics_Factory_CreateContext),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateShader_Native", BasicVoxelEngine_Graphics_Factory_CreateShader),
 
             pair("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
             pair("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),
@@ -340,6 +343,22 @@ namespace bve {
             pair("BasicVoxelEngine.Graphics.Texture::DestroyRef_Native", BasicVoxelEngine_Graphics_Texture_DestroyRef),
             pair("BasicVoxelEngine.Graphics.Texture::GetSize_Native", BasicVoxelEngine_Graphics_Texture_GetSize),
             pair("BasicVoxelEngine.Graphics.Texture::GetChannels_Native", BasicVoxelEngine_Graphics_Texture_GetChannels),
+
+            pair("BasicVoxelEngine.Window::DestroyRef_Native", BasicVoxelEngine_Window_DestroyRef),
+            pair("BasicVoxelEngine.Window::GetContext_Native", BasicVoxelEngine_Window_GetContext),
+            pair("BasicVoxelEngine.Window::GetFramebufferSize_Native", BasicVoxelEngine_Window_GetFramebufferSize),
+
+            pair("BasicVoxelEngine.Graphics.Shader::DestroyRef_Native", BasicVoxelEngine_Graphics_Shader_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.Shader::Reload_Native", BasicVoxelEngine_Graphics_Shader_Reload),
+            pair("BasicVoxelEngine.Graphics.Shader::Bind_Native", BasicVoxelEngine_Graphics_Shader_Bind),
+            pair("BasicVoxelEngine.Graphics.Shader::Unbind_Native", BasicVoxelEngine_Graphics_Shader_Unbind),
+            pair("BasicVoxelEngine.Graphics.Shader::Set_Native", BasicVoxelEngine_Graphics_Shader_Set),
+            pair("BasicVoxelEngine.Graphics.Shader::Get_Native", BasicVoxelEngine_Graphics_Shader_Get),
+            pair("BasicVoxelEngine.Graphics.Shader::InitializeUniforms_Native", BasicVoxelEngine_Graphics_Shader_InitializeUniforms),
+
+            pair("BasicVoxelEngine.Graphics.Context::DestroyRef_Native", BasicVoxelEngine_Graphics_Context_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.Context::MakeCurrent_Native", BasicVoxelEngine_Graphics_Context_MakeCurrent),
+            pair("BasicVoxelEngine.Graphics.Context::DrawIndexed_Native", BasicVoxelEngine_Graphics_Context_DrawIndexed),
         };
     }
     static ref<code_host> current_code_host;
@@ -351,6 +370,8 @@ namespace bve {
         mono_set_assemblies_path(MONO_ASSEMBLIES);
         this->m_domain = mono_jit_init(BVE_TARGET_NAME);
         this->make_current();
+        MonoAssembly* corlib = mono_image_get_assembly(mono_get_corlib());
+        this->m_assemblies.push_back(ref<managed::assembly>::create(corlib, this->m_domain));
     }
     code_host::~code_host() {
         mono_jit_cleanup(this->m_domain);

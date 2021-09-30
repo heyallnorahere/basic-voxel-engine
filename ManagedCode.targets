@@ -5,10 +5,17 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>latest</LangVersion>
         <OutputPath>$(MSBuildThisFileDirectory)\managed-code</OutputPath>
+        <CopyDestination>$(MSBuildThisFileDirectory)\src</CopyDestination>
+        <BVECore Condition="'$(BVECore)' == ''">false</BVECore>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="!$(BVECore)">
+        <OutputPath>$(OutputPath)\mods</OutputPath>
+        <CopyDestination>$(CopyDestination)\mods</CopyDestination>
     </PropertyGroup>
 
     <Target Name="CopyBinary" AfterTargets="Build">
-        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildThisFileDirectory)\src" />
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(CopyDestination)" />
     </Target>
 
 </Project>
