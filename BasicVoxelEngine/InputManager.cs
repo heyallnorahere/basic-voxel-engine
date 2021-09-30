@@ -144,7 +144,15 @@ namespace BasicVoxelEngine
             get => GetMouseEnabled_Native(mAddress);
             set => SetMouseEnabled_Native(mAddress, value);
         }
-        public Vector2 Mouse => GetMouse_Native(mAddress);
+        public Vector2 Mouse
+        {
+            get
+            {
+                Vector2 offset;
+                GetMouse_Native(mAddress, out offset);
+                return offset;
+            }
+        }
         public KeyState GetKey(Key key) => GetKey_Native(mAddress, key);
         public KeyState GetMouseButton(int button) => GetMouseButton_Native(mAddress, button);
         private readonly IntPtr mAddress;
@@ -155,7 +163,7 @@ namespace BasicVoxelEngine
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void SetMouseEnabled_Native(IntPtr address, bool value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern Vector2 GetMouse_Native(IntPtr address);
+        private static extern void GetMouse_Native(IntPtr address, out Vector2 offset);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern KeyState GetKey_Native(IntPtr address, Key key);
         [MethodImpl(MethodImplOptions.InternalCall)]

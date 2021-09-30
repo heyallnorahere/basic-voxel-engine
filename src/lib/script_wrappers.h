@@ -120,7 +120,7 @@ namespace bve {
         void BasicVoxelEngine_InputManager_DestroyRef(IntPtr address);
         bool BasicVoxelEngine_InputManager_GetMouseEnabled(IntPtr address);
         void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value);
-        Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address);
+        void BasicVoxelEngine_InputManager_GetMouse(IntPtr address, Vector2* offset);
         input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key);
         input_manager::key_state BasicVoxelEngine_InputManager_GetMouseButton(IntPtr address, int32_t button);
 

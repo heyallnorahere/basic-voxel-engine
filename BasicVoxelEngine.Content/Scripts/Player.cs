@@ -7,56 +7,20 @@ namespace BasicVoxelEngine.Content.Scripts
     {
         public override void OnAttach()
         {
+            mCurrentMouseOffset = new Vector2(0f);
             mCameraSensitivity = 0.1f;
             GetComponent<TransformComponent>().Translation = new Vector3(5f, 64f, 5f);
             AddComponent<CameraComponent>().Direction = new Vector3(-1f);
         }
         public override void Update()
         {
-            InputManager inputManager = Application.InputManager;
-            UpdateCameraDirection(inputManager);
-            TakeInput(inputManager);
+            TakeInput();
+            UpdateCameraDirection();
             // todo: some sort of debug menu
         }
-        private void UpdateCameraDirection(InputManager inputManager)
+        private void TakeInput()
         {
-            Vector2 offset = inputManager.Mouse * mCameraSensitivity;
-            var camera = GetComponent<CameraComponent>();
-            var direction = camera.Direction;
-            double x = Math.Asin(direction.Y);
-            double factor = Math.Cos(x);
-            double y = Math.Atan2(direction.Z / factor, direction.X / factor);
-            var radians = new Vector2
-            {
-                X = (float)x,
-                Y = (float)y
-            };
-            var angle = radians.Degrees;
-            Vector2 cameraOffset = new Vector2(offset.Y, offset.X);
-            if (camera.Up.Y < 0f)
-            {
-                cameraOffset *= -1f;
-            }
-            angle += cameraOffset;
-            if (angle.X > 89f)
-            {
-                angle.X = 89f;
-            }
-            if (angle.X < -89f)
-            {
-                angle.X = -89f;
-            }
-            radians = angle.Radians;
-            Vector3 newDirection = new Vector3
-            {
-                X = (float)(Math.Cos(radians.X) * Math.Cos(radians.Y)),
-                Y = (float)Math.Sin(radians.X),
-                Z = (float)(Math.Cos(radians.X) * Math.Sin(radians.Y))
-            };
-            camera.Direction = newDirection.Normalized;
-        }
-        private void TakeInput(InputManager inputManager)
-        {
+            var inputManager = Application.InputManager;
             var camera = GetComponent<CameraComponent>();
             var transform = GetComponent<TransformComponent>();
             float playerSpeed = 2.5f * (float)Application.GetDeltaTime();
@@ -101,6 +65,7 @@ namespace BasicVoxelEngine.Content.Scripts
             {
                 RightClick();
             }
+            mCurrentMouseOffset = inputManager.Mouse;
         }
         private void LeftClick()
         {
@@ -110,6 +75,44 @@ namespace BasicVoxelEngine.Content.Scripts
         {
             Logger.Print(Logger.Severity.Info, "right clicked");
         }
+        private void UpdateCameraDirection()
+        {
+            Vector2 offset = mCurrentMouseOffset * mCameraSensitivity;
+            var camera = GetComponent<CameraComponent>();
+            var direction = camera.Direction;
+            double x = Math.Asin(direction.Y);
+            double factor = Math.Cos(x);
+            double y = Math.Atan2(direction.Z / factor, direction.X / factor);
+            var radians = new Vector2
+            {
+                X = (float)x,
+                Y = (float)y
+            };
+            var angle = radians.Degrees;
+            var cameraOffset = new Vector2(offset.Y, offset.X);
+            if (camera.Up.Y < 0f)
+            {
+                cameraOffset *= -1f;
+            }
+            angle += cameraOffset;
+            if (angle.X > 89f)
+            {
+                angle.X = 89f;
+            }
+            if (angle.X < -89f)
+            {
+                angle.X = -89f;
+            }
+            radians = angle.Radians;
+            var newDirection = new Vector3
+            {
+                X = (float)(Math.Cos(radians.X) * Math.Cos(radians.Y)),
+                Y = (float)Math.Sin(radians.X),
+                Z = (float)(Math.Cos(radians.X) * Math.Sin(radians.Y))
+            };
+            camera.Direction = newDirection.Normalized;
+        }
         private float mCameraSensitivity;
+        private Vector2 mCurrentMouseOffset;
     }
 }

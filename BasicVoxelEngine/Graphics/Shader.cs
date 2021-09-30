@@ -24,7 +24,7 @@ namespace BasicVoxelEngine.Graphics
         public void Reload() => Reload_Native(mAddress);
         public void Bind() => Bind_Native(mAddress);
         public void Unbind() => Unbind_Native(mAddress);
-        public void Set<T>(string name, T value) where T : notnull => Set_Native(mAddress, name, value, typeof(T));
+        public void Set<T>(string name, T value) where T : struct => Set_Native(mAddress, name, value, typeof(T));
         public T? Get<T>(string name) where T : struct
         {
             var returnValue = new UniformReturnValue();

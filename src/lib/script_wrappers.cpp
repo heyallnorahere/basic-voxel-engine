@@ -718,9 +718,9 @@ namespace bve {
             auto im = get_input_manager(address);
             im->mouse_enabled() = value;
         }
-        Vector2 BasicVoxelEngine_InputManager_GetMouse(IntPtr address) {
+        void BasicVoxelEngine_InputManager_GetMouse(IntPtr address, Vector2* offset) {
             auto im = get_input_manager(address);
-            return im->get_mouse();
+            *offset = im->get_mouse();
         }
         input_manager::key_state BasicVoxelEngine_InputManager_GetKey(IntPtr address, int32_t key) {
             auto im = get_input_manager(address);
