@@ -16,7 +16,7 @@ namespace bve {
         ref<managed::class_> builder_class = host->find_class("BasicVoxelEngine.WorldGen.Builder");
         auto generate = builder_class->get_method("*:Generate");
         int32_t seed = -1;
-        builder_class->invoke(generate, world_instance->get(), &seed);
+        managed::class_::invoke(generate, world_instance->get(), &seed);
     }
     void world::update() {
         auto script_view = this->m_registry.view<components::script_component>();

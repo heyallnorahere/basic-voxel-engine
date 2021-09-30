@@ -155,7 +155,7 @@ namespace bve {
             MonoMethod* method = helpers->get_method("*:DerivesFrom");
             auto reftype = type::get_type(this)->get_object();
             auto base_reftype = type::get_type(cls)->get_object();
-            auto result = helpers->invoke(method, reftype, base_reftype);
+            auto result = managed::class_::invoke(method, reftype, base_reftype);
             return result->unbox<bool>();
         }
         void* class_::get() {

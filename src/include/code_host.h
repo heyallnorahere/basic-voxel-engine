@@ -87,7 +87,8 @@ namespace bve {
             MonoClassField* get_field(const std::string& name);
             MonoProperty* get_property(const std::string& name);
             bool derives_from(ref<class_> cls);
-            template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) {
+            template<typename... Args> static ref<object> invoke(MonoMethod* method, Args*... args) {
+                MonoDomain* domain = mono_domain_get();
                 if (!method) {
                     throw std::runtime_error("[managed class] attempted to call nullptr!");
                 }
@@ -96,12 +97,12 @@ namespace bve {
                 void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
                 MonoObject* returned = mono_runtime_invoke(method, nullptr, args_ptr, &exc);
                 if (exc) {
-                    ref<object> exception = ref<object>::create(exc, this->get_domain());
+                    ref<object> exception = ref<object>::create(exc, domain);
                     object::handle_exception(exception);
                 }
                 ref<object> returned_object;
                 if (returned) {
-                    returned_object = ref<object>::create(returned, this->get_domain());
+                    returned_object = ref<object>::create(returned, domain);
                 }
                 return returned_object;
             }

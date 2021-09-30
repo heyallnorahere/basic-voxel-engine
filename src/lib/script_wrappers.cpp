@@ -218,7 +218,7 @@ namespace bve {
             auto register_type = managed::type::get_type(host->find_class("BasicVoxelEngine.Register`1"));
             auto helper_class = host->find_class("BasicVoxelEngine.Helpers");
             MonoMethod* get_generic_type = helper_class->get_method("BasicVoxelEngine.Helpers:GetGenericType(Type,Type[])");
-            auto generic_type = (MonoReflectionType*)helper_class->invoke(get_generic_type, register_type->get_object(), type_array)->get();
+            auto generic_type = (MonoReflectionType*)managed::class_::invoke(get_generic_type, register_type->get_object(), type_array)->get();
             mono_gchandle_free(array_handle);
             return ref<managed::type>::create(generic_type, domain);
         }

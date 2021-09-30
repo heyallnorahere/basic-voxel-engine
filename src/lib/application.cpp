@@ -18,7 +18,8 @@ namespace bve {
         {
             auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
             auto testmethod = app_class->get_method("*:TestMethod");
-            app_class->invoke(testmethod);
+            managed::class_::invoke(testmethod);
+            testmethod = app_class->get_method("*:TestMethod2");
         }
 #endif
         auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
@@ -58,7 +59,7 @@ namespace bve {
         {
             auto app_class = this->m_code_host->find_class("BasicVoxelEngine.ContentLoading.ContentLoader");
             auto load_content = app_class->get_method("*:LoadContent");
-            app_class->invoke(load_content);
+            managed::class_::invoke(load_content);
         }
         this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
         asset_manager& asset_manager_ = asset_manager::get();
