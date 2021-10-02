@@ -154,6 +154,7 @@ namespace bve {
         auto set_field = [&reflection_data](const std::string& name, const void* data, size_t size, uint32_t uniform_buffer, buffer& memory) {
             auto type = reflection_data.uniform_buffers[uniform_buffer].type;
             size_t offset = type->find_offset(name);
+            spdlog::info("[renderer] uniform buffer {0}: offset of {1} is {2}", uniform_buffer, name, offset);
             memory.copy(data, size, offset);
         };
         set_field("projection", &this->m_vub_data.projection, sizeof(glm::mat4), 0, this->m_vertex_uniform_data);

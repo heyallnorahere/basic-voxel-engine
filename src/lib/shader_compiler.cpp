@@ -198,7 +198,7 @@ namespace bve {
         }
         return 0;
     }
-    static std::shared_ptr<graphics::struct_data> get_type(const spirv_cross::Compiler& compiler, spirv_cross::TypeID id) {
+    static std::shared_ptr<graphics::struct_data> get_type(const spirv_cross::Compiler& compiler, spirv_cross::TypeID id, spirv_cross::TypeID parent, size_t member_index) {
         if (defined_structs.find(id) != defined_structs.end()) {
             return defined_structs[id];
         }
@@ -210,20 +210,18 @@ namespace bve {
         if (spirv_type.columns > 1) {
             data->size *= (size_t)spirv_type.columns;
         }
-        if (data->size < 16) {
-            data->size = 16;
-        }
         if (spirv_type.array.empty()) {
             data->array_size = 1;
             data->array_stride = 0;
         } else {
             data->array_size = spirv_type.array[0];
-            data->array_stride = compiler.type_struct_member_array_stride(spirv_type, 1);
+            const auto& parent_type = compiler.get_type(parent);
+            data->array_stride = compiler.type_struct_member_array_stride(parent_type, member_index);
         }
         for (size_t i = 0; i < spirv_type.member_types.size(); i++) {
             std::string name = compiler.get_member_name(spirv_type.self, (uint32_t)i);
             graphics::field_data field;
-            field.type = get_type(compiler, spirv_type.member_types[i]).get();
+            field.type = get_type(compiler, spirv_type.member_types[i], id, i).get();
             field.offset = compiler.type_struct_member_offset(spirv_type, i);
             data->fields.insert({ name, field });
         }
@@ -236,7 +234,7 @@ namespace bve {
             uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
             graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
             ubd.name = resource.name;
-            ubd.type = get_type(compiler, resource.base_type_id);
+            ubd.type = get_type(compiler, resource.base_type_id, spirv_cross::TypeID(), 0);
         }
         for (const auto& [_, struct_] : defined_structs) {
             output.structs.push_back(struct_);
