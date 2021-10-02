@@ -51,16 +51,14 @@ namespace bve {
             return *this;
         }
         template<typename U> ref& operator=(const ref<U>& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             other.inrease_ref_count();
             this->decrease_ref_count();
-            this->m_instance = other.m_instance;
+            this->m_instance = (T*)(void*)other.m_instance;
             return *this;
         }
         template<typename U> ref& operator=(ref<U>&& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             this->decrease_ref_count();
-            this->m_instance = other.m_instance;
+            this->m_instance = (T*)(void*)other.m_instance;
             other.m_instance = nullptr;
             return *this;
         }

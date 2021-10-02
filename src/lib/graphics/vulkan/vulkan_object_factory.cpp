@@ -5,8 +5,8 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            ref<vao> vulkan_object_factory::create_vao() {
-                // todo: create vao
+            ref<pipeline> vulkan_object_factory::create_pipeline() {
+                // todo: create pipeline
                 return nullptr;
             }
             ref<buffer> vulkan_object_factory::create_vbo(const void* data, size_t size) {

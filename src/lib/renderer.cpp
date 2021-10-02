@@ -5,7 +5,8 @@
 #include "asset_manager.h"
 namespace bve {
     struct command_list {
-        ref<graphics::buffer> vao, vbo, ebo;
+        ref<graphics::pipeline> pipeline;
+        ref<graphics::buffer> vbo, ebo;
         std::vector<ref<mesh>> meshes;
         std::vector<std::pair<glm::vec3, ref<lighting::light>>> lights;
         size_t index_count;
@@ -47,9 +48,9 @@ namespace bve {
             return;
         }
         cmdlist->open = false;
-        ref<graphics::vao> vao = this->m_factory->create_vao();
-        vao->bind();
-        cmdlist->vao = vao;
+        ref<graphics::pipeline> pipeline = this->m_factory->create_pipeline();
+        pipeline->bind();
+        cmdlist->pipeline = pipeline;
         std::vector<uint32_t> indices;
         size_t vertex_buffer_size = 0;
         size_t vertex_count = 0;
@@ -77,7 +78,7 @@ namespace bve {
         }
         cmdlist->vbo = this->m_factory->create_vbo(vertex_buffer_data, vertex_buffer_size);
         cmdlist->ebo = this->m_factory->create_ebo(indices);
-        vao->set_vertex_attributes(attributes);
+        pipeline->set_vertex_attributes(attributes);
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {
         this->m_current_shader->bind();
@@ -108,9 +109,9 @@ namespace bve {
         }
         this->set_uniform_data();
         this->m_texture_buffer->set_data(this->m_sampler_data);
-        cmdlist->vao->bind();
+        cmdlist->pipeline->bind();
         context->draw_indexed(cmdlist->index_count);
-        cmdlist->vao->unbind();
+        cmdlist->pipeline->unbind();
         this->m_current_shader->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {

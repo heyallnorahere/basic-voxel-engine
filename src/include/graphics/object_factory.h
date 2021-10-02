@@ -1,7 +1,7 @@
 #pragma once
 #include "buffer.h"
 #include "context.h"
-#include "vao.h"
+#include "pipeline.h"
 #include "shader.h"
 #include "texture.h"
 #include "uniform_buffer.h"
@@ -18,7 +18,7 @@ namespace bve {
             virtual ~object_factory() = default;
             object_factory(const object_factory&) = delete;
             object_factory& operator=(const object_factory&) = delete;
-            virtual ref<vao> create_vao() = 0;
+            virtual ref<pipeline> create_pipeline() = 0;
             template<typename T> ref<buffer> create_vbo(const std::vector<T>& data) {
                 return this->create_vbo(data.data(), data.size() * sizeof(T));
             }

@@ -1,21 +1,21 @@
 #include "bve_pch.h"
-#include "opengl_vao.h"
+#include "opengl_pipeline.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
-            opengl_vao::opengl_vao() {
+            opengl_pipeline::opengl_pipeline() {
                 glGenVertexArrays(1, &this->m_id);
             }
-            opengl_vao::~opengl_vao() {
+            opengl_pipeline::~opengl_pipeline() {
                 glDeleteVertexArrays(1, &this->m_id);
             }
-            void opengl_vao::bind() {
+            void opengl_pipeline::bind() {
                 glBindVertexArray(this->m_id);
             }
-            void opengl_vao::unbind() {
+            void opengl_pipeline::unbind() {
                 glBindVertexArray(0);
             }
-            void opengl_vao::set_vertex_attributes(const std::vector<vertex_attribute>& attributes) {
+            void opengl_pipeline::set_vertex_attributes(const std::vector<vertex_attribute>& attributes) {
                 this->bind();
                 for (size_t i = 0; i < attributes.size(); i++) {
                     const auto& attrib = attributes[i];
@@ -59,7 +59,7 @@ namespace bve {
                         element_count = 16;
                         break;
                     default:
-                        throw std::runtime_error("[opengl vao] invalid vertex_attribute_type value");
+                        throw std::runtime_error("[opengl pipeline] invalid vertex_attribute_type value");
                         break;
                     }
                     if (integer) {
