@@ -9,7 +9,7 @@ namespace bve {
         };
         struct struct_data {
             std::string name;
-            size_t size;
+            size_t size, array_stride;
             uint32_t array_size;
             std::map<std::string, field_data> fields;
             size_t find_offset(const std::string& field_name);
@@ -20,6 +20,7 @@ namespace bve {
         };
         struct reflection_output {
             std::map<uint32_t, uniform_buffer_data> uniform_buffers;
+            std::vector<std::shared_ptr<struct_data>> structs;
         };
         class shader : public ref_counted {
         public:
@@ -49,18 +50,12 @@ namespace bve {
             virtual glm::vec4 get_vec4(const std::string& name) = 0;
             virtual glm::mat4 get_mat4(const std::string& name) = 0;
             reflection_output get_reflection_data() {
-                reflection_output output;
-                for (const auto& [_, data] : this->m_reflection_data) {
-                    for (const auto& [binding, ubd] : data.uniform_buffers) {
-                        output.uniform_buffers[binding] = ubd;
-                    }
-                }
-                return output;
+                return this->m_reflection_data;
             }
         protected:
             void reflect(shader_type type, const std::vector<uint32_t>& spirv);
         private:
-            std::map<shader_type, reflection_output> m_reflection_data;
+            reflection_output m_reflection_data;
         };
     }
 }

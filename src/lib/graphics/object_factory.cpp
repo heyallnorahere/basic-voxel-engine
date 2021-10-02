@@ -49,9 +49,6 @@ namespace bve {
             } else {
                 name = field_name;
             }
-            if (this->fields.find(name) == this->fields.end()) {
-                throw std::runtime_error("[shader compiler] " + name + " is not the name of a field");
-            }
             int32_t index = 0;
             size_t open_bracket = name.find('[');
             if (open_bracket != std::string::npos) {
@@ -64,11 +61,14 @@ namespace bve {
                 name = name.substr(0, open_bracket);
                 index = atoi(index_string.c_str());
             }
+            if (this->fields.find(name) == this->fields.end()) {
+                throw std::runtime_error("[shader compiler] " + name + " is not the name of a field");
+            }
             const auto& field = this->fields[name];
             if (index > 0 && field.type->array_size <= 1) {
                 throw std::runtime_error("[shader compiler] attempted to index into a non-array field");
             }
-            size_t offset = field.offset + (index * field.type->size);
+            size_t offset = field.offset + (index * field.type->array_stride);
             if (subname.empty()) {
                 return offset;
             } else {
@@ -77,7 +77,7 @@ namespace bve {
         }
         void shader::reflect(shader_type type, const std::vector<uint32_t>& spirv) {
             shader_compiler compiler;
-            compiler.reflect(spirv, this->m_reflection_data[type]);
+            compiler.reflect(spirv, this->m_reflection_data);
         }
     }
 }

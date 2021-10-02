@@ -207,22 +207,25 @@ namespace bve {
         const auto& spirv_type = compiler.get_type(id);
         data->name = compiler.get_name(id);
         data->size = get_size(spirv_type, compiler);
+        if (spirv_type.columns > 1) {
+            data->size *= (size_t)spirv_type.columns;
+        }
+        if (data->size < 16) {
+            data->size = 16;
+        }
         if (spirv_type.array.empty()) {
             data->array_size = 1;
+            data->array_stride = 0;
         } else {
             data->array_size = spirv_type.array[0];
+            data->array_stride = compiler.type_struct_member_array_stride(spirv_type, 1);
         }
-        size_t current_offset = 0;
         for (size_t i = 0; i < spirv_type.member_types.size(); i++) {
-            std::string name = compiler.get_member_name(id, (uint32_t)i);
-            graphics::field_data& field = data->fields[name];
+            std::string name = compiler.get_member_name(spirv_type.self, (uint32_t)i);
+            graphics::field_data field;
             field.type = get_type(compiler, spirv_type.member_types[i]).get();
-            field.offset = current_offset;
-            size_t field_size = field.type->size;
-            if (field_size < 16) {
-                field_size = 16;
-            }
-            current_offset += field_size;
+            field.offset = compiler.type_struct_member_offset(spirv_type, i);
+            data->fields.insert({ name, field });
         }
         return data;
     }
@@ -234,6 +237,9 @@ namespace bve {
             graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
             ubd.name = resource.name;
             ubd.type = get_type(compiler, resource.base_type_id);
+        }
+        for (const auto& [_, struct_] : defined_structs) {
+            output.structs.push_back(struct_);
         }
         defined_structs.clear();
     }

@@ -65,7 +65,12 @@ namespace bve {
                 this->copy(temp);
             }
         }
-        spdlog::info("[buffer] copying {0} (size: {1}) into {2} (size: {3})", data, size, this->m_pointer, this->m_size);
+        std::stringstream address_string;
+        address_string << this->m_pointer;
+        if (offset > 0) {
+            address_string << "+0x" << std::hex << offset;
+        }
+        spdlog::info("[buffer] copying {0} (size: {1}) into {2} (size: {3})", data, size, address_string.str(), this->m_size - offset);
         void* ptr = (void*)((size_t)this->m_pointer + offset);
         memcpy(ptr, data, this->m_size);
     }

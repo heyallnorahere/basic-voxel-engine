@@ -78,23 +78,20 @@ namespace bve {
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {
         this->m_current_shader->bind();
-        this->m_vertex_uniform_buffer->set_data(this->m_vertex_uniform_data);
-        fragment_uniform_buffer_t& fud = this->m_fragment_uniform_data;
         if (atlas) {
-            fud.texture_atlas_ = atlas->get_uniform_data();
-            this->m_textures[fud.texture_atlas_.image] = atlas->get_texture();
+            this->m_fub_data.texture_atlas_ = atlas->get_uniform_data();
+            this->m_textures[this->m_fub_data.texture_atlas_.image] = atlas->get_texture();
         }
         if (cmdlist->lights.size() > 30) {
             throw std::runtime_error("[renderer] scene cannot contain more than 30 lights!");
         }
-        fud.light_count = (int32_t)cmdlist->lights.size();
+        this->m_fub_data.light_count = (int32_t)cmdlist->lights.size();
         for (size_t i = 0; i < cmdlist->lights.size(); i++) {
             ref<lighting::light> light = cmdlist->lights[i].second;
             lighting::light::uniform_data data = light->get_uniform_data();
             data.position = cmdlist->lights[i].first;
-            fud.lights[i] = data;
+            this->m_fub_data.lights[i] = data;
         }
-        this->m_fragment_uniform_buffer->set_data(this->m_fragment_uniform_data);
         int32_t* sampler_data = this->m_sampler_data;
         for (size_t i = 0; i < max_texture_units; i++) {
             ref<graphics::texture> texture = this->m_textures[i];
@@ -106,6 +103,7 @@ namespace bve {
             }
             sampler_data[i] = (int32_t)i;
         }
+        this->set_uniform_data();
         this->m_texture_buffer->set_data(this->m_sampler_data);
         cmdlist->vao->bind();
         context->draw_indexed(cmdlist->index_count);
@@ -126,7 +124,7 @@ namespace bve {
         this->set_camera_data(transform.translation, camera.direction, aspect_ratio, camera.up, camera.near_plane, camera.far_plane);
     }
     void renderer::set_shader(ref<graphics::shader> shader_) {
-        if (shader_ != this->m_current_shader) {
+        if (shader_ && shader_ != this->m_current_shader) {
             auto reflection_data = shader_->get_reflection_data();
             size_t size = reflection_data.uniform_buffers[0].type->size;
             this->m_vertex_uniform_buffer = this->m_factory->create_uniform_buffer(size, 0);
@@ -139,9 +137,21 @@ namespace bve {
         }
         this->m_current_shader = shader_;
     }
+    using set_field_callback = std::function<void(const std::string&, const void*, size_t)>;
+    static void set_atlas_data(const texture_atlas::uniform_data& data, set_field_callback set_field) {
+        std::string base_name = "texture_atlas";
+        set_field(base_name + ".image", &data.image, sizeof(int32_t));
+        set_field(base_name + ".texture_size", &data.texture_size, sizeof(glm::ivec2));
+        set_field(base_name + ".grid_size", &data.grid_size, sizeof(glm::ivec2));
+        for (size_t i = 0; i < 64; i++) {
+            std::string entry_name = base_name + ".texture_dimensions[" + std::to_string(i) + "]";
+            set_field(entry_name + ".grid_position", &data.texture_dimensions[i].grid_position, sizeof(glm::ivec2));
+            set_field(entry_name + ".texture_dimensions", &data.texture_dimensions[i].texture_dimensions, sizeof(glm::ivec2));
+        }
+    }
     void renderer::set_uniform_data() {
-        auto set_field = [this](const std::string& name, void* data, size_t size, uint32_t uniform_buffer, buffer& memory) {
-            auto reflection_data = this->m_current_shader->get_reflection_data();
+        auto reflection_data = this->m_current_shader->get_reflection_data();
+        auto set_field = [&reflection_data](const std::string& name, const void* data, size_t size, uint32_t uniform_buffer, buffer& memory) {
             auto type = reflection_data.uniform_buffers[uniform_buffer].type;
             size_t offset = type->find_offset(name);
             memory.copy(data, size, offset);
@@ -160,5 +170,11 @@ namespace bve {
             set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
             set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1, this->m_fragment_uniform_data);
         }
+        set_atlas_data(this->m_fub_data.texture_atlas_, [set_field, this](const std::string& name, const void* data, size_t size) {
+            set_field(name, data, size, 1, this->m_fragment_uniform_data);
+        });
+        set_field("camera_position", &this->m_fub_data.camera_position, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
+        this->m_vertex_uniform_buffer->set_data(this->m_vertex_uniform_data);
+        this->m_fragment_uniform_buffer->set_data(this->m_fragment_uniform_data);
     }
 }

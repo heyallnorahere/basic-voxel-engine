@@ -26,20 +26,20 @@ layout(location = 0) in vec2 uv;
 layout(location = 1) flat in int block_id;
 layout(location = 2) in vec3 fragment_position;
 layout(location = 3) in vec3 normal;
-struct light_t {
+layout(std140) struct light_t {
     int type;
-    vec3 position, color;
+    vec4 position, color;
     float ambient_strength, specular_strength;
     // spotlight fields
-    vec3 direction;
+    vec4 direction;
     float cutoff;
     // point light fields
     float constant, linear_, quadratic;
 };
-struct texture_dimensions_t {
+layout(std140) struct texture_dimensions_t {
     ivec2 grid_position, texture_dimensions;
 };
-struct texture_atlas_t {
+layout(std140) struct texture_atlas_t {
     int image;
     ivec2 texture_size, grid_size;
     texture_dimensions_t texture_dimensions[64]; // im gonna increase the size of this array once i add more blocks
@@ -48,7 +48,7 @@ layout(std140, binding = 1) uniform fragment_uniform_buffer_t {
     light_t lights[30];
     int light_count;
     texture_atlas_t texture_atlas;
-    vec3 camera_position;
+    vec4 camera_position;
 } fragment_uniform_buffer;
 layout(binding = 2) uniform sampler2D textures[30];
 layout(location = 0) out vec4 fragment_color;
@@ -60,23 +60,23 @@ vec4 get_texture() {
     return texture(textures[fragment_uniform_buffer.texture_atlas.image], uv_coordinates);
 }
 vec3 calculate_ambient(light_t l) {
-    return l.ambient_strength * l.color;
+    return l.ambient_strength * l.color.xyz;
 }
 vec3 calculate_diffuse(light_t l) {
-    vec3 light_direction = normalize(l.position - fragment_position);
+    vec3 light_direction = normalize(l.position.xyz - fragment_position);
     float diff = max(dot(normal, light_direction), 0.0);
-    return diff * l.color;
+    return diff * l.color.xyz;
 }
 vec3 calculate_specular(light_t l) {
-    vec3 light_direction = normalize(l.position - fragment_position);
-    vec3 view_direction = normalize(fragment_uniform_buffer.camera_position - fragment_position);
+    vec3 light_direction = normalize(l.position.xyz - fragment_position);
+    vec3 view_direction = normalize(fragment_uniform_buffer.camera_position.xyz - fragment_position);
     vec3 reflect_direction = reflect(-light_direction, normal);
     float spec = pow(max(dot(view_direction, reflect_direction), 0.0), 32);
-    return l.specular_strength * spec * l.color;
+    return l.specular_strength * spec * l.color.xyz;
 }
 vec3 calculate_spotlight(light_t l, vec3 color, vec3 ambient_color) {
-    vec3 light_direction = normalize(l.position - fragment_position);
-    float theta = dot(light_direction, normalize(-l.direction));
+    vec3 light_direction = normalize(l.position.xyz - fragment_position);
+    float theta = dot(light_direction, normalize(-l.direction.xyz));
     if (theta > l.cutoff) {
         return color;
     } else {
@@ -84,7 +84,7 @@ vec3 calculate_spotlight(light_t l, vec3 color, vec3 ambient_color) {
     }
 }
 vec3 calculate_point_light(light_t l, vec3 color) {
-    float distance_ = length(l.position - fragment_position);
+    float distance_ = length(l.position.xyz - fragment_position);
     float distance_squared = distance_ * distance_;
     float attenuation = 1.0 / (l.constant + l.linear_ * distance_ + l.quadratic * distance_squared);
     return color * attenuation;
@@ -107,9 +107,9 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
 void main() {
     // commented out in favor of placeholder
     vec4 color = get_texture();
-    /*vec3 output_color = vec3(0.0);
+    /*vec3 output_color = 0.0);
     for (int i = 0; i < fragment_uniform_buffer.light_count; i++) {
-        output_color += calculate_light(i, vec3(color));
+        output_color += calculate_light(i, color));
     }*/
     fragment_color = color;
 }
