@@ -38,7 +38,7 @@ namespace bve {
         }
         this->m_size = size;
         this->m_pointer = malloc(this->m_size);
-#ifndef DEBUG
+#ifdef BVE_BUFFER_TRACE
         spdlog::info("[buffer] allocated {0} (size: {1})", this->m_pointer, this->m_size);
 #endif
         if (!this->m_pointer) {
@@ -47,7 +47,7 @@ namespace bve {
     }
     void buffer::free() {
         ::free(this->m_pointer);
-#ifndef DEBUG
+#ifdef BVE_BUFFER_TRACE
         spdlog::info("[buffer] freed {0} (size: {1})", this->m_pointer, this->m_size);
 #endif
         this->m_pointer = nullptr;
@@ -77,7 +77,7 @@ namespace bve {
                 throw std::runtime_error("[buffer] tried to copy into unallocated memory");
             }
         }
-#ifndef NDEBUG
+#ifdef BVE_BUFFER_TRACE
         std::stringstream address_string;
         address_string << this->m_pointer;
         if (offset > 0) {

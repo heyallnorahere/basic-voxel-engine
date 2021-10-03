@@ -107,9 +107,9 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
 void main() {
     // commented out in favor of placeholder
     vec4 color = get_texture();
-    /*vec3 output_color = 0.0);
+    vec3 output_color = vec3(0.0);
     for (int i = 0; i < fragment_uniform_buffer.light_count; i++) {
-        output_color += calculate_light(i, color));
-    }*/
-    fragment_color = color;
+        output_color += calculate_light(i, color.xyz);
+    }
+    fragment_color = vec4(output_color, color.a);
 }
