@@ -5,6 +5,8 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            static std::list<ref<vulkan_uniform_buffer>> active_uniform_buffers;
+            const std::list<ref<vulkan_uniform_buffer>>& vulkan_uniform_buffer::get_active_uniform_buffers() { return active_uniform_buffers; }
             vulkan_uniform_buffer::vulkan_uniform_buffer(size_t size, uint32_t binding, ref<vulkan_object_factory> factory) {
                 this->m_size = size;
                 this->m_binding = binding;
@@ -21,8 +23,10 @@ namespace bve {
                 this->m_descriptor_info.buffer = this->m_buffer;
                 this->m_descriptor_info.offset = 0;
                 this->m_descriptor_info.range = (VkDeviceSize)this->m_size;
+                active_uniform_buffers.push_back(this);
             }
             vulkan_uniform_buffer::~vulkan_uniform_buffer() {
+                active_uniform_buffers.remove_if([this](ref<vulkan_uniform_buffer> element) { return element == this; });
                 vkDestroyBuffer(this->m_device, this->m_buffer, nullptr);
                 vkFreeMemory(this->m_device, this->m_memory, nullptr);
             }

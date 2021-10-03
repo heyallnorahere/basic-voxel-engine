@@ -9,7 +9,7 @@ namespace bve {
                 VkPhysicalDeviceMemoryProperties memory_properties;
                 vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
                 for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
-                    if (filter & (1 << i)) {
+                    if ((filter & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
                         return i;
                     }
                 }
@@ -33,7 +33,7 @@ namespace bve {
                 alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
                 alloc_info.allocationSize = requirements.size;
                 alloc_info.memoryTypeIndex = find_memory_type(requirements.memoryTypeBits,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, physical_device);
+                    properties, physical_device);
                 if (vkAllocateMemory(device, &alloc_info, nullptr, &memory) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan buffer] could not allocate memory on the gpu");
                 }

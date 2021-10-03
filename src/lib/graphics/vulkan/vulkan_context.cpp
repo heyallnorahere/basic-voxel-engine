@@ -4,6 +4,7 @@
 #include <backends/imgui_impl_vulkan.h>
 #include "vulkan_extensions.h"
 #include "vulkan_pipeline.h"
+#include "vulkan_uniform_buffer.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -158,6 +159,9 @@ namespace bve {
                 auto pipeline = this->m_factory->m_current_pipeline;
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
+                    if (!vk_pipeline->valid()) {
+                        throw std::runtime_error("[vulkan context] an invalid pipeline is bound");
+                    }
                     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
                     auto bound_buffers = vk_pipeline->get_bound_buffers();
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
@@ -173,6 +177,37 @@ namespace bve {
                         vkCmdBindIndexBuffer(command_buffer, buffer->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
                     } else {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
+                    }
+                    auto shader = vk_pipeline->get_shader();
+                    const auto& sets = shader->get_descriptor_sets();
+                    std::vector<VkDescriptorSet> sets_to_bind;
+                    for (const auto& set : sets) {
+                        auto descriptor_set = set.sets[this->m_current_command_buffer];
+                        sets_to_bind.push_back(descriptor_set);
+                    }
+                    VkPipelineLayout layout = vk_pipeline->get_layout();
+                    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
+                    const auto& reflection_data = shader->get_reflection_data();
+                    for (auto buffer : vulkan_uniform_buffer::get_active_uniform_buffers()) {
+                        uint32_t binding = buffer->get_binding();
+                        if (reflection_data.uniform_buffers.find(binding) == reflection_data.uniform_buffers.end()) {
+                            throw std::runtime_error("[vulkan context] invalid uniform buffer binding");
+                        }
+                        const auto& buffer_info = reflection_data.uniform_buffers.find(binding)->second;
+                        uint32_t descriptor_set = buffer_info.descriptor_set;
+                        VkDescriptorSet vk_descriptor_set = sets[descriptor_set].sets[this->m_current_command_buffer];
+                        VkWriteDescriptorSet write;
+                        memset(&write, 0, sizeof(VkWriteDescriptorSet));
+                        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                        write.dstSet = vk_descriptor_set;
+                        write.dstBinding = binding;
+                        write.dstArrayElement = 0;
+                        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        write.descriptorCount = 1;
+                        write.pBufferInfo = &buffer->get_descriptor_info();
+                        write.pImageInfo = nullptr;
+                        write.pTexelBufferView = nullptr;
+                        vkUpdateDescriptorSets(this->m_device, 1, &write, 0, nullptr);
                     }
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
@@ -273,6 +308,35 @@ namespace bve {
                 ImGui_ImplGlfw_Shutdown();
             }
             void vulkan_context::call_imgui_backend_newframe() {
+                static bool first_frame = true;
+                if (first_frame) {
+                    VkCommandBufferAllocateInfo alloc_info;
+                    memset(&alloc_info, 0, sizeof(VkCommandBufferAllocateInfo));
+                    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                    alloc_info.commandPool = this->m_command_pool;
+                    alloc_info.commandBufferCount = 1;
+                    VkCommandBuffer command_buffer;
+                    if (vkAllocateCommandBuffers(this->m_device, &alloc_info, &command_buffer) != VK_SUCCESS) {
+                        throw std::runtime_error("[vulkan context] could not allocate command buffer for initializing ImGui");
+                    }
+                    VkCommandBufferBeginInfo begin_info;
+                    memset(&begin_info, 0, sizeof(VkCommandBufferBeginInfo));
+                    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                    vkBeginCommandBuffer(command_buffer, &begin_info);
+                    ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
+                    vkEndCommandBuffer(command_buffer);
+                    VkSubmitInfo submit_info;
+                    memset(&submit_info, 0, sizeof(VkSubmitInfo));
+                    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                    submit_info.commandBufferCount = 1;
+                    submit_info.pCommandBuffers = &command_buffer;
+                    vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, nullptr);
+                    vkDeviceWaitIdle(this->m_device);
+                    ImGui_ImplVulkan_DestroyFontUploadObjects();
+                    first_frame = false;
+                }
                 ImGui_ImplVulkan_NewFrame();
                 ImGui_ImplGlfw_NewFrame();
             }

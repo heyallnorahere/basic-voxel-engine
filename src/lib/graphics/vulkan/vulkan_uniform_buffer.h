@@ -6,6 +6,7 @@ namespace bve {
         namespace vulkan {
             class vulkan_uniform_buffer : public uniform_buffer {
             public:
+                static const std::list<ref<vulkan_uniform_buffer>>& get_active_uniform_buffers();
                 vulkan_uniform_buffer(size_t size, uint32_t binding, ref<vulkan_object_factory> factory);
                 virtual ~vulkan_uniform_buffer() override;
                 virtual void set_data(const void* data, size_t size, size_t offset);

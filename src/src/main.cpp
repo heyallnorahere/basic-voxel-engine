@@ -3,18 +3,18 @@
 #include "application.h"
 #include "player.h"
 int main(int argc, const char** argv) {
+#ifdef NDEBUG
     try {
-        using namespace bve;
-        auto& app = application::get();
-        app.get_world()->create().add_component<components::script_component>().bind<player>();
-        app.run();
-        return EXIT_SUCCESS;
+#endif
+    using namespace bve;
+    auto& app = application::get();
+    app.get_world()->create().add_component<components::script_component>().bind<player>();
+    app.run();
+    return EXIT_SUCCESS;
+#ifdef NDEBUG
     } catch (const std::runtime_error& exc) {
         spdlog::error(exc.what());
-#ifdef NDEBUG
         return EXIT_FAILURE;
-#else
-        throw exc;
-#endif
     }
+#endif
 }

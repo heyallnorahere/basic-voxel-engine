@@ -14,6 +14,7 @@ namespace bve {
                 virtual void bind() override;
                 virtual void unbind() override;
                 VkPipeline get_pipeline() { return this->m_pipeline; }
+                VkPipelineLayout get_layout() { return this->m_layout; }
                 void set_shader(ref<vulkan_shader> shader) { this->m_shader = shader; }
                 ref<vulkan_shader> get_shader() { return this->m_shader; }
                 void bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer);
