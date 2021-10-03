@@ -9,6 +9,6 @@ namespace bve {
         std::vector<uint32_t> compile(const std::string& source, shader_language input_language, shader_type type);
         std::string decompile(const std::vector<uint32_t>& spirv, shader_language output_language);
         std::string convert(const std::string& source, shader_language input_language, shader_language output_language, shader_type type);
-        void reflect(const std::vector<uint32_t>& spirv, graphics::reflection_output& output);
+        void reflect(const std::vector<uint32_t>& spirv, shader_type stage, graphics::reflection_output& output);
     };
 }

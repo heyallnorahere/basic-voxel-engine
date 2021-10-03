@@ -21,6 +21,8 @@ namespace bve {
                 VkExtent2D get_swapchain_extent() { return this->m_swapchain_extent; }
                 VkRenderPass get_render_pass() { return this->m_render_pass; }
                 VkCommandPool get_command_pool() { return this->m_command_pool; }
+                VkDescriptorPool get_descriptor_pool() { return this->m_descriptor_pool; }
+                size_t get_swapchain_image_count() { return this->m_swapchain_images.size(); }
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -42,6 +44,7 @@ namespace bve {
                 void create_command_pool();
                 void alloc_command_buffers();
                 void create_semaphores();
+                void create_descriptor_pool();
                 void cleanup_swapchain(bool* recreate_pipeline);
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
@@ -66,6 +69,7 @@ namespace bve {
                 std::vector<VkCommandBuffer> m_command_buffers;
                 uint32_t m_current_command_buffer;
                 VkSemaphore m_image_available_semaphore, m_render_finished_semaphore;
+                VkDescriptorPool m_descriptor_pool;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };

@@ -26,9 +26,6 @@ namespace bve {
                     this->m_factory->m_current_pipeline.reset();
                 }
             }
-            void vulkan_pipeline::set_shader(ref<vulkan_shader> shader) {
-                this->m_shader = shader;
-            }
             void vulkan_pipeline::bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {
                 if (buffer) {
                     this->m_buffers.insert({ type, buffer });
@@ -38,9 +35,6 @@ namespace bve {
                 if (this->m_buffers.find(type) != this->m_buffers.end()) {
                     this->m_buffers.erase(type);
                 }
-            }
-            std::map<VkBufferUsageFlags, ref<vulkan_buffer>> vulkan_pipeline::get_bound_buffers() {
-                return this->m_buffers;
             }
             void vulkan_pipeline::create() {
                 if (this->m_factory->m_current_pipeline != this) {
@@ -177,8 +171,15 @@ namespace bve {
                 VkPipelineLayoutCreateInfo pipeline_layout_info;
                 memset(&pipeline_layout_info, 0, sizeof(VkPipelineLayoutCreateInfo));
                 pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-                pipeline_layout_info.setLayoutCount = 0;
-                pipeline_layout_info.pSetLayouts = nullptr;
+                if (this->m_shader) {
+                    std::vector<VkDescriptorSetLayout> layouts;
+                    const auto& sets = this->m_shader->get_descriptor_sets();
+                    for (const auto& set : sets) {
+                        layouts.push_back(set.layout);
+                    }
+                    pipeline_layout_info.setLayoutCount = (uint32_t)layouts.size();
+                    pipeline_layout_info.pSetLayouts = layouts.data();
+                }
                 pipeline_layout_info.pushConstantRangeCount = 0;
                 pipeline_layout_info.pPushConstantRanges = nullptr;
                 if (vkCreatePipelineLayout(device, &pipeline_layout_info, nullptr, &this->m_layout) != VK_SUCCESS) {
@@ -191,6 +192,8 @@ namespace bve {
                     const auto& shader_stage_create_info = this->m_shader->get_create_info();
                     create_info.stageCount = (uint32_t)shader_stage_create_info.size();
                     create_info.pStages = shader_stage_create_info.data();
+                } else {
+                    throw std::runtime_error("[vulkan pipeline] cannot create a pipeline without a shader");
                 }
                 create_info.pVertexInputState = &vertex_input_info;
                 create_info.pInputAssemblyState = &input_assembly;

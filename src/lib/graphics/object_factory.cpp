@@ -77,7 +77,7 @@ namespace bve {
         }
         void shader::reflect(shader_type type, const std::vector<uint32_t>& spirv) {
             shader_compiler compiler;
-            compiler.reflect(spirv, this->m_reflection_data);
+            compiler.reflect(spirv, type, this->m_reflection_data);
         }
     }
 }

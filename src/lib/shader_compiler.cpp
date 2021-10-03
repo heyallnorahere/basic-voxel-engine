@@ -227,14 +227,17 @@ namespace bve {
         }
         return data;
     }
-    void shader_compiler::reflect(const std::vector<uint32_t>& spirv, graphics::reflection_output& output) {
+    void shader_compiler::reflect(const std::vector<uint32_t>& spirv, shader_type stage, graphics::reflection_output& output) {
         spirv_cross::Compiler compiler(spirv);
         auto resources = compiler.get_shader_resources();
         for (const auto& resource : resources.uniform_buffers) {
             uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
             graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
+            ubd.descriptor_set = descriptor_set;
             ubd.name = resource.name;
             ubd.type = get_type(compiler, resource.base_type_id, spirv_cross::TypeID(), 0);
+            ubd.stage = stage;
         }
         for (const auto& [_, struct_] : defined_structs) {
             output.structs.push_back(struct_);

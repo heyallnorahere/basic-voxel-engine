@@ -17,6 +17,8 @@ namespace bve {
         struct uniform_buffer_data {
             std::string name;
             std::shared_ptr<struct_data> type;
+            shader_type stage;
+            uint32_t descriptor_set;
         };
         struct reflection_output {
             std::map<uint32_t, uniform_buffer_data> uniform_buffers;
@@ -49,7 +51,7 @@ namespace bve {
             virtual glm::vec3 get_vec3(const std::string& name) = 0;
             virtual glm::vec4 get_vec4(const std::string& name) = 0;
             virtual glm::mat4 get_mat4(const std::string& name) = 0;
-            reflection_output get_reflection_data() {
+            const reflection_output& get_reflection_data() {
                 return this->m_reflection_data;
             }
         protected:

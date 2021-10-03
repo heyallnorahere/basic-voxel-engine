@@ -6,13 +6,17 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            static std::list<ref<vulkan_shader>> active_shaders;
+            const std::list<ref<vulkan_shader>>& vulkan_shader::get_active_shaders() { return active_shaders; }
             vulkan_shader::vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<fs::path>& sources) {
                 this->m_device = nullptr;
                 this->m_factory = factory;
                 this->m_sources = sources;
                 this->compile();
+                active_shaders.push_back(this);
             }
             vulkan_shader::~vulkan_shader() {
+                active_shaders.remove_if([this](ref<vulkan_shader> element) { return element == this; });
                 this->cleanup();
             }
             void vulkan_shader::reload() {
@@ -30,60 +34,24 @@ namespace bve {
                 }
             }
             void vulkan_shader::unbind() { }
-            void vulkan_shader::set_int(const std::string& name, int32_t value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_float(const std::string& name, float value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_ivec2(const std::string& name, const glm::ivec2& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_ivec3(const std::string& name, const glm::ivec3& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_ivec4(const std::string& name, const glm::ivec4& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_vec2(const std::string& name, const glm::vec2& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_vec3(const std::string& name, const glm::vec3& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_vec4(const std::string& name, const glm::vec4& value) {
-                // todo: stuff
-            }
-            void vulkan_shader::set_mat4(const std::string& name, const glm::mat4& value) {
-                // todo: stuff
-            }
-            int32_t vulkan_shader::get_int(const std::string& name) {
-                return 0;
-            }
-            float vulkan_shader::get_float(const std::string& name) {
-                return 0.f;
-            }
-            glm::ivec2 vulkan_shader::get_ivec2(const std::string& name) {
-                return glm::ivec2(0);
-            }
-            glm::ivec3 vulkan_shader::get_ivec3(const std::string& name) {
-                return glm::ivec3(0);
-            }
-            glm::ivec4 vulkan_shader::get_ivec4(const std::string& name) {
-                return glm::ivec4(0);
-            }
-            glm::vec2 vulkan_shader::get_vec2(const std::string& name) {
-                return glm::vec2(0.f);
-            }
-            glm::vec3 vulkan_shader::get_vec3(const std::string& name) {
-                return glm::vec3(0.f);
-            }
-            glm::vec4 vulkan_shader::get_vec4(const std::string& name) {
-                return glm::vec4(0.f);
-            }
-            glm::mat4 vulkan_shader::get_mat4(const std::string& name) {
-                return glm::mat4(1.f);
-            }
+            void vulkan_shader::set_int(const std::string& name, int32_t value) { }
+            void vulkan_shader::set_float(const std::string& name, float value) { }
+            void vulkan_shader::set_ivec2(const std::string& name, const glm::ivec2& value) { }
+            void vulkan_shader::set_ivec3(const std::string& name, const glm::ivec3& value) { }
+            void vulkan_shader::set_ivec4(const std::string& name, const glm::ivec4& value) { }
+            void vulkan_shader::set_vec2(const std::string& name, const glm::vec2& value) { }
+            void vulkan_shader::set_vec3(const std::string& name, const glm::vec3& value) { }
+            void vulkan_shader::set_vec4(const std::string& name, const glm::vec4& value) { }
+            void vulkan_shader::set_mat4(const std::string& name, const glm::mat4& value) { }
+            int32_t vulkan_shader::get_int(const std::string& name) { return 0; }
+            float vulkan_shader::get_float(const std::string& name) { return 0.f; }
+            glm::ivec2 vulkan_shader::get_ivec2(const std::string& name) { return glm::ivec2(0); }
+            glm::ivec3 vulkan_shader::get_ivec3(const std::string& name) { return glm::ivec3(0); }
+            glm::ivec4 vulkan_shader::get_ivec4(const std::string& name) { return glm::ivec4(0); }
+            glm::vec2 vulkan_shader::get_vec2(const std::string& name) { return glm::vec2(0.f); }
+            glm::vec3 vulkan_shader::get_vec3(const std::string& name) { return glm::vec3(0.f); }
+            glm::vec4 vulkan_shader::get_vec4(const std::string& name) { return glm::vec4(0.f); }
+            glm::mat4 vulkan_shader::get_mat4(const std::string& name) { return glm::mat4(1.f); }
             void vulkan_shader::compile() {
                 ref<vulkan_context> context_ = this->m_factory->get_current_context();
                 this->m_device = context_->get_device();
@@ -139,6 +107,7 @@ namespace bve {
                     create_info.pName = "main";
                     this->m_pipeline_create_info.push_back(create_info);
                 }
+                this->create_descriptor_sets();
             }
             VkShaderModule vulkan_shader::compile_shader(shader_type type, const shader_parser& parser) {
                 std::string source = parser.get_shader(type);
@@ -157,10 +126,74 @@ namespace bve {
                 return shader_module;
             }
             void vulkan_shader::cleanup() {
+                this->destroy_descriptor_sets();
                 for (const auto& create_info : this->m_pipeline_create_info) {
                     vkDestroyShaderModule(this->m_device, create_info.module, nullptr);
                 }
                 this->m_pipeline_create_info.clear();
+            }
+            void vulkan_shader::create_descriptor_sets() {
+                auto context = this->m_factory->get_current_context().as<vulkan_context>();
+                size_t image_count = context->get_swapchain_image_count();
+                this->m_descriptor_pool = context->get_descriptor_pool();
+                const auto& data = this->get_reflection_data();
+                uint32_t descriptor_set_count = 0;
+                for (const auto& [binding, buffer_info] : data.uniform_buffers) {
+                    uint32_t new_size = buffer_info.descriptor_set + 1;
+                    if (new_size > descriptor_set_count) {
+                        descriptor_set_count = new_size;
+                    }
+                }
+                std::vector<VkDescriptorSetLayout> layouts;
+                for (uint32_t i = 0; i < descriptor_set_count; i++) {
+                    VkDescriptorSetLayoutBinding layout_binding;
+                    memset(&layout_binding, 0, sizeof(VkDescriptorSetLayoutBinding));
+                    layout_binding.binding = i;
+                    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    layout_binding.descriptorCount = 1;
+                    layout_binding.stageFlags = VK_SHADER_STAGE_ALL;
+                    layout_binding.pImmutableSamplers = nullptr;
+                    VkDescriptorSetLayoutCreateInfo create_info;
+                    memset(&create_info, 0, sizeof(VkDescriptorSetLayoutCreateInfo));
+                    create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+                    create_info.bindingCount = 1;
+                    create_info.pBindings = &layout_binding;
+                    VkDescriptorSetLayout layout;
+                    if (vkCreateDescriptorSetLayout(this->m_device, &create_info, nullptr, &layout) != VK_SUCCESS) {
+                        throw std::runtime_error("[vulkan shader] could not create descriptor set layout for binding " + std::to_string(i));
+                    }
+                    this->m_descriptor_sets.push_back({ layout });
+                    for (size_t j = 0; j < image_count; j++) {
+                        layouts.push_back(layout);
+                    }
+                }
+                VkDescriptorSetAllocateInfo alloc_info;
+                memset(&alloc_info, 0, sizeof(VkDescriptorSetAllocateInfo));
+                alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+                alloc_info.descriptorPool = this->m_descriptor_pool;
+                alloc_info.descriptorSetCount = (uint32_t)layouts.size();
+                alloc_info.pSetLayouts = layouts.data();
+                std::vector<VkDescriptorSet> sets(layouts.size());
+                if (vkAllocateDescriptorSets(this->m_device, &alloc_info, sets.data()) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan shader] could not allocate descriptor sets");
+                }
+                for (size_t i = 0; i < descriptor_set_count; i++) {
+                    for (size_t j = 0; j < image_count; j++) {
+                        size_t set_index = (i * image_count) + j;
+                        this->m_descriptor_sets[i].sets.push_back(sets[set_index]);
+                    }
+                }
+            }
+            void vulkan_shader::destroy_descriptor_sets() {
+                std::vector<VkDescriptorSet> sets;
+                for (const auto& desc : this->m_descriptor_sets) {
+                    vkDestroyDescriptorSetLayout(this->m_device, desc.layout, nullptr);
+                    for (auto set : desc.sets) {
+                        sets.push_back(set);
+                    }
+                }
+                vkFreeDescriptorSets(this->m_device, this->m_descriptor_pool, (uint32_t)sets.size(), sets.data());
+                this->m_descriptor_sets.clear();
             }
         }
     }

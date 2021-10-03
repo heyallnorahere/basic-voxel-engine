@@ -232,8 +232,10 @@ namespace bve {
                 this->create_render_pass();
                 this->create_framebuffers();
                 this->create_command_pool();
+                this->create_descriptor_pool();
                 this->alloc_command_buffers();
-                this->create_semaphores();            }
+                this->create_semaphores();
+            }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 vkDeviceWaitIdle(this->m_device);
                 bool recreate_pipeline;
@@ -241,11 +243,15 @@ namespace bve {
                 this->create_swap_chain(glm::ivec2(x, y));
                 this->create_image_views();
                 this->create_render_pass();
+                for (auto shader : vulkan_shader::get_active_shaders()) {
+                    shader->create_descriptor_sets();
+                }
                 if (recreate_pipeline) {
                     auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
                     pipeline->create();
                 }
                 this->create_framebuffers();
+                this->create_descriptor_pool();
                 this->alloc_command_buffers();
             }
             void vulkan_context::init_imgui_backends() {
@@ -259,6 +265,7 @@ namespace bve {
                 info.Queue = this->m_graphics_queue;
                 info.ImageCount = this->m_image_count;
                 info.MinImageCount = this->m_min_image_count;
+                info.DescriptorPool = this->m_descriptor_pool;
                 ImGui_ImplVulkan_Init(&info, this->m_render_pass);
             }
             void vulkan_context::shutdown_imgui_backends() {
@@ -276,7 +283,7 @@ namespace bve {
                 if (!this->layers_supported()) {
                     throw std::runtime_error("[vulkan context] not all of the layers specified are supported");
                 }
-                std::string app_name = "basic-voxel-engine";
+                std::string app_name = "basic voxel engine";
                 uint32_t version = VK_MAKE_VERSION(0, 0, 1); // i should make this dynamic or something idk lol
                 VkApplicationInfo app_info;
                 memset(&app_info, 0, sizeof(VkApplicationInfo));
@@ -531,6 +538,30 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not create semaphores");
                 }
             }
+            void vulkan_context::create_descriptor_pool() {
+                std::vector<VkDescriptorPoolSize> pool_sizes = {
+                    { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+                    { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+                    { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+                    { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+                    { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+                    { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+                };
+                VkDescriptorPoolCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkDescriptorPoolCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+                create_info.poolSizeCount = (uint32_t)pool_sizes.size();
+                create_info.pPoolSizes = pool_sizes.data();
+                create_info.maxSets = (uint32_t)(1000 * pool_sizes.size());
+                if (vkCreateDescriptorPool(this->m_device, &create_info, nullptr, &this->m_descriptor_pool) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create descriptor pool");
+                }
+            }
             void vulkan_context::cleanup_swapchain(bool* recreate_pipeline) {
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
                 this->m_command_buffers.clear();
@@ -546,12 +577,18 @@ namespace bve {
                         *recreate_pipeline = true;
                     }
                 }
+                if (recreate_pipeline) {
+                    for (auto shader : vulkan_shader::get_active_shaders()) {
+                        shader->destroy_descriptor_sets();
+                    }
+                }
                 vkDestroyRenderPass(this->m_device, this->m_render_pass, nullptr);
                 for (VkImageView image_view : this->m_swapchain_image_views) {
                     vkDestroyImageView(this->m_device, image_view, nullptr);
                 }
                 this->m_swapchain_image_views.clear();
                 vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
+                vkDestroyDescriptorPool(this->m_device, this->m_descriptor_pool, nullptr);
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;

@@ -14,10 +14,11 @@ namespace bve {
                 virtual void bind() override;
                 virtual void unbind() override;
                 VkPipeline get_pipeline() { return this->m_pipeline; }
-                void set_shader(ref<vulkan_shader> shader);
+                void set_shader(ref<vulkan_shader> shader) { this->m_shader = shader; }
+                ref<vulkan_shader> get_shader() { return this->m_shader; }
                 void bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer);
                 void unbind_buffer(VkBufferUsageFlags type);
-                std::map<VkBufferUsageFlags, ref<vulkan_buffer>> get_bound_buffers();
+                const std::map<VkBufferUsageFlags, ref<vulkan_buffer>>& get_bound_buffers() { return this->m_buffers; }
                 void create();
                 void destroy();
                 bool valid() { return this->m_pipeline != nullptr && this->m_layout != nullptr; }

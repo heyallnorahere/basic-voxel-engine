@@ -4,8 +4,14 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            struct descriptor_set {
+                VkDescriptorSetLayout layout;
+                std::vector<VkDescriptorSet> sets;
+            };
+            class vulkan_context;
             class vulkan_shader : public shader {
             public:
+                static const std::list<ref<vulkan_shader>>& get_active_shaders();
                 vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<fs::path>& sources);
                 virtual ~vulkan_shader() override;
                 virtual void reload() override;
@@ -30,14 +36,20 @@ namespace bve {
                 virtual glm::vec4 get_vec4(const std::string& name) override;
                 virtual glm::mat4 get_mat4(const std::string& name) override;
                 const std::vector<VkPipelineShaderStageCreateInfo>& get_create_info() { return this->m_pipeline_create_info; }
+                const std::vector<descriptor_set>& get_descriptor_sets() { return this->m_descriptor_sets; }
             private:
                 void compile();
                 VkShaderModule compile_shader(shader_type type, const shader_parser& parser);
                 void cleanup();
+                void create_descriptor_sets();
+                void destroy_descriptor_sets();
                 ref<vulkan_object_factory> m_factory;
                 std::vector<fs::path> m_sources;
                 VkDevice m_device;
                 std::vector<VkPipelineShaderStageCreateInfo> m_pipeline_create_info;
+                std::vector<descriptor_set> m_descriptor_sets;
+                VkDescriptorPool m_descriptor_pool;
+                friend class vulkan_context;
             };
         }
     }
