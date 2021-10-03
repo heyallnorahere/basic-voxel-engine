@@ -22,8 +22,8 @@ namespace bve {
             template<typename T> ref<buffer> create_vbo(const std::vector<T>& data) {
                 return this->create_vbo(data.data(), data.size() * sizeof(T));
             }
-            virtual ref<buffer> create_vbo(const void* data, size_t size) = 0;
-            virtual ref<buffer> create_ebo(const std::vector<uint32_t>& data) = 0;
+            virtual ref<buffer> create_vertex_buffer(const void* data, size_t size) = 0;
+            virtual ref<buffer> create_index_buffer(const std::vector<uint32_t>& data) = 0;
             virtual ref<context> create_context() = 0;
             virtual ref<shader> create_shader(const std::vector<fs::path>& sources) = 0;
             ref<texture> create_texture(const fs::path& path) {

@@ -6,7 +6,7 @@
 namespace bve {
     struct command_list {
         ref<graphics::pipeline> pipeline;
-        ref<graphics::buffer> vbo, ebo;
+        ref<graphics::buffer> vertex_buffer, index_buffer;
         std::vector<ref<mesh>> meshes;
         std::vector<std::pair<glm::vec3, ref<lighting::light>>> lights;
         size_t index_count;
@@ -76,8 +76,8 @@ namespace bve {
             memcpy(ptr, data, size);
             current_offset += size;
         }
-        cmdlist->vbo = this->m_factory->create_vbo(vertex_buffer_data, vertex_buffer_size);
-        cmdlist->ebo = this->m_factory->create_ebo(indices);
+        cmdlist->vertex_buffer = this->m_factory->create_vertex_buffer(vertex_buffer_data, vertex_buffer_size);
+        cmdlist->index_buffer = this->m_factory->create_index_buffer(indices);
         pipeline->set_vertex_attributes(attributes);
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {

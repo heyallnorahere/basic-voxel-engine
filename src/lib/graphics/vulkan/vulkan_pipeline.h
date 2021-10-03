@@ -13,8 +13,8 @@ namespace bve {
                 virtual void bind() override;
                 virtual void unbind() override;
                 void set_shader(ref<vulkan_shader> shader);
+                void create();
             private:
-                void build();
                 void destroy();
                 ref<vulkan_object_factory> m_factory;
                 ref<vulkan_context> m_context;

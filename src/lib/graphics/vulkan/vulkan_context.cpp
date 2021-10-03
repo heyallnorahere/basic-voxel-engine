@@ -115,6 +115,7 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
+                vkDestroyRenderPass(this->m_device, this->m_render_pass, nullptr);
                 for (const auto& image_view : this->m_swapchain_image_views) {
                     vkDestroyImageView(this->m_device, image_view, nullptr);
                 }
@@ -155,15 +156,15 @@ namespace bve {
                 this->m_swap_chain = nullptr;
                 this->create_swap_chain(window_size);
                 this->create_image_views();
+                this->create_render_pass();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
             }
             void vulkan_context::init_imgui_backends() {
-                // broken atm - not enough stuff implemented
-                /*
                 ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
                 ImGui_ImplVulkan_InitInfo info;
+                memset(&info, 0, sizeof(ImGui_ImplVulkan_InitInfo));
                 info.Instance = this->m_instance;
                 info.PhysicalDevice = this->m_physical_device;
                 info.Device = this->m_device;
@@ -171,15 +172,11 @@ namespace bve {
                 info.Queue = this->m_graphics_queue;
                 info.ImageCount = this->m_image_count;
                 info.MinImageCount = this->m_min_image_count;
-                
-                ImGui_ImplVulkan_Init(&info, nullptr);
-                */
+                ImGui_ImplVulkan_Init(&info, this->m_render_pass);
             }
             void vulkan_context::shutdown_imgui_backends() {
-                /*
                 ImGui_ImplVulkan_Shutdown();
                 ImGui_ImplGlfw_Shutdown();
-                */
             }
             void vulkan_context::call_imgui_backend_newframe() {
                 ImGui_ImplVulkan_NewFrame();
@@ -359,6 +356,37 @@ namespace bve {
                     if (vkCreateImageView(this->m_device, &create_info, nullptr, &image_view) != VK_SUCCESS) {
                         throw std::runtime_error("[vulkan context] could not create image view " + std::to_string(i));
                     }
+                }
+            }
+            void vulkan_context::create_render_pass() {
+                VkAttachmentDescription color_attachment;
+                memset(&color_attachment, 0, sizeof(VkAttachmentDescription));
+                color_attachment.format = this->m_swapchain_image_format;
+                color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                VkAttachmentReference color_attachment_ref;
+                memset(&color_attachment_ref, 0, sizeof(VkAttachmentReference));
+                color_attachment_ref.attachment = 0;
+                color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                VkSubpassDescription subpass;
+                memset(&subpass, 0, sizeof(VkSubpassDescription));
+                subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+                subpass.colorAttachmentCount = 1;
+                subpass.pColorAttachments = &color_attachment_ref;
+                VkRenderPassCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkRenderPassCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+                create_info.attachmentCount = 1;
+                create_info.pAttachments = &color_attachment;
+                create_info.subpassCount = 1;
+                create_info.pSubpasses = &subpass;
+                if (vkCreateRenderPass(this->m_device, &create_info, nullptr, &this->m_render_pass) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create render pass");
                 }
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {

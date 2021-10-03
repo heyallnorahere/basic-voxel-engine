@@ -27,9 +27,8 @@ namespace bve {
             }
             void vulkan_pipeline::set_shader(ref<vulkan_shader> shader) {
                 this->m_shader = shader;
-                this->build();
             }
-            void vulkan_pipeline::build() {
+            void vulkan_pipeline::create() {
                 if (this->m_pipeline) {
                     this->destroy();
                 }
@@ -37,6 +36,7 @@ namespace bve {
                     this->m_context = this->m_factory->m_current_context.as<vulkan_context>();
                 }
                 VkExtent2D swapchain_extent = this->m_context->get_swapchain_extent();
+                VkDevice device = this->m_context->get_device();
                 VkPipelineVertexInputStateCreateInfo vertex_input_info;
                 memset(&vertex_input_info, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
                 vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -44,6 +44,11 @@ namespace bve {
                 vertex_input_info.pVertexBindingDescriptions = nullptr;
                 vertex_input_info.vertexAttributeDescriptionCount = 0;
                 vertex_input_info.pVertexAttributeDescriptions = nullptr;
+                VkPipelineInputAssemblyStateCreateInfo input_assembly;
+                memset(&input_assembly, 0, sizeof(VkPipelineInputAssemblyStateCreateInfo));
+                input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+                input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+                input_assembly.primitiveRestartEnable = false;
                 VkViewport viewport;
                 memset(&viewport, 0, sizeof(VkViewport));
                 viewport.x = viewport.y = 0.f;
@@ -116,15 +121,38 @@ namespace bve {
                 pipeline_layout_info.pSetLayouts = nullptr;
                 pipeline_layout_info.pushConstantRangeCount = 0;
                 pipeline_layout_info.pPushConstantRanges = nullptr;
-                if (vkCreatePipelineLayout(this->m_context->get_device(), &pipeline_layout_info, nullptr, &this->m_layout) != VK_SUCCESS) {
+                if (vkCreatePipelineLayout(device, &pipeline_layout_info, nullptr, &this->m_layout) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan pipeline] could not create pipeline layout");
                 }
-                // todo: create the damn pipeline
+                VkGraphicsPipelineCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkGraphicsPipelineCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+                if (this->m_shader) {
+                    const auto& shader_stage_create_info = this->m_shader->get_create_info();
+                    create_info.stageCount = (uint32_t)shader_stage_create_info.size();
+                    create_info.pStages = shader_stage_create_info.data();
+                }
+                create_info.pVertexInputState = &vertex_input_info;
+                create_info.pInputAssemblyState = &input_assembly;
+                create_info.pViewportState = &viewport_state;
+                create_info.pRasterizationState = &rasterizer;
+                create_info.pMultisampleState = &multisampling;
+                create_info.pDepthStencilState = nullptr;
+                create_info.pColorBlendState = &color_blending;
+                create_info.pDynamicState = &dynamic_state;
+                create_info.layout = this->m_layout;
+                create_info.renderPass = this->m_context->get_render_pass();
+                create_info.subpass = 0;
+                create_info.basePipelineHandle = nullptr;
+                create_info.basePipelineIndex = -1;
+                if (vkCreateGraphicsPipelines(device, nullptr, 1, &create_info, nullptr, &this->m_pipeline) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan pipeline] could not create pipeline");
+                }
             }
             void vulkan_pipeline::destroy() {
                 VkDevice device = this->m_context->get_device();
-                vkDestroyPipelineLayout(device, this->m_layout, nullptr);
                 vkDestroyPipeline(device, this->m_pipeline, nullptr);
+                vkDestroyPipelineLayout(device, this->m_layout, nullptr);
             }
         }
     }

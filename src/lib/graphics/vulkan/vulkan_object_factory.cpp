@@ -9,11 +9,11 @@ namespace bve {
             ref<pipeline> vulkan_object_factory::create_pipeline() {
                 return ref<vulkan_pipeline>::create(this);
             }
-            ref<buffer> vulkan_object_factory::create_vbo(const void* data, size_t size) {
+            ref<buffer> vulkan_object_factory::create_vertex_buffer(const void* data, size_t size) {
                 // todo: create vbo
                 return nullptr;
             }
-            ref<buffer> vulkan_object_factory::create_ebo(const std::vector<uint32_t>& data) {
+            ref<buffer> vulkan_object_factory::create_index_buffer(const std::vector<uint32_t>& data) {
                 // todo: create ebo
                 return nullptr;
             }

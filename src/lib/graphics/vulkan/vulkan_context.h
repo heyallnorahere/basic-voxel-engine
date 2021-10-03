@@ -19,6 +19,7 @@ namespace bve {
                 VkSurfaceKHR get_window_surface() { return this->m_window_surface; }
                 VkSwapchainKHR get_swap_chain() { return this->m_swap_chain; }
                 VkExtent2D get_swapchain_extent() { return this->m_swapchain_extent; }
+                VkRenderPass get_render_pass() { return this->m_render_pass; }
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;
@@ -35,6 +36,7 @@ namespace bve {
                 void create_logical_device();
                 void create_swap_chain(glm::ivec2 size);
                 void create_image_views();
+                void create_render_pass();
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -52,6 +54,7 @@ namespace bve {
                 VkFormat m_swapchain_image_format;
                 VkExtent2D m_swapchain_extent;
                 std::vector<VkImageView> m_swapchain_image_views;
+                VkRenderPass m_render_pass;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };

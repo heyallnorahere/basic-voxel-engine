@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "vulkan_shader.h"
 #include "vulkan_context.h"
+#include "vulkan_pipeline.h"
 #include "../../shader_compiler.h"
 namespace bve {
     namespace graphics {
@@ -19,11 +20,16 @@ namespace bve {
                 this->compile();
             }
             void vulkan_shader::bind() {
-                // todo: stuff
+                auto pipeline = this->m_factory->get_current_pipeline();
+                if (pipeline) {
+                    auto vk_pipeline = pipeline.as<vulkan_pipeline>();
+                    vk_pipeline->set_shader(this);
+                    vk_pipeline->create();
+                } else {
+                    spdlog::warn("[vulkan shader] attempted to bind to a null pipeline");
+                }
             }
-            void vulkan_shader::unbind() {
-                // todo: stuff
-            }
+            void vulkan_shader::unbind() { }
             void vulkan_shader::set_int(const std::string& name, int32_t value) {
                 // todo: stuff
             }

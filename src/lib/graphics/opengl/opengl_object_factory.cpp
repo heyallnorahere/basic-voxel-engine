@@ -12,10 +12,10 @@ namespace bve {
             ref<pipeline> opengl_object_factory::create_pipeline() {
                 return ref<opengl_pipeline>::create();
             }
-            ref<buffer> opengl_object_factory::create_vbo(const void* data, size_t size) {
+            ref<buffer> opengl_object_factory::create_vertex_buffer(const void* data, size_t size) {
                 return ref<opengl_buffer>::create(data, size, GL_ARRAY_BUFFER);
             }
-            ref<buffer> opengl_object_factory::create_ebo(const std::vector<uint32_t>& data) {
+            ref<buffer> opengl_object_factory::create_index_buffer(const std::vector<uint32_t>& data) {
                 return ref<opengl_buffer>::create(data.data(), data.size() * sizeof(uint32_t), GL_ELEMENT_ARRAY_BUFFER);
             }
             ref<context> opengl_object_factory::create_context() {
