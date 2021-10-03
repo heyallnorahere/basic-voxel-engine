@@ -20,6 +20,7 @@ namespace bve {
                 VkSwapchainKHR get_swap_chain() { return this->m_swap_chain; }
                 VkExtent2D get_swapchain_extent() { return this->m_swapchain_extent; }
                 VkRenderPass get_render_pass() { return this->m_render_pass; }
+                VkCommandPool get_command_pool() { return this->m_command_pool; }
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;

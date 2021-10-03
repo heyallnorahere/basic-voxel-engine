@@ -29,6 +29,19 @@ namespace bve {
             void vulkan_pipeline::set_shader(ref<vulkan_shader> shader) {
                 this->m_shader = shader;
             }
+            void vulkan_pipeline::bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {
+                if (buffer) {
+                    this->m_buffers.insert({ type, buffer });
+                }
+            }
+            void vulkan_pipeline::unbind_buffer(VkBufferUsageFlags type) {
+                if (this->m_buffers.find(type) != this->m_buffers.end()) {
+                    this->m_buffers.erase(type);
+                }
+            }
+            std::map<VkBufferUsageFlags, ref<vulkan_buffer>> vulkan_pipeline::get_bound_buffers() {
+                return this->m_buffers;
+            }
             void vulkan_pipeline::create() {
                 if (this->m_factory->m_current_pipeline != this) {
                     this->bind();

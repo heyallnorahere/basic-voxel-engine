@@ -159,6 +159,21 @@ namespace bve {
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
+                    auto bound_buffers = vk_pipeline->get_bound_buffers();
+                    if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
+                        auto buffer = bound_buffers[VK_BUFFER_USAGE_VERTEX_BUFFER_BIT];
+                        VkBuffer buf = buffer->get_buffer();
+                        VkDeviceSize offset = 0;
+                        vkCmdBindVertexBuffers(command_buffer, 0, 1, &buf, &offset);
+                    } else {
+                        spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without a vertex buffer");
+                    }
+                    if (bound_buffers.find(VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != bound_buffers.end()) {
+                        auto buffer = bound_buffers[VK_BUFFER_USAGE_INDEX_BUFFER_BIT];
+                        vkCmdBindIndexBuffer(command_buffer, buffer->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
+                    } else {
+                        spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
+                    }
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
                 }

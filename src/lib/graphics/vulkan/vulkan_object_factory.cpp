@@ -3,6 +3,7 @@
 #include "vulkan_context.h"
 #include "vulkan_shader.h"
 #include "vulkan_pipeline.h"
+#include "vulkan_buffer.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -10,12 +11,10 @@ namespace bve {
                 return ref<vulkan_pipeline>::create(this);
             }
             ref<buffer> vulkan_object_factory::create_vertex_buffer(const void* data, size_t size) {
-                // todo: create vbo
-                return nullptr;
+                return ref<vulkan_buffer>::create(data, size, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, this);
             }
             ref<buffer> vulkan_object_factory::create_index_buffer(const std::vector<uint32_t>& data) {
-                // todo: create ebo
-                return nullptr;
+                return ref<vulkan_buffer>::create(data.data(), data.size() * sizeof(uint32_t), VK_BUFFER_USAGE_INDEX_BUFFER_BIT, this);
             }
             ref<context> vulkan_object_factory::create_context() {
                 return ref<vulkan_context>::create(this);
