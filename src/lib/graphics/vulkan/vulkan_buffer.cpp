@@ -16,7 +16,7 @@ namespace bve {
                 throw std::runtime_error("[vulkan buffer] could not find suitable memory type");
                 return 0;
             }
-            static void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkBuffer& buffer, VkDeviceMemory& memory) {
+            void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkBuffer& buffer, VkDeviceMemory& memory) {
                 VkBufferCreateInfo create_info;
                 memset(&create_info, 0, sizeof(VkBufferCreateInfo));
                 create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -39,7 +39,7 @@ namespace bve {
                 }
                 vkBindBufferMemory(device, buffer, memory, 0);
             }
-            static void copy_buffer(VkBuffer src, VkBuffer dest, VkDeviceSize size, ref<vulkan_context> context) {
+            void copy_buffer(VkBuffer src, VkBuffer dest, VkDeviceSize size, ref<vulkan_context> context) {
                 VkDevice device = context->get_device();
                 VkCommandPool command_pool = context->get_command_pool();
                 VkCommandBufferAllocateInfo alloc_info;
