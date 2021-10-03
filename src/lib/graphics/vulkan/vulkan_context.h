@@ -11,13 +11,14 @@ namespace bve {
                 virtual void clear() override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
-                VkInstance get_instance();
-                VkDebugUtilsMessengerEXT get_debug_messenger();
-                VkPhysicalDevice get_physical_device();
-                VkDevice get_device();
-                VkQueue get_graphics_queue();
-                VkSurfaceKHR get_window_surface();
-                VkSwapchainKHR get_swap_chain();
+                VkInstance get_instance() { return this->m_instance; }
+                VkDebugUtilsMessengerEXT get_debug_messenger() { return this->m_debug_messenger; }
+                VkPhysicalDevice get_physical_device() { return this->m_physical_device; }
+                VkDevice get_device() { return this->m_device; }
+                VkQueue get_graphics_queue() { return this->m_graphics_queue; }
+                VkSurfaceKHR get_window_surface() { return this->m_window_surface; }
+                VkSwapchainKHR get_swap_chain() { return this->m_swap_chain; }
+                VkExtent2D get_swapchain_extent() { return this->m_swapchain_extent; }
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;

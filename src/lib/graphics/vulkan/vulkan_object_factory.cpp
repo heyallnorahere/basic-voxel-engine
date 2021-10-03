@@ -2,12 +2,12 @@
 #include "vulkan_object_factory.h"
 #include "vulkan_context.h"
 #include "vulkan_shader.h"
+#include "vulkan_pipeline.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
             ref<pipeline> vulkan_object_factory::create_pipeline() {
-                // todo: create pipeline
-                return nullptr;
+                return ref<vulkan_pipeline>::create(this);
             }
             ref<buffer> vulkan_object_factory::create_vbo(const void* data, size_t size) {
                 // todo: create vbo
@@ -33,6 +33,9 @@ namespace bve {
             }
             ref<context> vulkan_object_factory::get_current_context() {
                 return this->m_current_context;
+            }
+            ref<pipeline> vulkan_object_factory::get_current_pipeline() {
+                return this->m_current_pipeline;
             }
         }
     }

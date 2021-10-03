@@ -87,6 +87,28 @@ namespace bve {
                 }
                 std::vector<std::pair<shader_type, VkShaderModule>> shader_modules;
                 for (shader_type type : parser.get_parsed_shader_types()) {
+                    auto optional_path = parser.get_shader_path(type);
+                    std::string path, shader_name;
+                    if (optional_path) {
+                        path = optional_path->string();
+                    } else {
+                        path = "unknown";
+                    }
+                    switch (type) {
+                    case shader_type::VERTEX:
+                        shader_name = "vertex";
+                        break;
+                    case shader_type::FRAGMENT:
+                        shader_name = "fragment";
+                        break;
+                    case shader_type::GEOMETRY:
+                        shader_name = "geometry";
+                        break;
+                    default:
+                        shader_name = "unidentified";
+                        break;
+                    }
+                    spdlog::info("[vulkan shader] compiling {0} shader (path: {1})", shader_name, path);
                     shader_modules.push_back({ type, this->compile_shader(type, parser) });
                 }
                 for (const auto& module : shader_modules) {

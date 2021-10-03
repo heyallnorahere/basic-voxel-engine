@@ -135,27 +135,6 @@ namespace bve {
             void vulkan_context::draw_indexed(size_t index_count) {
                 // todo: draw
             }
-            VkInstance vulkan_context::get_instance() {
-                return this->m_instance;
-            }
-            VkDebugUtilsMessengerEXT vulkan_context::get_debug_messenger() {
-                return this->m_debug_messenger;
-            }
-            VkPhysicalDevice vulkan_context::get_physical_device() {
-                return this->m_physical_device;
-            }
-            VkDevice vulkan_context::get_device() {
-                return this->m_device;
-            }
-            VkQueue vulkan_context::get_graphics_queue() {
-                return this->m_graphics_queue;
-            }
-            VkSurfaceKHR vulkan_context::get_window_surface() {
-                return this->m_window_surface;
-            }
-            VkSwapchainKHR vulkan_context::get_swap_chain() {
-                return this->m_swap_chain;
-            }
             void vulkan_context::swap_buffers() {
                 // todo: swap buffers
             }

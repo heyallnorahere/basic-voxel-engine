@@ -29,6 +29,7 @@ namespace bve {
                 virtual glm::vec3 get_vec3(const std::string& name) override;
                 virtual glm::vec4 get_vec4(const std::string& name) override;
                 virtual glm::mat4 get_mat4(const std::string& name) override;
+                const std::vector<VkPipelineShaderStageCreateInfo>& get_create_info() { return this->m_pipeline_create_info; }
             private:
                 void compile();
                 VkShaderModule compile_shader(shader_type type, const shader_parser& parser);
