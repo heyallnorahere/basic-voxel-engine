@@ -7,6 +7,7 @@ namespace bve {
             vulkan_pipeline::vulkan_pipeline(ref<vulkan_object_factory> factory) {
                 this->m_factory = factory;
                 this->m_pipeline = nullptr;
+                this->m_layout = nullptr;
             }
             vulkan_pipeline::~vulkan_pipeline() {
                 if (this->m_pipeline) {
@@ -14,7 +15,7 @@ namespace bve {
                 }
             }
             void vulkan_pipeline::set_vertex_attributes(const std::vector<vertex_attribute>& attributes) {
-                // todo: implement
+                this->m_vertex_attributes = attributes;
             }
             void vulkan_pipeline::bind() {
                 this->m_factory->m_current_pipeline = this;
@@ -32,18 +33,64 @@ namespace bve {
                 if (this->m_factory->m_current_pipeline != this) {
                     this->bind();
                 }
-                if (this->m_pipeline) {
-                    this->destroy();
-                }
                 VkExtent2D swapchain_extent = this->m_context->get_swapchain_extent();
                 VkDevice device = this->m_context->get_device();
                 VkPipelineVertexInputStateCreateInfo vertex_input_info;
                 memset(&vertex_input_info, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
                 vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-                vertex_input_info.vertexBindingDescriptionCount = 0;
-                vertex_input_info.pVertexBindingDescriptions = nullptr;
-                vertex_input_info.vertexAttributeDescriptionCount = 0;
-                vertex_input_info.pVertexAttributeDescriptions = nullptr;
+                if (this->m_vertex_attributes.empty()) { 
+                    vertex_input_info.vertexBindingDescriptionCount = 0;
+                    vertex_input_info.pVertexBindingDescriptions = nullptr;
+                    vertex_input_info.vertexAttributeDescriptionCount = 0;
+                    vertex_input_info.pVertexAttributeDescriptions = nullptr;
+                } else {
+                    VkVertexInputBindingDescription binding_description;
+                    memset(&binding_description, 0, sizeof(VkVertexInputBindingDescription));
+                    binding_description.binding = 0;
+                    binding_description.stride = (uint32_t)this->m_vertex_attributes[0].stride;
+                    binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+                    std::vector<VkVertexInputAttributeDescription> attributes;
+                    for (uint32_t i = 0; i < this->m_vertex_attributes.size(); i++) {
+                        const auto& attr = this->m_vertex_attributes[i];
+                        VkVertexInputAttributeDescription descriptor;
+                        memset(&descriptor, 0, sizeof(VkVertexInputAttributeDescription));
+                        descriptor.binding = 0;
+                        descriptor.location = i;
+                        switch (attr.type) {
+                        case vertex_attribute_type::INT:
+                            descriptor.format = VK_FORMAT_R32_SINT;
+                            break;
+                        case vertex_attribute_type::FLOAT:
+                            descriptor.format = VK_FORMAT_R32_SFLOAT;
+                            break;
+                        case vertex_attribute_type::VEC2:
+                            descriptor.format = VK_FORMAT_R32G32_SFLOAT;
+                            break;
+                        case vertex_attribute_type::VEC3:
+                            descriptor.format = VK_FORMAT_R32G32B32_SFLOAT;
+                            break;
+                        case vertex_attribute_type::VEC4:
+                            descriptor.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                        case vertex_attribute_type::IVEC2:
+                            descriptor.format = VK_FORMAT_R32G32_SINT;
+                            break;
+                        case vertex_attribute_type::IVEC3:
+                            descriptor.format = VK_FORMAT_R32G32B32_SINT;
+                            break;
+                        case vertex_attribute_type::IVEC4:
+                            descriptor.format = VK_FORMAT_R32G32B32A32_SINT;
+                            break;
+                        default:
+                            throw std::runtime_error("[vulkan pipeline] unsupported vertex attribute type");
+                        }
+                        descriptor.offset = (uint32_t)attr.offset;
+                        attributes.push_back(descriptor);
+                    }
+                    vertex_input_info.vertexBindingDescriptionCount = 1;
+                    vertex_input_info.pVertexBindingDescriptions = &binding_description;
+                    vertex_input_info.vertexAttributeDescriptionCount = (uint32_t)attributes.size();
+                    vertex_input_info.pVertexAttributeDescriptions = attributes.data();
+                }
                 VkPipelineInputAssemblyStateCreateInfo input_assembly;
                 memset(&input_assembly, 0, sizeof(VkPipelineInputAssemblyStateCreateInfo));
                 input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -153,6 +200,8 @@ namespace bve {
                 VkDevice device = this->m_context->get_device();
                 vkDestroyPipeline(device, this->m_pipeline, nullptr);
                 vkDestroyPipelineLayout(device, this->m_layout, nullptr);
+                this->m_pipeline = nullptr;
+                this->m_layout = nullptr;
             }
         }
     }

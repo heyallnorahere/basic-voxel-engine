@@ -41,6 +41,7 @@ namespace bve {
                 void create_command_pool();
                 void alloc_command_buffers();
                 void create_semaphores();
+                void cleanup_swapchain(bool* recreate_pipeline);
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);

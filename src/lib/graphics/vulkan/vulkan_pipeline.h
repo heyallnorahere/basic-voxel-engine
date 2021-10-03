@@ -15,11 +15,13 @@ namespace bve {
                 VkPipeline get_pipeline() { return this->m_pipeline; }
                 void set_shader(ref<vulkan_shader> shader);
                 void create();
-            private:
                 void destroy();
+                bool valid() { return this->m_pipeline != nullptr && this->m_layout != nullptr; }
+            private:
                 ref<vulkan_object_factory> m_factory;
                 ref<vulkan_context> m_context;
                 ref<vulkan_shader> m_shader;
+                std::vector<vertex_attribute> m_vertex_attributes;
                 VkPipeline m_pipeline;
                 VkPipelineLayout m_layout;
             };

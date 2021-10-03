@@ -111,6 +111,7 @@ namespace bve {
         this->set_uniform_data();
         this->m_texture_buffer->set_data(this->m_sampler_data);
         context->draw_indexed(cmdlist->index_count);
+        cmdlist->pipeline->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
         this->m_vub_data.projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);

@@ -119,16 +119,8 @@ namespace bve {
             vulkan_context::~vulkan_context() {
                 vkDestroySemaphore(this->m_device, this->m_render_finished_semaphore, nullptr);
                 vkDestroySemaphore(this->m_device, this->m_image_available_semaphore, nullptr);
-                vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
+                this->cleanup_swapchain(nullptr);
                 vkDestroyCommandPool(this->m_device, this->m_command_pool, nullptr);
-                for (VkFramebuffer framebuffer : this->m_framebuffers) {
-                    vkDestroyFramebuffer(this->m_device, framebuffer, nullptr);
-                }
-                vkDestroyRenderPass(this->m_device, this->m_render_pass, nullptr);
-                for (VkImageView image_view : this->m_swapchain_image_views) {
-                    vkDestroyImageView(this->m_device, image_view, nullptr);
-                }
-                vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
                 vkDestroyDevice(this->m_device, nullptr);
                 if (this->m_validation_layers_enabled) {
                     _vkDestroyDebugUtilsMessengerEXT(this->m_instance, this->m_debug_messenger, nullptr);
@@ -226,10 +218,20 @@ namespace bve {
                 this->create_framebuffers();
                 this->create_command_pool();
                 this->alloc_command_buffers();
-                this->create_semaphores();
-            }
+                this->create_semaphores();            }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
-                // todo: resize
+                vkDeviceWaitIdle(this->m_device);
+                bool recreate_pipeline;
+                this->cleanup_swapchain(&recreate_pipeline);
+                this->create_swap_chain(glm::ivec2(x, y));
+                this->create_image_views();
+                this->create_render_pass();
+                if (recreate_pipeline) {
+                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    pipeline->create();
+                }
+                this->create_framebuffers();
+                this->alloc_command_buffers();
             }
             void vulkan_context::init_imgui_backends() {
                 ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
@@ -402,10 +404,6 @@ namespace bve {
                 vkGetSwapchainImagesKHR(this->m_device, this->m_swap_chain, &this->m_image_count, this->m_swapchain_images.data());
             }
             void vulkan_context::create_image_views() {
-                for (const auto& view : this->m_swapchain_image_views) {
-                    vkDestroyImageView(this->m_device, view, nullptr);
-                }
-                this->m_swapchain_image_views.clear();
                 for (size_t i = 0; i < this->m_swapchain_images.size(); i++) {
                     VkImageViewCreateInfo create_info;
                     memset(&create_info, 0, sizeof(VkImageViewCreateInfo));
@@ -426,6 +424,7 @@ namespace bve {
                     if (vkCreateImageView(this->m_device, &create_info, nullptr, &image_view) != VK_SUCCESS) {
                         throw std::runtime_error("[vulkan context] could not create image view " + std::to_string(i));
                     }
+                    this->m_swapchain_image_views.push_back(image_view);
                 }
             }
             void vulkan_context::create_render_pass() {
@@ -516,6 +515,28 @@ namespace bve {
                     vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_render_finished_semaphore) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create semaphores");
                 }
+            }
+            void vulkan_context::cleanup_swapchain(bool* recreate_pipeline) {
+                vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
+                this->m_command_buffers.clear();
+                for (VkFramebuffer framebuffer : this->m_framebuffers) {
+                    vkDestroyFramebuffer(this->m_device, framebuffer, nullptr);
+                }
+                this->m_framebuffers.clear();
+                if (recreate_pipeline && this->m_factory->m_current_pipeline) {
+                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    *recreate_pipeline = false;
+                    if (pipeline->valid()) {
+                        pipeline->destroy();
+                        *recreate_pipeline = true;
+                    }
+                }
+                vkDestroyRenderPass(this->m_device, this->m_render_pass, nullptr);
+                for (VkImageView image_view : this->m_swapchain_image_views) {
+                    vkDestroyImageView(this->m_device, image_view, nullptr);
+                }
+                this->m_swapchain_image_views.clear();
+                vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;
