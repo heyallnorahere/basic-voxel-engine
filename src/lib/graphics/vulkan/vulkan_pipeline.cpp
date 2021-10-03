@@ -29,11 +29,11 @@ namespace bve {
                 this->m_shader = shader;
             }
             void vulkan_pipeline::create() {
+                if (this->m_factory->m_current_pipeline != this) {
+                    this->bind();
+                }
                 if (this->m_pipeline) {
                     this->destroy();
-                }
-                if (!this->m_context) {
-                    this->m_context = this->m_factory->m_current_context.as<vulkan_context>();
                 }
                 VkExtent2D swapchain_extent = this->m_context->get_swapchain_extent();
                 VkDevice device = this->m_context->get_device();

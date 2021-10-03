@@ -8,7 +8,7 @@ namespace bve {
             public:
                 vulkan_context(ref<vulkan_object_factory> factory);
                 virtual ~vulkan_context() override;
-                virtual void clear() override;
+                virtual void clear(glm::vec4 clear_color) override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
                 VkInstance get_instance() { return this->m_instance; }
@@ -37,6 +37,9 @@ namespace bve {
                 void create_swap_chain(glm::ivec2 size);
                 void create_image_views();
                 void create_render_pass();
+                void create_framebuffers();
+                void create_command_pool();
+                void alloc_command_buffers();
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -55,6 +58,10 @@ namespace bve {
                 VkExtent2D m_swapchain_extent;
                 std::vector<VkImageView> m_swapchain_image_views;
                 VkRenderPass m_render_pass;
+                std::vector<VkFramebuffer> m_framebuffers;
+                VkCommandPool m_command_pool;
+                std::vector<VkCommandBuffer> m_command_buffers;
+                size_t m_current_command_buffer;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };

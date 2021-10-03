@@ -8,7 +8,7 @@ namespace bve {
             virtual ~context() = default;
             context(const context&) = delete;
             context& operator=(const context&) = delete;
-            virtual void clear() = 0;
+            virtual void clear(glm::vec4 clear_color) = 0;
             virtual void make_current() = 0;
             virtual void draw_indexed(size_t index_count) = 0;
         protected:

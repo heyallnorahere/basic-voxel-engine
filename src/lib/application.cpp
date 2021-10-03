@@ -87,7 +87,7 @@ namespace bve {
         this->m_world->update();
     }
     void application::render() {
-        this->m_window->get_context()->clear();
+        this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
         this->m_renderer->set_shader(this->m_shaders["static"]);
         auto cmdlist = this->m_renderer->create_command_list();
         for (auto& mesh_ : this->m_meshes) {

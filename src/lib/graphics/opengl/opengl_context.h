@@ -6,7 +6,7 @@ namespace bve {
             class opengl_context : public context {
             public:
                 static double get_version();
-                virtual void clear() override;
+                virtual void clear(glm::vec4 clear_color) override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
             private:

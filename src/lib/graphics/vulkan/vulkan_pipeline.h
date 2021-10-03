@@ -12,6 +12,7 @@ namespace bve {
                 virtual void set_vertex_attributes(const std::vector<vertex_attribute>& attributes) override;
                 virtual void bind() override;
                 virtual void unbind() override;
+                VkPipeline get_pipeline() { return this->m_pipeline; }
                 void set_shader(ref<vulkan_shader> shader);
                 void create();
             private:
