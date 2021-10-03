@@ -4,6 +4,7 @@ namespace bve {
     buffer::buffer() {
         this->m_pointer = nullptr;
         this->m_size = 0;
+        this->m_dynamic_resizing_enabled = true;
     }
     buffer::buffer(size_t size) : buffer() {
         this->alloc(size);
@@ -28,20 +29,27 @@ namespace bve {
             this->free();
         }
     }
+    void buffer::set_dynamic_resizing_enabled(bool enabled) {
+        this->m_dynamic_resizing_enabled = enabled;
+    }
     void buffer::alloc(size_t size) {
         if (this->m_pointer) {
             this->free();
         }
         this->m_size = size;
         this->m_pointer = malloc(this->m_size);
+#ifndef DEBUG
         spdlog::info("[buffer] allocated {0} (size: {1})", this->m_pointer, this->m_size);
+#endif
         if (!this->m_pointer) {
             throw std::runtime_error("[buffer] ran out of memory");
         }
     }
     void buffer::free() {
         ::free(this->m_pointer);
+#ifndef DEBUG
         spdlog::info("[buffer] freed {0} (size: {1})", this->m_pointer, this->m_size);
+#endif
         this->m_pointer = nullptr;
         this->m_size = 0;
     }
@@ -56,23 +64,29 @@ namespace bve {
             throw std::runtime_error("[buffer] tried to access unallocated memory");
         }
         if (!this->m_pointer || this->m_size < size + offset) {
-            buffer temp;
-            if (this->m_pointer) {
-                temp.copy(*this);
-            }
-            this->alloc(size + offset);
-            if (temp) {
-                this->copy(temp);
+            if (this->m_dynamic_resizing_enabled) {
+                buffer temp;
+                if (this->m_pointer) {
+                    temp.copy(*this);
+                }
+                this->alloc(size + offset);
+                if (temp) {
+                    this->copy(temp);
+                }
+            } else {
+                throw std::runtime_error("[buffer] tried to copy into unallocated memory");
             }
         }
+#ifndef NDEBUG
         std::stringstream address_string;
         address_string << this->m_pointer;
         if (offset > 0) {
             address_string << "+0x" << std::hex << offset;
         }
         spdlog::info("[buffer] copying {0} (size: {1}) into {2} (size: {3})", data, size, address_string.str(), this->m_size - offset);
+#endif
         void* ptr = (void*)((size_t)this->m_pointer + offset);
-        memcpy(ptr, data, this->m_size);
+        memcpy(ptr, data, size);
     }
     void buffer::copy(const buffer& buf) {
         this->copy(buf.m_pointer, buf.m_size);

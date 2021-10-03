@@ -8,6 +8,7 @@ namespace bve {
         buffer(const buffer& buf);
         buffer& operator=(const buffer& buf);
         ~buffer();
+        void set_dynamic_resizing_enabled(bool enabled);
         void alloc(size_t size);
         void free();
         void zero();
@@ -47,5 +48,6 @@ namespace bve {
     private:
         void* m_pointer;
         size_t m_size;
+        bool m_dynamic_resizing_enabled;
     };
 }

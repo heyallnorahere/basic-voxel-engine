@@ -17,6 +17,9 @@ namespace bve {
         this->m_texture_buffer = this->m_factory->create_uniform_buffer(sampler_buffer_size, 2);
         this->m_sampler_data.alloc(sampler_buffer_size);
         this->m_sampler_data.zero();
+        this->m_vertex_uniform_data.set_dynamic_resizing_enabled(false);
+        this->m_fragment_uniform_data.set_dynamic_resizing_enabled(false);
+        this->m_sampler_data.set_dynamic_resizing_enabled(false);
         auto& asset_manager_ = asset_manager::get();
         fs::path placeholder_path = asset_manager_.get_asset_path("block:bve:placeholder.png");
         this->m_placeholder_texture = this->m_factory->create_texture(placeholder_path);
