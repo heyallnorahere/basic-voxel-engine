@@ -81,7 +81,6 @@ namespace bve {
         pipeline->set_vertex_attributes(attributes);
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {
-        this->m_current_shader->bind();
         if (atlas) {
             this->m_fub_data.texture_atlas_ = atlas->get_uniform_data();
             this->m_textures[this->m_fub_data.texture_atlas_.image] = atlas->get_texture();
@@ -107,12 +106,11 @@ namespace bve {
             }
             sampler_data[i] = (int32_t)i;
         }
+        cmdlist->pipeline->bind();
+        this->m_current_shader->bind();
         this->set_uniform_data();
         this->m_texture_buffer->set_data(this->m_sampler_data);
-        cmdlist->pipeline->bind();
         context->draw_indexed(cmdlist->index_count);
-        cmdlist->pipeline->unbind();
-        this->m_current_shader->unbind();
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
         this->m_vub_data.projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);

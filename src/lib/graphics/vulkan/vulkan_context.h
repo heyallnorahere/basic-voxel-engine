@@ -40,6 +40,7 @@ namespace bve {
                 void create_framebuffers();
                 void create_command_pool();
                 void alloc_command_buffers();
+                void create_semaphores();
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -61,7 +62,8 @@ namespace bve {
                 std::vector<VkFramebuffer> m_framebuffers;
                 VkCommandPool m_command_pool;
                 std::vector<VkCommandBuffer> m_command_buffers;
-                size_t m_current_command_buffer;
+                uint32_t m_current_command_buffer;
+                VkSemaphore m_image_available_semaphore, m_render_finished_semaphore;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };

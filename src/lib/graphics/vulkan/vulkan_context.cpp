@@ -117,6 +117,8 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
+                vkDestroySemaphore(this->m_device, this->m_render_finished_semaphore, nullptr);
+                vkDestroySemaphore(this->m_device, this->m_image_available_semaphore, nullptr);
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
                 vkDestroyCommandPool(this->m_device, this->m_command_pool, nullptr);
                 for (VkFramebuffer framebuffer : this->m_framebuffers) {
@@ -135,6 +137,7 @@ namespace bve {
                 vkDestroyInstance(this->m_instance, nullptr);
             }
             void vulkan_context::clear(glm::vec4 clear_color) {
+                vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphore, nullptr, &this->m_current_command_buffer);
                 VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_command_buffer];
                 VkCommandBufferBeginInfo begin_info;
                 memset(&begin_info, 0, sizeof(VkCommandBufferBeginInfo));
@@ -175,8 +178,32 @@ namespace bve {
                 if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not finish recording a command buffer");
                 }
-                this->m_current_command_buffer++;
-                this->m_current_command_buffer %= this->m_command_buffers.size();
+                VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+                VkSubmitInfo submit_info;
+                memset(&submit_info, 0, sizeof(VkSubmitInfo));
+                submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submit_info.waitSemaphoreCount = 1;
+                submit_info.pWaitSemaphores = &this->m_image_available_semaphore;
+                submit_info.pWaitDstStageMask = wait_stages;
+                submit_info.commandBufferCount = 1;
+                submit_info.pCommandBuffers = &command_buffer;
+                submit_info.signalSemaphoreCount = 1;
+                submit_info.pSignalSemaphores = &this->m_render_finished_semaphore;
+                if (vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, nullptr) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not submit command buffer");
+                }
+                VkPresentInfoKHR present_info;
+                memset(&present_info, 0, sizeof(VkPresentInfoKHR));
+                present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+                present_info.waitSemaphoreCount = 1;
+                present_info.pWaitSemaphores = &this->m_render_finished_semaphore;
+                present_info.swapchainCount = 1;
+                present_info.pSwapchains = &this->m_swap_chain;
+                present_info.pImageIndices = &this->m_current_command_buffer;
+                present_info.pResults = nullptr;
+                if (vkQueuePresentKHR(this->m_present_queue, &present_info) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not present");
+                }
             }
             void vulkan_context::setup_glfw() {
                 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -199,6 +226,7 @@ namespace bve {
                 this->create_framebuffers();
                 this->create_command_pool();
                 this->alloc_command_buffers();
+                this->create_semaphores();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: resize
@@ -420,6 +448,13 @@ namespace bve {
                 subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
                 subpass.colorAttachmentCount = 1;
                 subpass.pColorAttachments = &color_attachment_ref;
+                VkSubpassDependency dependency;
+                memset(&dependency, 0, sizeof(VkSubpassDependency));
+                dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+                dependency.dstSubpass = 0;
+                dependency.srcStageMask = dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                dependency.srcAccessMask = 0;
+                dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                 VkRenderPassCreateInfo create_info;
                 memset(&create_info, 0, sizeof(VkRenderPassCreateInfo));
                 create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -427,6 +462,8 @@ namespace bve {
                 create_info.pAttachments = &color_attachment;
                 create_info.subpassCount = 1;
                 create_info.pSubpasses = &subpass;
+                create_info.dependencyCount = 1;
+                create_info.pDependencies = &dependency;
                 if (vkCreateRenderPass(this->m_device, &create_info, nullptr, &this->m_render_pass) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create render pass");
                 }
@@ -469,6 +506,15 @@ namespace bve {
                 alloc_info.commandBufferCount = (uint32_t)this->m_command_buffers.size();
                 if (vkAllocateCommandBuffers(this->m_device, &alloc_info, this->m_command_buffers.data()) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not allocate command buffers");
+                }
+            }
+            void vulkan_context::create_semaphores() {
+                VkSemaphoreCreateInfo create_info;
+                memset(&create_info, 0, sizeof(VkSemaphoreCreateInfo));
+                create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                if (vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_image_available_semaphore) != VK_SUCCESS ||
+                    vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_render_finished_semaphore) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create semaphores");
                 }
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
