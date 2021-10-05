@@ -15,9 +15,9 @@ namespace bve {
     renderer::renderer(ref<graphics::object_factory> factory) {
         this->m_factory = factory;
         size_t sampler_buffer_size = sizeof(int32_t) * max_texture_units;
-        this->m_texture_buffer = this->m_factory->create_uniform_buffer(sampler_buffer_size, 2);
+        /*this->m_texture_buffer = this->m_factory->create_uniform_buffer(sampler_buffer_size, 2);
         this->m_sampler_data.alloc(sampler_buffer_size);
-        this->m_sampler_data.zero();
+        this->m_sampler_data.zero();*/
         this->m_vertex_uniform_data.set_dynamic_resizing_enabled(false);
         this->m_fragment_uniform_data.set_dynamic_resizing_enabled(false);
         this->m_sampler_data.set_dynamic_resizing_enabled(false);
@@ -77,7 +77,9 @@ namespace bve {
             current_offset += size;
         }
         cmdlist->vertex_buffer = this->m_factory->create_vertex_buffer(vertex_buffer_data, vertex_buffer_size);
+        cmdlist->vertex_buffer->bind();
         cmdlist->index_buffer = this->m_factory->create_index_buffer(indices);
+        cmdlist->index_buffer->bind();
         pipeline->set_vertex_attributes(attributes);
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas) {
@@ -95,7 +97,7 @@ namespace bve {
             data.position = cmdlist->lights[i].first;
             this->m_fub_data.lights[i] = data;
         }
-        int32_t* sampler_data = this->m_sampler_data;
+        /*int32_t* sampler_data = this->m_sampler_data;
         for (size_t i = 0; i < max_texture_units; i++) {
             ref<graphics::texture> texture = this->m_textures[i];
             uint32_t texture_slot = (uint32_t)i;
@@ -105,11 +107,11 @@ namespace bve {
                 this->m_placeholder_texture->bind(texture_slot);
             }
             sampler_data[i] = (int32_t)i;
-        }
+        }*/
         cmdlist->pipeline->bind();
         this->m_current_shader->bind();
         this->set_uniform_data();
-        this->m_texture_buffer->set_data(this->m_sampler_data);
+        //this->m_texture_buffer->set_data(this->m_sampler_data);
         context->draw_indexed(cmdlist->index_count);
         cmdlist->pipeline->unbind();
     }

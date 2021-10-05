@@ -2,6 +2,7 @@
 #include "vulkan_uniform_buffer.h"
 #include "vulkan_buffer.h"
 #include "vulkan_context.h"
+#include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -19,7 +20,7 @@ namespace bve {
                 this->m_device = vk_context->get_device();
                 VkPhysicalDevice physical_device = vk_context->get_physical_device();
                 create_buffer((VkDeviceSize)this->m_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, this->m_device, physical_device, this->m_buffer, this->m_memory);
-                memset(&this->m_descriptor_info, 0, sizeof(VkDescriptorBufferInfo));
+                util::zero(this->m_descriptor_info);
                 this->m_descriptor_info.buffer = this->m_buffer;
                 this->m_descriptor_info.offset = 0;
                 this->m_descriptor_info.range = (VkDeviceSize)this->m_size;

@@ -1,5 +1,6 @@
 #include "bve_pch.h"
 #include "buffer.h"
+#include "util.h"
 namespace bve {
     buffer::buffer() {
         this->m_pointer = nullptr;

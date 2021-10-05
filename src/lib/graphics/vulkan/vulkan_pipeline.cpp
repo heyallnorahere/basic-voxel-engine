@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_context.h"
+#include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -43,24 +44,24 @@ namespace bve {
                 VkExtent2D swapchain_extent = this->m_context->get_swapchain_extent();
                 VkDevice device = this->m_context->get_device();
                 VkPipelineVertexInputStateCreateInfo vertex_input_info;
-                memset(&vertex_input_info, 0, sizeof(VkPipelineVertexInputStateCreateInfo));
+                util::zero(vertex_input_info);
                 vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+                std::vector<VkVertexInputAttributeDescription> attributes;
+                VkVertexInputBindingDescription binding_description;
                 if (this->m_vertex_attributes.empty()) { 
                     vertex_input_info.vertexBindingDescriptionCount = 0;
                     vertex_input_info.pVertexBindingDescriptions = nullptr;
                     vertex_input_info.vertexAttributeDescriptionCount = 0;
                     vertex_input_info.pVertexAttributeDescriptions = nullptr;
                 } else {
-                    VkVertexInputBindingDescription binding_description;
-                    memset(&binding_description, 0, sizeof(VkVertexInputBindingDescription));
+                    util::zero(binding_description);
                     binding_description.binding = 0;
                     binding_description.stride = (uint32_t)this->m_vertex_attributes[0].stride;
                     binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-                    std::vector<VkVertexInputAttributeDescription> attributes;
                     for (uint32_t i = 0; i < this->m_vertex_attributes.size(); i++) {
                         const auto& attr = this->m_vertex_attributes[i];
                         VkVertexInputAttributeDescription descriptor;
-                        memset(&descriptor, 0, sizeof(VkVertexInputAttributeDescription));
+                        util::zero(descriptor);
                         descriptor.binding = 0;
                         descriptor.location = i;
                         switch (attr.type) {
@@ -78,6 +79,7 @@ namespace bve {
                             break;
                         case vertex_attribute_type::VEC4:
                             descriptor.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+                            break;
                         case vertex_attribute_type::IVEC2:
                             descriptor.format = VK_FORMAT_R32G32_SINT;
                             break;
@@ -99,29 +101,29 @@ namespace bve {
                     vertex_input_info.pVertexAttributeDescriptions = attributes.data();
                 }
                 VkPipelineInputAssemblyStateCreateInfo input_assembly;
-                memset(&input_assembly, 0, sizeof(VkPipelineInputAssemblyStateCreateInfo));
+                util::zero(input_assembly);
                 input_assembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
                 input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
                 input_assembly.primitiveRestartEnable = false;
                 VkViewport viewport;
-                memset(&viewport, 0, sizeof(VkViewport));
+                util::zero(viewport);
                 viewport.x = viewport.y = 0.f;
                 viewport.width = (float)swapchain_extent.width;
                 viewport.height = (float)swapchain_extent.height;
                 viewport.minDepth = 0.f;
                 viewport.maxDepth = 1.f;
                 VkRect2D scissor;
-                memset(&scissor, 0, sizeof(VkRect2D));
+                util::zero(scissor);
                 scissor.extent = swapchain_extent;
                 VkPipelineViewportStateCreateInfo viewport_state;
-                memset(&viewport_state, 0, sizeof(VkPipelineViewportStateCreateInfo));
+                util::zero(viewport_state);
                 viewport_state.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
                 viewport_state.viewportCount = 1;
                 viewport_state.pViewports = &viewport;
                 viewport_state.scissorCount = 1;
                 viewport_state.pScissors = &scissor;
                 VkPipelineRasterizationStateCreateInfo rasterizer;
-                memset(&rasterizer, 0, sizeof(VkPipelineRasterizationStateCreateInfo));
+                util::zero(rasterizer);
                 rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
                 rasterizer.depthClampEnable = false;
                 rasterizer.rasterizerDiscardEnable = false;
@@ -131,7 +133,7 @@ namespace bve {
                 rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
                 rasterizer.depthBiasEnable = false;
                 VkPipelineMultisampleStateCreateInfo multisampling;
-                memset(&multisampling, 0, sizeof(VkPipelineMultisampleStateCreateInfo));
+                util::zero(multisampling);
                 multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
                 multisampling.sampleShadingEnable = false;
                 multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
@@ -140,7 +142,7 @@ namespace bve {
                 multisampling.alphaToCoverageEnable = false;
                 multisampling.alphaToOneEnable = false;
                 VkPipelineColorBlendAttachmentState color_blend_attachment;
-                memset(&color_blend_attachment, 0, sizeof(VkPipelineColorBlendAttachmentState));
+                util::zero(color_blend_attachment);
                 color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
                 color_blend_attachment.blendEnable = true;
                 color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -150,7 +152,7 @@ namespace bve {
                 color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
                 color_blend_attachment.alphaBlendOp = VK_BLEND_OP_ADD;
                 VkPipelineColorBlendStateCreateInfo color_blending;
-                memset(&color_blending, 0, sizeof(VkPipelineColorBlendStateCreateInfo));
+                util::zero(color_blending);
                 color_blending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
                 color_blending.logicOpEnable = false;
                 color_blending.logicOp = VK_LOGIC_OP_COPY;
@@ -164,15 +166,15 @@ namespace bve {
                     VK_DYNAMIC_STATE_LINE_WIDTH
                 };
                 VkPipelineDynamicStateCreateInfo dynamic_state;
-                memset(&dynamic_state, 0, sizeof(VkPipelineDynamicStateCreateInfo));
+                util::zero(dynamic_state);
                 dynamic_state.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
                 dynamic_state.dynamicStateCount = (uint32_t)dynamic_states.size();
                 dynamic_state.pDynamicStates = dynamic_states.data();
                 VkPipelineLayoutCreateInfo pipeline_layout_info;
-                memset(&pipeline_layout_info, 0, sizeof(VkPipelineLayoutCreateInfo));
+                util::zero(pipeline_layout_info);
                 pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+                std::vector<VkDescriptorSetLayout> layouts;
                 if (this->m_shader) {
-                    std::vector<VkDescriptorSetLayout> layouts;
                     const auto& sets = this->m_shader->get_descriptor_sets();
                     for (const auto& set : sets) {
                         layouts.push_back(set.layout);
@@ -186,7 +188,7 @@ namespace bve {
                     throw std::runtime_error("[vulkan pipeline] could not create pipeline layout");
                 }
                 VkGraphicsPipelineCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkGraphicsPipelineCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
                 if (this->m_shader) {
                     const auto& shader_stage_create_info = this->m_shader->get_create_info();
@@ -202,7 +204,7 @@ namespace bve {
                 create_info.pMultisampleState = &multisampling;
                 create_info.pDepthStencilState = nullptr;
                 create_info.pColorBlendState = &color_blending;
-                create_info.pDynamicState = &dynamic_state;
+                //create_info.pDynamicState = &dynamic_state;
                 create_info.layout = this->m_layout;
                 create_info.renderPass = this->m_context->get_render_pass();
                 create_info.subpass = 0;

@@ -2,6 +2,7 @@
 #include "vulkan_buffer.h"
 #include "vulkan_context.h"
 #include "vulkan_pipeline.h"
+#include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -18,7 +19,7 @@ namespace bve {
             }
             void create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkBuffer& buffer, VkDeviceMemory& memory) {
                 VkBufferCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkBufferCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
                 create_info.size = (VkDeviceSize)size;
                 create_info.usage = usage;
@@ -29,7 +30,7 @@ namespace bve {
                 VkMemoryRequirements requirements;
                 vkGetBufferMemoryRequirements(device, buffer, &requirements);
                 VkMemoryAllocateInfo alloc_info;
-                memset(&alloc_info, 0, sizeof(VkMemoryAllocateInfo));
+                util::zero(alloc_info);
                 alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
                 alloc_info.allocationSize = requirements.size;
                 alloc_info.memoryTypeIndex = find_memory_type(requirements.memoryTypeBits,
@@ -43,7 +44,7 @@ namespace bve {
                 VkDevice device = context->get_device();
                 VkCommandPool command_pool = context->get_command_pool();
                 VkCommandBufferAllocateInfo alloc_info;
-                memset(&alloc_info, 0, sizeof(VkCommandBufferAllocateInfo));
+                util::zero(alloc_info);
                 alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
                 alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
                 alloc_info.commandPool = command_pool;
@@ -53,14 +54,14 @@ namespace bve {
                     throw std::runtime_error("[vulkan buffer] could not allocate a command buffer for copying");
                 }
                 VkCommandBufferBeginInfo begin_info;
-                memset(&begin_info, 0, sizeof(VkCommandBufferBeginInfo));
+                util::zero(begin_info);
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                 begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
                 if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan buffer] could not begin recording copy command");
                 }
                 VkBufferCopy copy_region;
-                memset(&copy_region, 0, sizeof(VkBufferCopy));
+                util::zero(copy_region);
                 copy_region.srcOffset = 0;
                 copy_region.dstOffset = 0;
                 copy_region.size = size;
@@ -69,7 +70,7 @@ namespace bve {
                     throw std::runtime_error("[vulkan buffer] could not end recording of copy command");
                 }
                 VkSubmitInfo submit_info;
-                memset(&submit_info, 0, sizeof(VkSubmitInfo));
+                util::zero(submit_info);
                 submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
                 submit_info.commandBufferCount = 1;
                 submit_info.pCommandBuffers = &command_buffer;

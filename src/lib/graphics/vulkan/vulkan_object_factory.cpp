@@ -4,6 +4,8 @@
 #include "vulkan_shader.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_buffer.h"
+#include "vulkan_texture.h"
+#include "vulkan_uniform_buffer.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -23,12 +25,10 @@ namespace bve {
                 return ref<vulkan_shader>::create(this, sources);
             }
             ref<texture> vulkan_object_factory::create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) {
-                // todo: create texture
-                return nullptr;
+                return ref<vulkan_texture>::create(data, width, height, channels, this);
             }
             ref<uniform_buffer> vulkan_object_factory::create_uniform_buffer(size_t size, uint32_t binding) {
-                // todo: create uniform buffer
-                return nullptr;
+                return ref<vulkan_uniform_buffer>::create(size, binding, this);
             }
             ref<context> vulkan_object_factory::get_current_context() {
                 return this->m_current_context;

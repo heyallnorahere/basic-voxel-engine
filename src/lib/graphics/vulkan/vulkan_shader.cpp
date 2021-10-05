@@ -3,6 +3,7 @@
 #include "vulkan_context.h"
 #include "vulkan_pipeline.h"
 #include "../../shader_compiler.h"
+#include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -87,7 +88,7 @@ namespace bve {
                 }
                 for (const auto& module : shader_modules) {
                     VkPipelineShaderStageCreateInfo create_info;
-                    memset(&create_info, 0, sizeof(VkPipelineShaderStageCreateInfo));
+                    util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
                     switch (module.first) {
                     case shader_type::VERTEX:
@@ -115,7 +116,7 @@ namespace bve {
                 auto spirv = compiler.compile(source, shader_language::GLSL, type);
                 this->reflect(type, spirv);
                 VkShaderModuleCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkShaderModuleCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
                 create_info.codeSize = spirv.size() * sizeof(uint32_t);
                 create_info.pCode = spirv.data();
@@ -132,6 +133,10 @@ namespace bve {
                 }
                 this->m_pipeline_create_info.clear();
             }
+            struct layout_binding_t {
+                VkDescriptorType descriptor_type;
+                VkShaderStageFlags stage;
+            };
             void vulkan_shader::create_descriptor_sets() {
                 auto context = this->m_factory->get_current_context().as<vulkan_context>();
                 size_t image_count = context->get_swapchain_image_count();
@@ -144,20 +149,43 @@ namespace bve {
                         descriptor_set_count = new_size;
                     }
                 }
+                std::map<uint32_t, std::map<uint32_t, layout_binding_t>> layout_bindings;
+                for (const auto& [binding, buffer_info] : data.uniform_buffers) {
+                    layout_binding_t layout_binding;
+                    layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    switch (buffer_info.stage) {
+                    case shader_type::VERTEX:
+                        layout_binding.stage = VK_SHADER_STAGE_VERTEX_BIT;
+                        break;
+                    case shader_type::FRAGMENT:
+                        layout_binding.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                        break;
+                    case shader_type::GEOMETRY:
+                        layout_binding.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+                        break;
+                    default:
+                        throw std::runtime_error("[vulkan shader] invalid shader type");
+                    }
+                    layout_bindings[buffer_info.descriptor_set][binding] = layout_binding;
+                }
                 std::vector<VkDescriptorSetLayout> layouts;
                 for (uint32_t i = 0; i < descriptor_set_count; i++) {
-                    VkDescriptorSetLayoutBinding layout_binding;
-                    memset(&layout_binding, 0, sizeof(VkDescriptorSetLayoutBinding));
-                    layout_binding.binding = i;
-                    layout_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    layout_binding.descriptorCount = 1;
-                    layout_binding.stageFlags = VK_SHADER_STAGE_ALL;
-                    layout_binding.pImmutableSamplers = nullptr;
+                    std::vector<VkDescriptorSetLayoutBinding> bindings;
+                    for (const auto& [binding, data] : layout_bindings[i]) {
+                        VkDescriptorSetLayoutBinding layout_binding;
+                        util::zero(layout_binding);
+                        layout_binding.binding = binding;
+                        layout_binding.descriptorType = data.descriptor_type;
+                        layout_binding.descriptorCount = 1;
+                        layout_binding.stageFlags = data.stage;
+                        layout_binding.pImmutableSamplers = nullptr;
+                        bindings.push_back(layout_binding);
+                    }
                     VkDescriptorSetLayoutCreateInfo create_info;
-                    memset(&create_info, 0, sizeof(VkDescriptorSetLayoutCreateInfo));
+                    util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-                    create_info.bindingCount = 1;
-                    create_info.pBindings = &layout_binding;
+                    create_info.bindingCount = (uint32_t)bindings.size();
+                    create_info.pBindings = bindings.data();
                     VkDescriptorSetLayout layout;
                     if (vkCreateDescriptorSetLayout(this->m_device, &create_info, nullptr, &layout) != VK_SUCCESS) {
                         throw std::runtime_error("[vulkan shader] could not create descriptor set layout for binding " + std::to_string(i));
@@ -168,7 +196,7 @@ namespace bve {
                     }
                 }
                 VkDescriptorSetAllocateInfo alloc_info;
-                memset(&alloc_info, 0, sizeof(VkDescriptorSetAllocateInfo));
+                util::zero(alloc_info);
                 alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
                 alloc_info.descriptorPool = this->m_descriptor_pool;
                 alloc_info.descriptorSetCount = (uint32_t)layouts.size();

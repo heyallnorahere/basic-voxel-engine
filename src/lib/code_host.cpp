@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "code_host.h"
 #include "script_wrappers.h"
+#include "util.h"
 namespace bve {
     static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
         size_t period_position = full_name.find_last_of('.');
@@ -312,7 +313,7 @@ namespace bve {
             fclose(f);
             throw std::runtime_error("[code host] application ran out of memory");
         }
-        memset(file_data, 0, file_size * sizeof(char));
+        util::zero(file_data, file_size * sizeof(char));
         size_t bytes_read = fread(file_data, sizeof(char), file_size, f);
         if (bytes_read != file_size) {
             fclose(f);

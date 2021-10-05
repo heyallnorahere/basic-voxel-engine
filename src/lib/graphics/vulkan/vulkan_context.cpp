@@ -5,6 +5,7 @@
 #include "vulkan_extensions.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_uniform_buffer.h"
+#include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -133,7 +134,7 @@ namespace bve {
                 vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphore, nullptr, &this->m_current_command_buffer);
                 VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_command_buffer];
                 VkCommandBufferBeginInfo begin_info;
-                memset(&begin_info, 0, sizeof(VkCommandBufferBeginInfo));
+                util::zero(begin_info);
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                 begin_info.flags = 0;
                 begin_info.pInheritanceInfo = nullptr;
@@ -141,7 +142,7 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not begin recording a command buffer");
                 }
                 VkRenderPassBeginInfo render_pass_info;
-                memset(&render_pass_info, 0, sizeof(VkRenderPassBeginInfo));
+                util::zero(render_pass_info);
                 render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 render_pass_info.renderPass = this->m_render_pass;
                 render_pass_info.framebuffer = this->m_framebuffers[this->m_current_command_buffer];
@@ -197,7 +198,7 @@ namespace bve {
                         uint32_t descriptor_set = buffer_info.descriptor_set;
                         VkDescriptorSet vk_descriptor_set = sets[descriptor_set].sets[this->m_current_command_buffer];
                         VkWriteDescriptorSet write;
-                        memset(&write, 0, sizeof(VkWriteDescriptorSet));
+                        util::zero(write);
                         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
                         write.dstSet = vk_descriptor_set;
                         write.dstBinding = binding;
@@ -222,7 +223,7 @@ namespace bve {
                 }
                 VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
                 VkSubmitInfo submit_info;
-                memset(&submit_info, 0, sizeof(VkSubmitInfo));
+                util::zero(submit_info);
                 submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
                 submit_info.waitSemaphoreCount = 1;
                 submit_info.pWaitSemaphores = &this->m_image_available_semaphore;
@@ -235,7 +236,7 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not submit command buffer");
                 }
                 VkPresentInfoKHR present_info;
-                memset(&present_info, 0, sizeof(VkPresentInfoKHR));
+                util::zero(present_info);
                 present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
                 present_info.waitSemaphoreCount = 1;
                 present_info.pWaitSemaphores = &this->m_render_finished_semaphore;
@@ -292,7 +293,7 @@ namespace bve {
             void vulkan_context::init_imgui_backends() {
                 ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
                 ImGui_ImplVulkan_InitInfo info;
-                memset(&info, 0, sizeof(ImGui_ImplVulkan_InitInfo));
+                util::zero(info);
                 info.Instance = this->m_instance;
                 info.PhysicalDevice = this->m_physical_device;
                 info.Device = this->m_device;
@@ -311,7 +312,7 @@ namespace bve {
                 static bool first_frame = true;
                 if (first_frame) {
                     VkCommandBufferAllocateInfo alloc_info;
-                    memset(&alloc_info, 0, sizeof(VkCommandBufferAllocateInfo));
+                    util::zero(alloc_info);
                     alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
                     alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
                     alloc_info.commandPool = this->m_command_pool;
@@ -321,14 +322,14 @@ namespace bve {
                         throw std::runtime_error("[vulkan context] could not allocate command buffer for initializing ImGui");
                     }
                     VkCommandBufferBeginInfo begin_info;
-                    memset(&begin_info, 0, sizeof(VkCommandBufferBeginInfo));
+                    util::zero(begin_info);
                     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                     begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
                     vkBeginCommandBuffer(command_buffer, &begin_info);
                     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
                     vkEndCommandBuffer(command_buffer);
                     VkSubmitInfo submit_info;
-                    memset(&submit_info, 0, sizeof(VkSubmitInfo));
+                    util::zero(submit_info);
                     submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
                     submit_info.commandBufferCount = 1;
                     submit_info.pCommandBuffers = &command_buffer;
@@ -341,7 +342,7 @@ namespace bve {
                 ImGui_ImplGlfw_NewFrame();
             }
             void vulkan_context::render_imgui_draw_data(ImDrawData* data) {
-                ImGui_ImplVulkan_RenderDrawData(data, this->m_command_buffers[this->m_current_command_buffer], nullptr);
+                //ImGui_ImplVulkan_RenderDrawData(data, this->m_command_buffers[this->m_current_command_buffer], nullptr);
             }
             void vulkan_context::create_instance() {
                 if (!this->layers_supported()) {
@@ -350,7 +351,7 @@ namespace bve {
                 std::string app_name = "basic voxel engine";
                 uint32_t version = VK_MAKE_VERSION(0, 0, 1); // i should make this dynamic or something idk lol
                 VkApplicationInfo app_info;
-                memset(&app_info, 0, sizeof(VkApplicationInfo));
+                util::zero(app_info);
                 app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
                 app_info.pApplicationName = app_name.c_str();
                 app_info.applicationVersion = version;
@@ -358,7 +359,7 @@ namespace bve {
                 app_info.engineVersion = version;
                 app_info.apiVersion = VK_API_VERSION_1_0;
                 VkInstanceCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkInstanceCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
                 create_info.pApplicationInfo = &app_info;
                 std::vector<const char*> extensions = this->get_extensions();
@@ -375,7 +376,7 @@ namespace bve {
                     return;
                 }
                 VkDebugUtilsMessengerCreateInfoEXT create_info;
-                memset(&create_info, 0, sizeof(VkDebugUtilsMessengerCreateInfoEXT));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
                 create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
                 create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
@@ -421,7 +422,7 @@ namespace bve {
                 float queue_priority = 1.f;
                 for (uint32_t index : queue_families) {
                     VkDeviceQueueCreateInfo create_info;
-                    memset(&create_info, 0, sizeof(VkDeviceQueueCreateInfo));
+                    util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
                     create_info.queueFamilyIndex = index;
                     create_info.queueCount = 1;
@@ -429,12 +430,12 @@ namespace bve {
                     queue_create_info.push_back(create_info);
                 }
                 VkDeviceCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkDeviceCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
                 create_info.pQueueCreateInfos = queue_create_info.data();
                 create_info.queueCreateInfoCount = (uint32_t)queue_create_info.size();
                 VkPhysicalDeviceFeatures features;
-                memset(&features, 0, sizeof(VkPhysicalDeviceFeatures));
+                util::zero(features);
                 create_info.pEnabledFeatures = &features;
                 create_info.enabledExtensionCount = (uint32_t)this->m_device_extensions.size();
                 create_info.ppEnabledExtensionNames = this->m_device_extensions.data();
@@ -455,7 +456,7 @@ namespace bve {
                     this->m_image_count = details.capabilities.maxImageCount;
                 }
                 VkSwapchainCreateInfoKHR create_info;
-                memset(&create_info, 0, sizeof(VkSwapchainCreateInfoKHR));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
                 create_info.surface = this->m_window_surface;
                 create_info.minImageCount = this->m_image_count;
@@ -492,7 +493,7 @@ namespace bve {
             void vulkan_context::create_image_views() {
                 for (size_t i = 0; i < this->m_swapchain_images.size(); i++) {
                     VkImageViewCreateInfo create_info;
-                    memset(&create_info, 0, sizeof(VkImageViewCreateInfo));
+                    util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
                     create_info.image = this->m_swapchain_images[i];
                     create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -515,7 +516,7 @@ namespace bve {
             }
             void vulkan_context::create_render_pass() {
                 VkAttachmentDescription color_attachment;
-                memset(&color_attachment, 0, sizeof(VkAttachmentDescription));
+                util::zero(color_attachment);
                 color_attachment.format = this->m_swapchain_image_format;
                 color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
                 color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -525,23 +526,23 @@ namespace bve {
                 color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
                 color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
                 VkAttachmentReference color_attachment_ref;
-                memset(&color_attachment_ref, 0, sizeof(VkAttachmentReference));
+                util::zero(color_attachment_ref);
                 color_attachment_ref.attachment = 0;
                 color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 VkSubpassDescription subpass;
-                memset(&subpass, 0, sizeof(VkSubpassDescription));
+                util::zero(subpass);
                 subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
                 subpass.colorAttachmentCount = 1;
                 subpass.pColorAttachments = &color_attachment_ref;
                 VkSubpassDependency dependency;
-                memset(&dependency, 0, sizeof(VkSubpassDependency));
+                util::zero(dependency);
                 dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
                 dependency.dstSubpass = 0;
                 dependency.srcStageMask = dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
                 dependency.srcAccessMask = 0;
                 dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
                 VkRenderPassCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkRenderPassCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
                 create_info.attachmentCount = 1;
                 create_info.pAttachments = &color_attachment;
@@ -557,7 +558,7 @@ namespace bve {
                 this->m_framebuffers.resize(this->m_swapchain_image_views.size());
                 for (size_t i = 0; i < this->m_swapchain_image_views.size(); i++) {
                     VkFramebufferCreateInfo create_info;
-                    memset(&create_info, 0, sizeof(VkFramebufferCreateInfo));
+                    util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
                     create_info.renderPass = this->m_render_pass;
                     create_info.attachmentCount = 1;
@@ -573,7 +574,7 @@ namespace bve {
             void vulkan_context::create_command_pool() {
                 auto indices = find_queue_families(this->m_physical_device, this->m_window_surface);
                 VkCommandPoolCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkCommandPoolCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
                 create_info.queueFamilyIndex = *indices.graphics_family;
                 create_info.flags = 0;
@@ -584,7 +585,7 @@ namespace bve {
             void vulkan_context::alloc_command_buffers() {
                 this->m_command_buffers.resize(this->m_framebuffers.size());
                 VkCommandBufferAllocateInfo alloc_info;
-                memset(&alloc_info, 0, sizeof(VkCommandBufferAllocateInfo));
+                util::zero(alloc_info);
                 alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
                 alloc_info.commandPool = this->m_command_pool;
                 alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -595,7 +596,7 @@ namespace bve {
             }
             void vulkan_context::create_semaphores() {
                 VkSemaphoreCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkSemaphoreCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
                 if (vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_image_available_semaphore) != VK_SUCCESS ||
                     vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_render_finished_semaphore) != VK_SUCCESS) {
@@ -617,7 +618,7 @@ namespace bve {
                     { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
                 };
                 VkDescriptorPoolCreateInfo create_info;
-                memset(&create_info, 0, sizeof(VkDescriptorPoolCreateInfo));
+                util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
                 create_info.poolSizeCount = (uint32_t)pool_sizes.size();
                 create_info.pPoolSizes = pool_sizes.data();
