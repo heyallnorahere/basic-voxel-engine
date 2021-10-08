@@ -46,6 +46,7 @@ namespace bve {
                 void create_sync_objects();
                 void create_descriptor_pool();
                 void cleanup_swapchain(bool* recreate_pipeline);
+                void recreate_swapchain(glm::ivec2 new_size);
                 uint32_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
@@ -73,7 +74,7 @@ namespace bve {
                 size_t m_current_frame;
                 uint32_t m_current_image;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
-                bool m_validation_layers_enabled;
+                bool m_validation_layers_enabled, m_resize_swapchain;
             };
         }
     }

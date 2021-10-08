@@ -67,44 +67,19 @@ void player::update() {
         ImGui::Text("FPS: %f", io.Framerate);
         auto atlas = app.get_texture_atlas();
         if (ImGui::CollapsingHeader("Texture atlas")) {
-            void* texture_id = atlas->get_texture()->get_id();
-            glm::ivec2 size = atlas->get_texture_size();
-            ImVec2 bottom_left, top_right;
-            if (app.get_object_factory()->get_graphics_api() == graphics::graphics_api::OPENGL) {
-                bottom_left = ImVec2(0.f, 1.f);
-                top_right = ImVec2(1.f, 0.f);
-            } else {
-                bottom_left = ImVec2(0.f, 0.f);
-                top_right = ImVec2(1.f, 1.f);
-            }
-            ImGui::Image(texture_id, ImVec2(content_region_available.x, 100.f), bottom_left, top_right);
-        }
-        if (ImGui::CollapsingHeader("Texture atlas uniform data")) {
-            static int32_t current_combo_item = 0;
-            auto shader = app.get_shader("block");
-            shader->bind();
-            glm::ivec2 texture_size = shader->get_ivec2("atlas.texture_size");
-            glm::ivec2 atlas_size = shader->get_ivec2("atlas.atlas_size");
-            std::vector<namespaced_name> names = atlas->get_included_block_names();
-            quick_sort(names, 0, names.size() - 1, block_register);
-            std::vector<char> combo_names_characters;
-            for (const auto& name : names) {
-                std::string full_name = name.get_full_name();
-                for (char c : full_name) {
-                    combo_names_characters.push_back(c);
+            ImTextureID texture_id = atlas->get_texture()->get_texture_id();
+            if (texture_id) {
+                ImVec2 bottom_left, top_right;
+                graphics::graphics_api graphics_api = app.get_object_factory()->get_graphics_api();
+                if (graphics_api == graphics::graphics_api::OPENGL || graphics_api == graphics::graphics_api::VULKAN) {
+                    bottom_left = ImVec2(0.f, 1.f);
+                    top_right = ImVec2(1.f, 0.f);
+                } else {
+                    bottom_left = ImVec2(0.f, 0.f);
+                    top_right = ImVec2(1.f, 1.f);
                 }
-                combo_names_characters.push_back('\0');
+                ImGui::Image(texture_id, ImVec2(content_region_available.x, 100.f), bottom_left, top_right);
             }
-            combo_names_characters.push_back('\0');
-            ImGui::Text("Texture size: (%d, %d)", texture_size.x, texture_size.y);
-            ImGui::Text("Atlas size: (%d, %d)", atlas_size.x, atlas_size.y);
-            ImGui::Combo("Current block", &current_combo_item, combo_names_characters.data());
-            size_t block_id = *block_register.get_index(names[(size_t)current_combo_item]);
-            std::string uniform_stub = "atlas.texture_dimensions_array[" + std::to_string(block_id) + "].";
-            glm::ivec2 atlas_position = shader->get_ivec2(uniform_stub + "atlas_position");
-            glm::ivec2 texture_dimensions = shader->get_ivec2(uniform_stub + "texture_dimensions");
-            ImGui::Text("Block atlas position: (%d, %d)", atlas_position.x, atlas_position.y);
-            ImGui::Text("Block texture dimensions: (%d, %d)", texture_dimensions.x, texture_dimensions.y);
         }
         ImGui::End();
     }

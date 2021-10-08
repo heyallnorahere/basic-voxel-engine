@@ -24,8 +24,8 @@ namespace bve {
             int32_t opengl_texture::get_channels() {
                 return this->m_channels;
             }
-            void* opengl_texture::get_id() {
-                return (void*)(size_t)this->m_id;
+            ImTextureID opengl_texture::get_texture_id() {
+                return (ImTextureID)(size_t)this->m_id;
             }
             void opengl_texture::create(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) {
                 if (opengl_context::get_version() < 4.5) {

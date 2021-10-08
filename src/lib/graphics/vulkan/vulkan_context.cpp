@@ -107,6 +107,7 @@ namespace bve {
                 return VK_FALSE;
             }
             vulkan_context::vulkan_context(ref<vulkan_object_factory> factory) {
+                this->m_resize_swapchain = false;
                 this->m_current_frame = 0;
                 this->m_current_image = 0;
                 this->m_factory = factory;
@@ -207,6 +208,16 @@ namespace bve {
                 vkCmdDrawIndexed(this->m_command_buffers[this->m_current_image], (uint32_t)index_count, 1, 0, 0, 0);
             }
             void vulkan_context::swap_buffers() {
+                auto resize_swapchain = [this]() mutable {
+                    int32_t width = 0, height = 0;
+                    glfwGetFramebufferSize(this->m_window, &width, &height);
+                    if (width == 0 || height == 0) {
+                        // why do we do this again?
+                        glfwGetFramebufferSize(this->m_window, &width, &height);
+                        glfwWaitEvents();
+                    }
+                    this->recreate_swapchain(glm::ivec2(width, height));
+                };
                 vkCmdEndRenderPass(this->m_command_buffers[this->m_current_image]);
                 if (vkEndCommandBuffer(this->m_command_buffers[this->m_current_image]) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not finish recording a command buffer");
@@ -219,7 +230,12 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not create fence for rendering");
                 }
                 uint32_t current_image;
-                vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphores[this->m_current_frame], fence, &current_image);
+                VkResult result = vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphores[this->m_current_frame], fence, &current_image);
+                if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+                    resize_swapchain();
+                } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+                    throw std::runtime_error("[vulkan context] could not acquire next swapchain image");
+                }
                 vkWaitForFences(this->m_device, 1, &fence, true, UINT64_MAX);
                 vkResetFences(this->m_device, 1, &fence);
                 VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
@@ -249,11 +265,16 @@ namespace bve {
                 present_info.pSwapchains = &this->m_swap_chain;
                 present_info.pImageIndices = &current_image;
                 present_info.pResults = nullptr;
-                if (vkQueuePresentKHR(this->m_present_queue, &present_info) != VK_SUCCESS) {
+                result = vkQueuePresentKHR(this->m_present_queue, &present_info);
+                if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || this->m_resize_swapchain) {
+                    this->m_resize_swapchain = false;
+                    resize_swapchain();
+                } else if (result != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not present");
                 }
                 this->m_current_frame = (this->m_current_frame + 1) % max_frames_in_flight;
                 this->m_current_image = (current_image + 1) % (uint32_t)this->m_swapchain_images.size();
+                this->m_bound_pipelines.clear();
             }
             void vulkan_context::setup_glfw() {
                 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -280,22 +301,7 @@ namespace bve {
                 this->create_sync_objects();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
-                vkDeviceWaitIdle(this->m_device);
-                bool recreate_pipeline;
-                this->cleanup_swapchain(&recreate_pipeline);
-                this->create_swap_chain(glm::ivec2(x, y));
-                this->create_image_views();
-                this->create_render_pass();
-                for (auto shader : vulkan_shader::get_active_shaders()) {
-                    shader->create_descriptor_sets();
-                }
-                if (recreate_pipeline) {
-                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
-                    pipeline->create();
-                }
-                this->create_framebuffers();
-                this->create_descriptor_pool();
-                this->alloc_command_buffers();
+                this->m_resize_swapchain = true;
             }
             void vulkan_context::init_imgui_backends() {
                 ImGui_ImplGlfw_InitForVulkan(this->m_window, true);
@@ -487,7 +493,6 @@ namespace bve {
                 create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
                 create_info.presentMode = present_mode;
                 create_info.clipped = true;
-                create_info.oldSwapchain = this->m_swap_chain;
                 if (vkCreateSwapchainKHR(this->m_device, &create_info, nullptr, &this->m_swap_chain) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create swapchain");
                 }
@@ -634,6 +639,7 @@ namespace bve {
                 create_info.poolSizeCount = (uint32_t)pool_sizes.size();
                 create_info.pPoolSizes = pool_sizes.data();
                 create_info.maxSets = (uint32_t)(1000 * pool_sizes.size());
+                create_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
                 if (vkCreateDescriptorPool(this->m_device, &create_info, nullptr, &this->m_descriptor_pool) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create descriptor pool");
                 }
@@ -664,6 +670,25 @@ namespace bve {
                 this->m_swapchain_image_views.clear();
                 vkDestroySwapchainKHR(this->m_device, this->m_swap_chain, nullptr);
                 vkDestroyDescriptorPool(this->m_device, this->m_descriptor_pool, nullptr);
+            }
+            void vulkan_context::recreate_swapchain(glm::ivec2 new_size) {
+                vkDeviceWaitIdle(this->m_device);
+                bool recreate_pipeline;
+                this->cleanup_swapchain(&recreate_pipeline);
+                this->create_swap_chain(new_size);
+                this->create_image_views();
+                this->create_render_pass();
+                this->create_framebuffers();
+                this->create_descriptor_pool();
+                this->alloc_command_buffers();
+                for (auto shader : vulkan_shader::get_active_shaders()) {
+                    shader->create_descriptor_sets();
+                }
+                if (recreate_pipeline) {
+                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    pipeline->create();
+                }
+                // imgui will crash; cant do anything about it now, i dont think
             }
             uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;

@@ -12,7 +12,7 @@ namespace bve {
             virtual void bind(uint32_t slot = 0) = 0;
             virtual glm::ivec2 get_size() = 0;
             virtual int32_t get_channels() = 0;
-            virtual void* get_id() = 0;
+            virtual ImTextureID get_texture_id() = 0;
         };
     }
 }

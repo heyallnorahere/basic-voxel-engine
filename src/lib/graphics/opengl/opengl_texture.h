@@ -10,7 +10,7 @@ namespace bve {
                 virtual void bind(uint32_t slot) override;
                 virtual glm::ivec2 get_size() override;
                 virtual int32_t get_channels() override;
-                virtual void* get_id() override;
+                virtual ImTextureID get_texture_id() override;
             private:
                 void create(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels);
                 uint32_t m_id;

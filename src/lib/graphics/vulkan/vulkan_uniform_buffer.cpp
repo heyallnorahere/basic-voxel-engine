@@ -34,7 +34,7 @@ namespace bve {
                 active_uniform_buffers.push_back(this);
             }
             vulkan_uniform_buffer::~vulkan_uniform_buffer() {
-                active_uniform_buffers.remove_if([this](ref<vulkan_uniform_buffer> element) { return element == this; });
+                active_uniform_buffers.remove_if([this](vulkan_uniform_buffer* element) { return element == this; });
                 vkDestroyBuffer(this->m_device, this->m_buffer, nullptr);
                 vkFreeMemory(this->m_device, this->m_memory, nullptr);
             }
