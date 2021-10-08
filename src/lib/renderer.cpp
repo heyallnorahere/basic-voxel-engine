@@ -117,6 +117,10 @@ namespace bve {
     }
     void renderer::set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up, float near_plane, float far_plane) {
         this->m_vub_data.projection = glm::perspective(glm::radians(45.f), aspect_ratio, near_plane, far_plane);
+        if (this->m_factory->get_graphics_api() != graphics::graphics_api::OPENGL) {
+            // i have no idea why i have to do this but it renders upside-down if i don't
+            this->m_vub_data.projection[1][1] *= -1.f;
+        }
         this->m_vub_data.view = glm::lookAt(position, position + direction, up);
         this->m_fub_data.camera_position = position;
     }

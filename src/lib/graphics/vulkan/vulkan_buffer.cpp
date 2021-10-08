@@ -6,7 +6,7 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            static uint32_t find_memory_type(uint32_t filter, VkMemoryPropertyFlags properties, VkPhysicalDevice physical_device) {
+            uint32_t find_memory_type(uint32_t filter, VkMemoryPropertyFlags properties, VkPhysicalDevice physical_device) {
                 VkPhysicalDeviceMemoryProperties memory_properties;
                 vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
                 for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++) {
@@ -41,51 +41,14 @@ namespace bve {
                 vkBindBufferMemory(device, buffer, memory, 0);
             }
             void copy_buffer(VkBuffer src, VkBuffer dest, VkDeviceSize size, ref<vulkan_context> context) {
-                VkDevice device = context->get_device();
-                VkCommandPool command_pool = context->get_command_pool();
-                VkCommandBufferAllocateInfo alloc_info;
-                util::zero(alloc_info);
-                alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                alloc_info.commandPool = command_pool;
-                alloc_info.commandBufferCount = 1;
-                VkCommandBuffer command_buffer;
-                if (vkAllocateCommandBuffers(device, &alloc_info, &command_buffer) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan buffer] could not allocate a command buffer for copying");
-                }
-                VkCommandBufferBeginInfo begin_info;
-                util::zero(begin_info);
-                begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan buffer] could not begin recording copy command");
-                }
+                VkCommandBuffer command_buffer = context->begin_single_time_commands();
                 VkBufferCopy copy_region;
                 util::zero(copy_region);
                 copy_region.srcOffset = 0;
                 copy_region.dstOffset = 0;
                 copy_region.size = size;
                 vkCmdCopyBuffer(command_buffer, src, dest, 1, &copy_region);
-                if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan buffer] could not end recording of copy command");
-                }
-                VkSubmitInfo submit_info;
-                util::zero(submit_info);
-                submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                submit_info.commandBufferCount = 1;
-                submit_info.pCommandBuffers = &command_buffer;
-                VkQueue queue = context->get_graphics_queue();
-                VkFenceCreateInfo fence_info;
-                util::zero(fence_info);
-                fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-                VkFence fence;
-                if (vkCreateFence(device, &fence_info, nullptr, &fence) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan buffer] could not create fence for copying buffers");
-                }
-                vkQueueSubmit(queue, 1, &submit_info, fence);
-                vkWaitForFences(device, 1, &fence, true, UINT64_MAX);
-                vkDestroyFence(device, fence, nullptr);
-                vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+                context->end_single_time_commands(command_buffer);
             }
             vulkan_buffer::vulkan_buffer(const void* data, size_t size, VkBufferUsageFlags usage, ref<vulkan_object_factory> factory) {
                 this->m_factory = factory;
@@ -95,15 +58,14 @@ namespace bve {
                 VkPhysicalDevice physical_device = context->get_physical_device();
                 VkBuffer staging_buffer;
                 VkDeviceMemory staging_memory;
-                VkDeviceSize buffer_size = (VkDeviceSize)size;
-                create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                create_buffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
                     this->m_device, physical_device, staging_buffer, staging_memory);
                 void* gpu_data;
-                vkMapMemory(this->m_device, staging_memory, 0, buffer_size, 0, &gpu_data);
+                vkMapMemory(this->m_device, staging_memory, 0, size, 0, &gpu_data);
                 memcpy(gpu_data, data, size);
                 vkUnmapMemory(this->m_device, staging_memory);
-                create_buffer(buffer_size, this->m_usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->m_device, physical_device, this->m_buffer, this->m_memory);
-                copy_buffer(staging_buffer, this->m_buffer, buffer_size, context);
+                create_buffer(size, this->m_usage | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->m_device, physical_device, this->m_buffer, this->m_memory);
+                copy_buffer(staging_buffer, this->m_buffer, size, context);
                 vkDestroyBuffer(this->m_device, staging_buffer, nullptr);
                 vkFreeMemory(this->m_device, staging_memory, nullptr);
             }

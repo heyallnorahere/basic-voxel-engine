@@ -207,6 +207,47 @@ namespace bve {
                 }
                 vkCmdDrawIndexed(this->m_command_buffers[this->m_current_image], (uint32_t)index_count, 1, 0, 0, 0);
             }
+            VkCommandBuffer vulkan_context::begin_single_time_commands() {
+                VkCommandBufferAllocateInfo alloc_info;
+                util::zero(alloc_info);
+                alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                alloc_info.commandPool = this->m_command_pool;
+                alloc_info.commandBufferCount = 1;
+                VkCommandBuffer command_buffer;
+                if (vkAllocateCommandBuffers(this->m_device, &alloc_info, &command_buffer) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not allocate single-time command buffer");
+                }
+                VkCommandBufferBeginInfo begin_info;
+                util::zero(begin_info);
+                begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+                begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+                if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not begin single-time command buffer");
+                }
+                return command_buffer;
+            }
+            void vulkan_context::end_single_time_commands(VkCommandBuffer command_buffer) {
+                if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan buffer] could not end recording of copy command");
+                }
+                VkSubmitInfo submit_info;
+                util::zero(submit_info);
+                submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+                submit_info.commandBufferCount = 1;
+                submit_info.pCommandBuffers = &command_buffer;
+                VkFenceCreateInfo fence_info;
+                util::zero(fence_info);
+                fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                VkFence fence;
+                if (vkCreateFence(this->m_device, &fence_info, nullptr, &fence) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan buffer] could not create fence for copying buffers");
+                }
+                vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, fence);
+                vkWaitForFences(this->m_device, 1, &fence, true, UINT64_MAX);
+                vkDestroyFence(this->m_device, fence, nullptr);
+                vkFreeCommandBuffers(this->m_device, this->m_command_pool, 1, &command_buffer);
+            }
             void vulkan_context::swap_buffers() {
                 auto resize_swapchain = [this]() mutable {
                     int32_t width = 0, height = 0;
@@ -324,30 +365,9 @@ namespace bve {
             void vulkan_context::call_imgui_backend_newframe() {
                 static bool first_frame = true;
                 if (first_frame) {
-                    VkCommandBufferAllocateInfo alloc_info;
-                    util::zero(alloc_info);
-                    alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                    alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                    alloc_info.commandPool = this->m_command_pool;
-                    alloc_info.commandBufferCount = 1;
-                    VkCommandBuffer command_buffer;
-                    if (vkAllocateCommandBuffers(this->m_device, &alloc_info, &command_buffer) != VK_SUCCESS) {
-                        throw std::runtime_error("[vulkan context] could not allocate command buffer for initializing ImGui");
-                    }
-                    VkCommandBufferBeginInfo begin_info;
-                    util::zero(begin_info);
-                    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-                    begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-                    vkBeginCommandBuffer(command_buffer, &begin_info);
+                    VkCommandBuffer command_buffer = this->begin_single_time_commands();
                     ImGui_ImplVulkan_CreateFontsTexture(command_buffer);
-                    vkEndCommandBuffer(command_buffer);
-                    VkSubmitInfo submit_info;
-                    util::zero(submit_info);
-                    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-                    submit_info.commandBufferCount = 1;
-                    submit_info.pCommandBuffers = &command_buffer;
-                    vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, nullptr);
-                    vkDeviceWaitIdle(this->m_device);
+                    this->end_single_time_commands(command_buffer);
                     ImGui_ImplVulkan_DestroyFontUploadObjects();
                     first_frame = false;
                 }
@@ -361,14 +381,13 @@ namespace bve {
                 if (!this->layers_supported()) {
                     throw std::runtime_error("[vulkan context] not all of the layers specified are supported");
                 }
-                std::string app_name = "basic voxel engine";
                 uint32_t version = VK_MAKE_VERSION(0, 0, 1); // i should make this dynamic or something idk lol
                 VkApplicationInfo app_info;
                 util::zero(app_info);
                 app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-                app_info.pApplicationName = app_name.c_str();
+                app_info.pApplicationName = "basic voxel engine";
                 app_info.applicationVersion = version;
-                app_info.pEngineName = app_name.c_str();
+                app_info.pEngineName = "raw fucking c++";
                 app_info.engineVersion = version;
                 app_info.apiVersion = VK_API_VERSION_1_0;
                 VkInstanceCreateInfo create_info;

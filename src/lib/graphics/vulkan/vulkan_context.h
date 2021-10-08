@@ -11,6 +11,8 @@ namespace bve {
                 virtual void clear(glm::vec4 clear_color) override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
+                VkCommandBuffer begin_single_time_commands();
+                void end_single_time_commands(VkCommandBuffer command_buffer);
                 VkInstance get_instance() { return this->m_instance; }
                 VkDebugUtilsMessengerEXT get_debug_messenger() { return this->m_debug_messenger; }
                 VkPhysicalDevice get_physical_device() { return this->m_physical_device; }

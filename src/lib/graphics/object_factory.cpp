@@ -28,7 +28,7 @@ namespace bve {
             std::string string_path = path.string();
             uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 4);
             if (!data_pointer) {
-                spdlog::warn("[texture] could not open file : " + string_path);
+                spdlog::warn("[texture] could not open file: " + string_path);
                 return false;
             }
             size_t buffer_size = (size_t)width * height * channels;
