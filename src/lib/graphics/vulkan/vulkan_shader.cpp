@@ -7,8 +7,14 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            static std::list<ref<vulkan_shader>> active_shaders;
-            const std::list<ref<vulkan_shader>>& vulkan_shader::get_active_shaders() { return active_shaders; }
+            static std::list<vulkan_shader*> active_shaders;
+            std::vector<ref<vulkan_shader>> vulkan_shader::get_active_shaders() {
+                std::vector<ref<vulkan_shader>> refs;
+                for (const auto& shader : active_shaders) {
+                    refs.push_back(shader);
+                }
+                return refs;
+            }
             vulkan_shader::vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<fs::path>& sources) {
                 this->m_device = nullptr;
                 this->m_factory = factory;
@@ -17,7 +23,7 @@ namespace bve {
                 active_shaders.push_back(this);
             }
             vulkan_shader::~vulkan_shader() {
-                active_shaders.remove_if([this](ref<vulkan_shader> element) { return element == this; });
+                active_shaders.remove_if([this](vulkan_shader* element) { return element == this; });
                 this->cleanup();
             }
             void vulkan_shader::reload() {
@@ -216,9 +222,7 @@ namespace bve {
                 std::vector<VkDescriptorSet> sets;
                 for (const auto& desc : this->m_descriptor_sets) {
                     vkDestroyDescriptorSetLayout(this->m_device, desc.layout, nullptr);
-                    for (auto set : desc.sets) {
-                        sets.push_back(set);
-                    }
+                    sets.insert(sets.end(), desc.sets.begin(), desc.sets.end());
                 }
                 vkFreeDescriptorSets(this->m_device, this->m_descriptor_pool, (uint32_t)sets.size(), sets.data());
                 this->m_descriptor_sets.clear();

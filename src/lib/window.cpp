@@ -91,12 +91,12 @@ namespace bve {
         io.DisplaySize.y = (float)height;
         ImGui::Render();
         this->m_context->render_imgui_draw_data(ImGui::GetDrawData());
+        this->m_context->swap_buffers();
         if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
             ImGui::UpdatePlatformWindows();
             ImGui::RenderPlatformWindowsDefault();
             this->m_context->make_current();
         }
-        this->m_context->swap_buffers();
     }
     ref<graphics::context> window::get_context() {
         return this->m_context;

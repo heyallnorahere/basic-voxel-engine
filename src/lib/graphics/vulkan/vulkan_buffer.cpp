@@ -75,9 +75,16 @@ namespace bve {
                 submit_info.commandBufferCount = 1;
                 submit_info.pCommandBuffers = &command_buffer;
                 VkQueue queue = context->get_graphics_queue();
-                if (vkQueueSubmit(queue, 1, &submit_info, nullptr) != VK_SUCCESS || vkQueueWaitIdle(queue) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan buffer] could not copy buffers");
+                VkFenceCreateInfo fence_info;
+                util::zero(fence_info);
+                fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                VkFence fence;
+                if (vkCreateFence(device, &fence_info, nullptr, &fence) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan buffer] could not create fence for copying buffers");
                 }
+                vkQueueSubmit(queue, 1, &submit_info, fence);
+                vkWaitForFences(device, 1, &fence, true, UINT64_MAX);
+                vkDestroyFence(device, fence, nullptr);
                 vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
             }
             vulkan_buffer::vulkan_buffer(const void* data, size_t size, VkBufferUsageFlags usage, ref<vulkan_object_factory> factory) {

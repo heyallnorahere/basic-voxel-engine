@@ -11,7 +11,7 @@ namespace bve {
             class vulkan_context;
             class vulkan_shader : public shader {
             public:
-                static const std::list<ref<vulkan_shader>>& get_active_shaders();
+                static std::vector<ref<vulkan_shader>> get_active_shaders();
                 vulkan_shader(ref<vulkan_object_factory> factory, const std::vector<fs::path>& sources);
                 virtual ~vulkan_shader() override;
                 virtual void reload() override;

@@ -43,7 +43,7 @@ namespace bve {
                 void create_framebuffers();
                 void create_command_pool();
                 void alloc_command_buffers();
-                void create_semaphores();
+                void create_sync_objects();
                 void create_descriptor_pool();
                 void cleanup_swapchain(bool* recreate_pipeline);
                 uint32_t rate_device(VkPhysicalDevice device);
@@ -66,10 +66,12 @@ namespace bve {
                 VkRenderPass m_render_pass;
                 std::vector<VkFramebuffer> m_framebuffers;
                 VkCommandPool m_command_pool;
+                std::vector<ref<pipeline>> m_bound_pipelines;
                 std::vector<VkCommandBuffer> m_command_buffers;
-                uint32_t m_current_command_buffer;
-                VkSemaphore m_image_available_semaphore, m_render_finished_semaphore;
+                std::vector<VkSemaphore> m_image_available_semaphores, m_render_finished_semaphores;
                 VkDescriptorPool m_descriptor_pool;
+                size_t m_current_frame;
+                uint32_t m_current_image;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;
                 bool m_validation_layers_enabled;
             };

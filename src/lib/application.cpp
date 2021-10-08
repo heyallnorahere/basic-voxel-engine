@@ -87,7 +87,6 @@ namespace bve {
         this->m_world->update();
     }
     void application::render() {
-        this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
         this->m_renderer->set_shader(this->m_shaders["static"]);
         auto cmdlist = this->m_renderer->create_command_list();
         for (auto& mesh_ : this->m_meshes) {
@@ -113,9 +112,10 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
+        this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
         this->m_renderer->render(cmdlist, this->m_window->get_context(), this->m_atlas);
-        this->m_renderer->destroy_command_list(cmdlist);
         this->m_window->swap_buffers();
+        this->m_renderer->destroy_command_list(cmdlist);
     }
     void application::load_assemblies() {
         std::vector<fs::path> assembly_paths = {

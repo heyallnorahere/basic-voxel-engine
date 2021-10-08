@@ -9,6 +9,7 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            constexpr size_t max_frames_in_flight = 2;
             struct swap_chain_support_details {
                 VkSurfaceCapabilitiesKHR capabilities;
                 std::vector<VkSurfaceFormatKHR> formats;
@@ -106,7 +107,8 @@ namespace bve {
                 return VK_FALSE;
             }
             vulkan_context::vulkan_context(ref<vulkan_object_factory> factory) {
-                this->m_current_command_buffer = 0;
+                this->m_current_frame = 0;
+                this->m_current_image = 0;
                 this->m_factory = factory;
                 this->m_validation_layers_enabled = false;
                 this->m_device_extensions = {
@@ -119,8 +121,10 @@ namespace bve {
 #endif
             }
             vulkan_context::~vulkan_context() {
-                vkDestroySemaphore(this->m_device, this->m_render_finished_semaphore, nullptr);
-                vkDestroySemaphore(this->m_device, this->m_image_available_semaphore, nullptr);
+                for (size_t i = 0; i < max_frames_in_flight; i++) {
+                    vkDestroySemaphore(this->m_device, this->m_render_finished_semaphores[i], nullptr);
+                    vkDestroySemaphore(this->m_device, this->m_image_available_semaphores[i], nullptr);
+                }
                 this->cleanup_swapchain(nullptr);
                 vkDestroyCommandPool(this->m_device, this->m_command_pool, nullptr);
                 vkDestroyDevice(this->m_device, nullptr);
@@ -131,51 +135,61 @@ namespace bve {
                 vkDestroyInstance(this->m_instance, nullptr);
             }
             void vulkan_context::clear(glm::vec4 clear_color) {
-                vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphore, nullptr, &this->m_current_command_buffer);
-                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_command_buffer];
+                VkCommandBufferAllocateInfo alloc_info;
+                util::zero(alloc_info);
+                alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+                alloc_info.commandPool = this->m_command_pool;
+                alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+                alloc_info.commandBufferCount = 1;
+                if (vkAllocateCommandBuffers(this->m_device, &alloc_info, &this->m_command_buffers[this->m_current_image])) {
+                    throw std::runtime_error("[vulkan context] could not allocate command buffer for rendering");
+                }
                 VkCommandBufferBeginInfo begin_info;
                 util::zero(begin_info);
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                 begin_info.flags = 0;
                 begin_info.pInheritanceInfo = nullptr;
-                if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
+                if (vkBeginCommandBuffer(this->m_command_buffers[this->m_current_image], &begin_info) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not begin recording a command buffer");
                 }
                 VkRenderPassBeginInfo render_pass_info;
                 util::zero(render_pass_info);
                 render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
                 render_pass_info.renderPass = this->m_render_pass;
-                render_pass_info.framebuffer = this->m_framebuffers[this->m_current_command_buffer];
+                render_pass_info.framebuffer = this->m_framebuffers[this->m_current_image];
                 render_pass_info.renderArea.offset = { 0, 0 };
                 render_pass_info.renderArea.extent = this->m_swapchain_extent;
                 render_pass_info.clearValueCount = 1;
-                render_pass_info.pClearValues = (VkClearValue*)&clear_color;
-                vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+                VkClearValue value;
+                util::zero(value);
+                memcpy(value.color.float32, &clear_color, sizeof(glm::vec4));
+                render_pass_info.pClearValues = &value;
+                vkCmdBeginRenderPass(this->m_command_buffers[this->m_current_image], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
             }
             void vulkan_context::make_current() {
                 this->m_factory->m_current_context = this;
             }
             void vulkan_context::draw_indexed(size_t index_count) {
-                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_command_buffer];
                 auto pipeline = this->m_factory->m_current_pipeline;
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     if (!vk_pipeline->valid()) {
                         throw std::runtime_error("[vulkan context] an invalid pipeline is bound");
                     }
-                    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
+                    this->m_bound_pipelines.push_back(pipeline);
+                    vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
                     auto bound_buffers = vk_pipeline->get_bound_buffers();
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
                         auto buffer = bound_buffers[VK_BUFFER_USAGE_VERTEX_BUFFER_BIT];
                         VkBuffer buf = buffer->get_buffer();
                         VkDeviceSize offset = 0;
-                        vkCmdBindVertexBuffers(command_buffer, 0, 1, &buf, &offset);
+                        vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, 1, &buf, &offset);
                     } else {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without a vertex buffer");
                     }
                     if (bound_buffers.find(VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != bound_buffers.end()) {
                         auto buffer = bound_buffers[VK_BUFFER_USAGE_INDEX_BUFFER_BIT];
-                        vkCmdBindIndexBuffer(command_buffer, buffer->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
+                        vkCmdBindIndexBuffer(this->m_command_buffers[this->m_current_image], buffer->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
                     } else {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
                     }
@@ -183,11 +197,10 @@ namespace bve {
                     const auto& sets = shader->get_descriptor_sets();
                     std::vector<VkDescriptorSet> sets_to_bind;
                     for (const auto& set : sets) {
-                        auto descriptor_set = set.sets[this->m_current_command_buffer];
-                        sets_to_bind.push_back(descriptor_set);
+                        sets_to_bind.push_back(set.sets[this->m_current_image]);
                     }
                     VkPipelineLayout layout = vk_pipeline->get_layout();
-                    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
+                    vkCmdBindDescriptorSets(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
                     const auto& reflection_data = shader->get_reflection_data();
                     for (auto buffer : vulkan_uniform_buffer::get_active_uniform_buffers()) {
                         uint32_t binding = buffer->get_binding();
@@ -196,7 +209,7 @@ namespace bve {
                         }
                         const auto& buffer_info = reflection_data.uniform_buffers.find(binding)->second;
                         uint32_t descriptor_set = buffer_info.descriptor_set;
-                        VkDescriptorSet vk_descriptor_set = sets[descriptor_set].sets[this->m_current_command_buffer];
+                        VkDescriptorSet vk_descriptor_set = sets[descriptor_set].sets[this->m_current_image];
                         VkWriteDescriptorSet write;
                         util::zero(write);
                         write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -213,40 +226,56 @@ namespace bve {
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
                 }
-                vkCmdDrawIndexed(command_buffer, (uint32_t)index_count, 1, 0, 0, 0);
+                vkCmdDrawIndexed(this->m_command_buffers[this->m_current_image], (uint32_t)index_count, 1, 0, 0, 0);
             }
             void vulkan_context::swap_buffers() {
-                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_command_buffer];
-                vkCmdEndRenderPass(command_buffer);
-                if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
+                vkCmdEndRenderPass(this->m_command_buffers[this->m_current_image]);
+                if (vkEndCommandBuffer(this->m_command_buffers[this->m_current_image]) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not finish recording a command buffer");
                 }
+                VkFenceCreateInfo fence_info;
+                util::zero(fence_info);
+                fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                VkFence fence;
+                if (vkCreateFence(this->m_device, &fence_info, nullptr, &fence) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] could not create fence for rendering");
+                }
+                uint32_t current_image;
+                vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphores[this->m_current_frame], fence, &current_image);
+                vkWaitForFences(this->m_device, 1, &fence, true, UINT64_MAX);
+                vkResetFences(this->m_device, 1, &fence);
                 VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
                 VkSubmitInfo submit_info;
                 util::zero(submit_info);
                 submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
                 submit_info.waitSemaphoreCount = 1;
-                submit_info.pWaitSemaphores = &this->m_image_available_semaphore;
+                submit_info.pWaitSemaphores = &this->m_image_available_semaphores[this->m_current_frame];
                 submit_info.pWaitDstStageMask = wait_stages;
                 submit_info.commandBufferCount = 1;
-                submit_info.pCommandBuffers = &command_buffer;
+                submit_info.pCommandBuffers = &this->m_command_buffers[current_image];
                 submit_info.signalSemaphoreCount = 1;
-                submit_info.pSignalSemaphores = &this->m_render_finished_semaphore;
-                if (vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, nullptr) != VK_SUCCESS) {
+                submit_info.pSignalSemaphores = &this->m_render_finished_semaphores[this->m_current_frame];
+                if (vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, fence) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not submit command buffer");
                 }
+                if (vkWaitForFences(this->m_device, 1, &fence, true, UINT64_MAX) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan context] an error occurred waiting for the render calls to finish");
+                }
+                vkDestroyFence(this->m_device, fence, nullptr);
                 VkPresentInfoKHR present_info;
                 util::zero(present_info);
                 present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
                 present_info.waitSemaphoreCount = 1;
-                present_info.pWaitSemaphores = &this->m_render_finished_semaphore;
+                present_info.pWaitSemaphores = &this->m_render_finished_semaphores[this->m_current_frame];
                 present_info.swapchainCount = 1;
                 present_info.pSwapchains = &this->m_swap_chain;
-                present_info.pImageIndices = &this->m_current_command_buffer;
+                present_info.pImageIndices = &current_image;
                 present_info.pResults = nullptr;
                 if (vkQueuePresentKHR(this->m_present_queue, &present_info) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not present");
                 }
+                this->m_current_frame = (this->m_current_frame + 1) % max_frames_in_flight;
+                this->m_current_image = (current_image + 1) % (uint32_t)this->m_swapchain_images.size();
             }
             void vulkan_context::setup_glfw() {
                 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -268,9 +297,9 @@ namespace bve {
                 this->create_render_pass();
                 this->create_framebuffers();
                 this->create_command_pool();
-                this->create_descriptor_pool();
                 this->alloc_command_buffers();
-                this->create_semaphores();
+                this->create_descriptor_pool();
+                this->create_sync_objects();
             }
             void vulkan_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 vkDeviceWaitIdle(this->m_device);
@@ -342,7 +371,7 @@ namespace bve {
                 ImGui_ImplGlfw_NewFrame();
             }
             void vulkan_context::render_imgui_draw_data(ImDrawData* data) {
-                //ImGui_ImplVulkan_RenderDrawData(data, this->m_command_buffers[this->m_current_command_buffer], nullptr);
+                ImGui_ImplVulkan_RenderDrawData(data, this->m_command_buffers[this->m_current_image]);
             }
             void vulkan_context::create_instance() {
                 if (!this->layers_supported()) {
@@ -583,7 +612,7 @@ namespace bve {
                 }
             }
             void vulkan_context::alloc_command_buffers() {
-                this->m_command_buffers.resize(this->m_framebuffers.size());
+                this->m_command_buffers.resize(this->m_swapchain_images.size());
                 VkCommandBufferAllocateInfo alloc_info;
                 util::zero(alloc_info);
                 alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -591,16 +620,20 @@ namespace bve {
                 alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
                 alloc_info.commandBufferCount = (uint32_t)this->m_command_buffers.size();
                 if (vkAllocateCommandBuffers(this->m_device, &alloc_info, this->m_command_buffers.data()) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan context] could not allocate command buffers");
+                    throw std::runtime_error("[vulkan context] could not allocate command buffers for rendering");
                 }
             }
-            void vulkan_context::create_semaphores() {
-                VkSemaphoreCreateInfo create_info;
-                util::zero(create_info);
-                create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-                if (vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_image_available_semaphore) != VK_SUCCESS ||
-                    vkCreateSemaphore(this->m_device, &create_info, nullptr, &this->m_render_finished_semaphore) != VK_SUCCESS) {
-                    throw std::runtime_error("[vulkan context] could not create semaphores");
+            void vulkan_context::create_sync_objects() {
+                VkSemaphoreCreateInfo semaphore_info;
+                util::zero(semaphore_info);
+                semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                this->m_image_available_semaphores.resize(max_frames_in_flight);
+                this->m_render_finished_semaphores.resize(max_frames_in_flight);
+                for (size_t i = 0; i < max_frames_in_flight; i++) {
+                    if ((vkCreateSemaphore(this->m_device, &semaphore_info, nullptr, &this->m_image_available_semaphores[i]) != VK_SUCCESS) ||
+                        (vkCreateSemaphore(this->m_device, &semaphore_info, nullptr, &this->m_render_finished_semaphores[i]) != VK_SUCCESS)) {
+                        throw std::runtime_error("[vulkan context] could not create sync objects");
+                    }
                 }
             }
             void vulkan_context::create_descriptor_pool() {
@@ -629,7 +662,6 @@ namespace bve {
             }
             void vulkan_context::cleanup_swapchain(bool* recreate_pipeline) {
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
-                this->m_command_buffers.clear();
                 for (VkFramebuffer framebuffer : this->m_framebuffers) {
                     vkDestroyFramebuffer(this->m_device, framebuffer, nullptr);
                 }
