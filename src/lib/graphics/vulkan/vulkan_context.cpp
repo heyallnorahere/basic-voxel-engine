@@ -201,28 +201,6 @@ namespace bve {
                     }
                     VkPipelineLayout layout = vk_pipeline->get_layout();
                     vkCmdBindDescriptorSets(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
-                    const auto& reflection_data = shader->get_reflection_data();
-                    for (auto buffer : vulkan_uniform_buffer::get_active_uniform_buffers()) {
-                        uint32_t binding = buffer->get_binding();
-                        if (reflection_data.uniform_buffers.find(binding) == reflection_data.uniform_buffers.end()) {
-                            throw std::runtime_error("[vulkan context] invalid uniform buffer binding");
-                        }
-                        const auto& buffer_info = reflection_data.uniform_buffers.find(binding)->second;
-                        uint32_t descriptor_set = buffer_info.descriptor_set;
-                        VkDescriptorSet vk_descriptor_set = sets[descriptor_set].sets[this->m_current_image];
-                        VkWriteDescriptorSet write;
-                        util::zero(write);
-                        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-                        write.dstSet = vk_descriptor_set;
-                        write.dstBinding = binding;
-                        write.dstArrayElement = 0;
-                        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                        write.descriptorCount = 1;
-                        write.pBufferInfo = &buffer->get_descriptor_info();
-                        write.pImageInfo = nullptr;
-                        write.pTexelBufferView = nullptr;
-                        vkUpdateDescriptorSets(this->m_device, 1, &write, 0, nullptr);
-                    }
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
                 }

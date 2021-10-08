@@ -35,6 +35,7 @@ namespace bve {
                 virtual glm::vec3 get_vec3(const std::string& name) override;
                 virtual glm::vec4 get_vec4(const std::string& name) override;
                 virtual glm::mat4 get_mat4(const std::string& name) override;
+                void update_descriptor_sets(size_t image_index);
                 const std::vector<VkPipelineShaderStageCreateInfo>& get_create_info() { return this->m_pipeline_create_info; }
                 const std::vector<descriptor_set>& get_descriptor_sets() { return this->m_descriptor_sets; }
             private:

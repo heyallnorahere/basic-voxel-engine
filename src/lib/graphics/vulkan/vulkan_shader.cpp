@@ -2,6 +2,7 @@
 #include "vulkan_shader.h"
 #include "vulkan_context.h"
 #include "vulkan_pipeline.h"
+#include "vulkan_uniform_buffer.h"
 #include "../../shader_compiler.h"
 #include "util.h"
 namespace bve {
@@ -59,6 +60,30 @@ namespace bve {
             glm::vec3 vulkan_shader::get_vec3(const std::string& name) { return glm::vec3(0.f); }
             glm::vec4 vulkan_shader::get_vec4(const std::string& name) { return glm::vec4(0.f); }
             glm::mat4 vulkan_shader::get_mat4(const std::string& name) { return glm::mat4(1.f); }
+            void vulkan_shader::update_descriptor_sets(size_t image_index) {
+                const auto& reflection_data = this->get_reflection_data();
+                for (auto buffer : vulkan_uniform_buffer::get_active_uniform_buffers()) {
+                    uint32_t binding = buffer->get_binding();
+                    if (reflection_data.uniform_buffers.find(binding) == reflection_data.uniform_buffers.end()) {
+                        throw std::runtime_error("[vulkan context] invalid uniform buffer binding");
+                    }
+                    const auto& buffer_info = reflection_data.uniform_buffers.find(binding)->second;
+                    uint32_t descriptor_set = buffer_info.descriptor_set;
+                    VkDescriptorSet vk_descriptor_set = this->m_descriptor_sets[descriptor_set].sets[image_index];
+                    VkWriteDescriptorSet write;
+                    util::zero(write);
+                    write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                    write.dstSet = vk_descriptor_set;
+                    write.dstBinding = binding;
+                    write.dstArrayElement = 0;
+                    write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                    write.descriptorCount = 1;
+                    write.pBufferInfo = &buffer->get_descriptor_info();
+                    write.pImageInfo = nullptr;
+                    write.pTexelBufferView = nullptr;
+                    vkUpdateDescriptorSets(this->m_device, 1, &write, 0, nullptr);
+                }
+            }
             void vulkan_shader::compile() {
                 ref<vulkan_context> context_ = this->m_factory->get_current_context();
                 this->m_device = context_->get_device();
@@ -216,6 +241,9 @@ namespace bve {
                         size_t set_index = (i * image_count) + j;
                         this->m_descriptor_sets[i].sets.push_back(sets[set_index]);
                     }
+                }
+                for (size_t i = 0; i < image_count; i++) {
+                    this->update_descriptor_sets(i);
                 }
             }
             void vulkan_shader::destroy_descriptor_sets() {

@@ -2,12 +2,19 @@
 #include "vulkan_uniform_buffer.h"
 #include "vulkan_buffer.h"
 #include "vulkan_context.h"
+#include "vulkan_pipeline.h"
 #include "util.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            static std::list<ref<vulkan_uniform_buffer>> active_uniform_buffers;
-            const std::list<ref<vulkan_uniform_buffer>>& vulkan_uniform_buffer::get_active_uniform_buffers() { return active_uniform_buffers; }
+            static std::list<vulkan_uniform_buffer*> active_uniform_buffers;
+            std::vector<ref<vulkan_uniform_buffer>> vulkan_uniform_buffer::get_active_uniform_buffers() {
+                std::vector<ref<vulkan_uniform_buffer>> refs;
+                for (auto buf : active_uniform_buffers) {
+                    refs.push_back(buf);
+                }
+                return refs;
+            }
             vulkan_uniform_buffer::vulkan_uniform_buffer(size_t size, uint32_t binding, ref<vulkan_object_factory> factory) {
                 this->m_size = size;
                 this->m_binding = binding;
@@ -37,6 +44,18 @@ namespace bve {
                 void* dest = (void*)((size_t)gpu_data + offset);
                 memcpy(dest, data, size);
                 vkUnmapMemory(this->m_device, this->m_memory);
+                auto pipeline = this->m_factory->get_current_pipeline();
+                if (pipeline) {
+                    auto vk_pipeline = pipeline.as<vulkan_pipeline>();
+                    auto shader = vk_pipeline->get_shader();
+                    if (shader) {
+                        auto context = this->m_factory->get_current_context().as<vulkan_context>();
+                        size_t image_count = context->get_swapchain_image_count();
+                        for (size_t i = 0; i < image_count; i++) {
+                            shader->update_descriptor_sets(i);
+                        }
+                    }
+                }
             }
         }
     }
