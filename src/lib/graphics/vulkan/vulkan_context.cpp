@@ -137,15 +137,6 @@ namespace bve {
                 vkDestroyInstance(this->m_instance, nullptr);
             }
             void vulkan_context::clear(glm::vec4 clear_color) {
-                VkCommandBufferAllocateInfo alloc_info;
-                util::zero(alloc_info);
-                alloc_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-                alloc_info.commandPool = this->m_command_pool;
-                alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                alloc_info.commandBufferCount = 1;
-                if (vkAllocateCommandBuffers(this->m_device, &alloc_info, &this->m_command_buffers[this->m_current_image])) {
-                    throw std::runtime_error("[vulkan context] could not allocate command buffer for rendering");
-                }
                 VkCommandBufferBeginInfo begin_info;
                 util::zero(begin_info);
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -180,6 +171,8 @@ namespace bve {
                         vk_pipeline->create();
                     }
                     this->m_bound_pipelines.push_back(pipeline);
+                    auto shader = vk_pipeline->get_shader();
+                    shader->update_descriptor_sets(this->m_current_image);
                     vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
                     auto bound_buffers = vk_pipeline->get_bound_buffers();
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
@@ -196,7 +189,6 @@ namespace bve {
                     } else {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
                     }
-                    auto shader = vk_pipeline->get_shader();
                     const auto& sets = shader->get_descriptor_sets();
                     std::vector<VkDescriptorSet> sets_to_bind;
                     for (const auto& set : sets) {
@@ -628,7 +620,7 @@ namespace bve {
                 util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
                 create_info.queueFamilyIndex = *indices.graphics_family;
-                create_info.flags = 0;
+                create_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
                 if (vkCreateCommandPool(this->m_device, &create_info, nullptr, &this->m_command_pool) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not create command pool");
                 }

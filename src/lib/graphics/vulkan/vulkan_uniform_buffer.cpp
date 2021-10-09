@@ -44,18 +44,6 @@ namespace bve {
                 void* dest = (void*)((size_t)gpu_data + offset);
                 memcpy(dest, data, size);
                 vkUnmapMemory(this->m_device, this->m_memory);
-                auto pipeline = this->m_factory->get_current_pipeline();
-                if (pipeline) {
-                    auto vk_pipeline = pipeline.as<vulkan_pipeline>();
-                    auto shader = vk_pipeline->get_shader();
-                    if (shader) {
-                        auto context = this->m_factory->get_current_context().as<vulkan_context>();
-                        size_t image_count = context->get_swapchain_image_count();
-                        for (size_t i = 0; i < image_count; i++) {
-                            shader->update_descriptor_sets(i);
-                        }
-                    }
-                }
             }
         }
     }

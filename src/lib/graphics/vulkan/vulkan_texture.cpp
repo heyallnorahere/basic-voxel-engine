@@ -156,18 +156,6 @@ namespace bve {
             }
             void vulkan_texture::bind(uint32_t slot) {
                 bound_textures[slot] = this;
-                auto pipeline = this->m_factory->get_current_pipeline();
-                if (pipeline) {
-                    auto vk_pipeline = pipeline.as<vulkan_pipeline>();
-                    auto shader = vk_pipeline->get_shader();
-                    if (shader) {
-                        auto context = this->m_factory->get_current_context().as<vulkan_context>();
-                        size_t image_count = context->get_swapchain_image_count();
-                        for (size_t i = 0; i < image_count; i++) {
-                            shader->update_descriptor_sets(i);
-                        }
-                    }
-                }
             }
             glm::ivec2 vulkan_texture::get_size() {
                 return glm::ivec2(this->m_width, this->m_height);
