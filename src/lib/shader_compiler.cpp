@@ -186,6 +186,8 @@ namespace bve {
         case BaseType::Float:
         case BaseType::Int:
         case BaseType::UInt:
+        case BaseType::SampledImage:
+        case BaseType::Sampler:
             return 4;
         case BaseType::Int64:
         case BaseType::Double:
@@ -215,8 +217,12 @@ namespace bve {
             data->array_stride = 0;
         } else {
             data->array_size = spirv_type.array[0];
-            const auto& parent_type = compiler.get_type(parent);
-            data->array_stride = compiler.type_struct_member_array_stride(parent_type, member_index);
+            if (parent != spirv_cross::TypeID()) {
+                const auto& parent_type = compiler.get_type(parent);
+                data->array_stride = compiler.type_struct_member_array_stride(parent_type, member_index);
+            } else {
+                data->array_stride = data->size < 16 ? 16 : data->size;
+            }
         }
         for (size_t i = 0; i < spirv_type.member_types.size(); i++) {
             std::string name = compiler.get_member_name(spirv_type.self, (uint32_t)i);
@@ -233,11 +239,20 @@ namespace bve {
         for (const auto& resource : resources.uniform_buffers) {
             uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
             uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            graphics::uniform_buffer_data& ubd = output.uniform_buffers[binding];
+            graphics::reflection_resource_data& ubd = output.uniform_buffers[binding];
             ubd.descriptor_set = descriptor_set;
             ubd.name = resource.name;
-            ubd.type = get_type(compiler, resource.base_type_id, spirv_cross::TypeID(), 0);
+            ubd.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
             ubd.stage = stage;
+        }
+        for (const auto& resource : resources.sampled_images) {
+            uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            graphics::reflection_resource_data& resource_data = output.sampled_images[binding];
+            resource_data.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
+            resource_data.descriptor_set = descriptor_set;
+            resource_data.name = resource.name;
+            resource_data.stage = stage;
         }
         for (const auto& [_, struct_] : defined_structs) {
             output.structs.push_back(struct_);

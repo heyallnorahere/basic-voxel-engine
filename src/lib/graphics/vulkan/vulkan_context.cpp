@@ -5,6 +5,7 @@
 #include "vulkan_extensions.h"
 #include "vulkan_pipeline.h"
 #include "vulkan_uniform_buffer.h"
+#include "vulkan_texture.h"
 #include "util.h"
 namespace bve {
     namespace graphics {
@@ -468,6 +469,7 @@ namespace bve {
                 create_info.queueCreateInfoCount = (uint32_t)queue_create_info.size();
                 VkPhysicalDeviceFeatures features;
                 util::zero(features);
+                features.samplerAnisotropy = true;
                 create_info.pEnabledFeatures = &features;
                 create_info.enabledExtensionCount = (uint32_t)this->m_device_extensions.size();
                 create_info.ppEnabledExtensionNames = this->m_device_extensions.data();
@@ -523,25 +525,7 @@ namespace bve {
             }
             void vulkan_context::create_image_views() {
                 for (size_t i = 0; i < this->m_swapchain_images.size(); i++) {
-                    VkImageViewCreateInfo create_info;
-                    util::zero(create_info);
-                    create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-                    create_info.image = this->m_swapchain_images[i];
-                    create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-                    create_info.format = this->m_swapchain_image_format;
-                    create_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-                    create_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-                    create_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-                    create_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-                    create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                    create_info.subresourceRange.baseMipLevel = 0;
-                    create_info.subresourceRange.levelCount = 1;
-                    create_info.subresourceRange.baseArrayLayer = 0;
-                    create_info.subresourceRange.layerCount = 1;
-                    VkImageView image_view;
-                    if (vkCreateImageView(this->m_device, &create_info, nullptr, &image_view) != VK_SUCCESS) {
-                        throw std::runtime_error("[vulkan context] could not create image view " + std::to_string(i));
-                    }
+                    auto image_view = create_image_view(this->m_swapchain_images[i], this->m_swapchain_image_format, this->m_device);
                     this->m_swapchain_image_views.push_back(image_view);
                 }
             }
@@ -725,9 +709,16 @@ namespace bve {
                     auto details = query_swap_chain_support(device, this->m_window_surface);
                     swap_chain_adequate = !details.formats.empty() && !details.present_modes.empty();
                 }
-                bool device_suitable = features.geometryShader && find_queue_families(device, this->m_window_surface).is_complete() && extensions_supported && swap_chain_adequate;
-                if (!device_suitable) {
-                    return 0;
+                std::vector<bool> requirements = {
+                    (bool)features.geometryShader,
+                    find_queue_families(device, this->m_window_surface).is_complete(),
+                    extensions_supported,
+                    swap_chain_adequate
+                };
+                for (bool satisfied : requirements) {
+                    if (!satisfied) {
+                        return 0;
+                    }
                 }
                 return score;
             }

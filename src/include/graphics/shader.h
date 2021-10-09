@@ -14,14 +14,14 @@ namespace bve {
             std::map<std::string, field_data> fields;
             size_t find_offset(const std::string& field_name);
         };
-        struct uniform_buffer_data {
+        struct reflection_resource_data {
             std::string name;
             std::shared_ptr<struct_data> type;
             shader_type stage;
             uint32_t descriptor_set;
         };
         struct reflection_output {
-            std::map<uint32_t, uniform_buffer_data> uniform_buffers;
+            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images;
             std::vector<std::shared_ptr<struct_data>> structs;
         };
         class shader : public ref_counted {

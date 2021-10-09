@@ -3,9 +3,11 @@
 #include "util.h"
 #include "vulkan_buffer.h"
 #include "vulkan_context.h"
+#include "vulkan_pipeline.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            static std::map<uint32_t, vulkan_texture*> bound_textures;
             void create_image(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkImage& image, VkDeviceMemory& memory) {
                 VkImageCreateInfo create_info;
                 util::zero(create_info);
@@ -90,6 +92,31 @@ namespace bve {
                 vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
                 context->end_single_time_commands(command_buffer);
             }
+            VkImageView create_image_view(VkImage image, VkFormat format, VkDevice device) {
+                VkImageViewCreateInfo create_info;
+                util::zero(create_info);
+                create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                create_info.image = image;
+                create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                create_info.format = format;
+                create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                create_info.subresourceRange.baseMipLevel = 0;
+                create_info.subresourceRange.levelCount = 1;
+                create_info.subresourceRange.baseArrayLayer = 0;
+                create_info.subresourceRange.layerCount = 1;
+                VkImageView image_view;
+                if (vkCreateImageView(device, &create_info, nullptr, &image_view) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan texture] could not create image view");
+                }
+                return image_view;
+            }
+            std::map<uint32_t, ref<vulkan_texture>> vulkan_texture::get_bound_textures() {
+                std::map<uint32_t, ref<vulkan_texture>> refs;
+                for (auto [slot, texture] : bound_textures) {
+                    refs.insert({ slot, texture });
+                }
+                return refs;
+            }
             vulkan_texture::vulkan_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, ref<vulkan_object_factory> factory) {
                 this->m_width = width;
                 this->m_height = height;
@@ -100,11 +127,34 @@ namespace bve {
                 this->create(data, context);
             }
             vulkan_texture::~vulkan_texture() {
+                std::vector<uint32_t> slots;
+                for (auto [slot, texture] : bound_textures) {
+                    if (this == texture) {
+                        slots.push_back(slot);
+                    }
+                }
+                for (uint32_t slot : slots) {
+                    bound_textures.erase(slot);
+                }
+                vkDestroySampler(this->m_device, this->m_sampler, nullptr);
+                vkDestroyImageView(this->m_device, this->m_image_view, nullptr);
                 vkDestroyImage(this->m_device, this->m_image, nullptr);
                 vkFreeMemory(this->m_device, this->m_memory, nullptr);
             }
             void vulkan_texture::bind(uint32_t slot) {
-                // todo: bind
+                bound_textures[slot] = this;
+                auto pipeline = this->m_factory->get_current_pipeline();
+                if (pipeline) {
+                    auto vk_pipeline = pipeline.as<vulkan_pipeline>();
+                    auto shader = vk_pipeline->get_shader();
+                    if (shader) {
+                        auto context = this->m_factory->get_current_context().as<vulkan_context>();
+                        size_t image_count = context->get_swapchain_image_count();
+                        for (size_t i = 0; i < image_count; i++) {
+                            shader->update_descriptor_sets(i);
+                        }
+                    }
+                }
             }
             glm::ivec2 vulkan_texture::get_size() {
                 return glm::ivec2(this->m_width, this->m_height);
@@ -115,10 +165,18 @@ namespace bve {
             ImTextureID vulkan_texture::get_texture_id() {
                 return nullptr; // todo: figure out some ImGui thing
             }
-            void vulkan_texture::create(const std::vector<uint8_t>& data, ref<context> context) {
-                // can't pass a vulkan_context ref because of headers
-                auto vk_context = context.as<vulkan_context>();
-                VkPhysicalDevice physical_device = vk_context->get_physical_device();
+            void vulkan_texture::create(const std::vector<uint8_t>& data, ref<vulkan_context> context) {
+                VkFormat format;
+                this->create_texture_image(data, context, format);
+                this->m_image_view = create_image_view(this->m_image, format, this->m_device);
+                this->create_sampler(context);
+                util::zero(this->m_image_info);
+                this->m_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                this->m_image_info.imageView = this->m_image_view;
+                this->m_image_info.sampler = this->m_sampler;
+            }
+            void vulkan_texture::create_texture_image(const std::vector<uint8_t>& data, ref<vulkan_context> context, VkFormat& format) {
+                VkPhysicalDevice physical_device = context->get_physical_device();
                 size_t buffer_size = (size_t)this->m_width * this->m_height * this->m_channels;
                 VkBuffer staging_buffer;
                 VkDeviceMemory staging_memory;
@@ -128,7 +186,6 @@ namespace bve {
                 vkMapMemory(this->m_device, staging_memory, 0, buffer_size, 0, &gpu_data);
                 memcpy(gpu_data, data.data(), buffer_size);
                 vkUnmapMemory(this->m_device, staging_memory);
-                VkFormat format;
                 switch (this->m_channels) {
                 case 1:
                     format = VK_FORMAT_R8_SRGB;
@@ -149,11 +206,44 @@ namespace bve {
                 uint32_t height = (uint32_t)this->m_height;
                 create_image(width, height, format, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->m_device, physical_device, this->m_image, this->m_memory);
-                transition_image_layout(this->m_image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_context);
-                copy_buffer_to_image(staging_buffer, this->m_image, width, height, vk_context);
-                transition_image_layout(this->m_image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, vk_context);
+                transition_image_layout(this->m_image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, context);
+                copy_buffer_to_image(staging_buffer, this->m_image, width, height, context);
+                transition_image_layout(this->m_image, format, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, context);
                 vkDestroyBuffer(this->m_device, staging_buffer, nullptr);
                 vkFreeMemory(this->m_device, staging_memory, nullptr);
+            }
+            void vulkan_texture::create_sampler(ref<vulkan_context> context) {
+                VkPhysicalDevice physical_device = context->get_physical_device();
+                VkPhysicalDeviceProperties properties;
+                vkGetPhysicalDeviceProperties(physical_device, &properties);
+                VkPhysicalDeviceFeatures features;
+                vkGetPhysicalDeviceFeatures(physical_device, &features);
+                VkSamplerCreateInfo create_info;
+                util::zero(create_info);
+                create_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+                create_info.magFilter = VK_FILTER_LINEAR;
+                create_info.minFilter = VK_FILTER_LINEAR;
+                create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+                if (features.samplerAnisotropy) {
+                    create_info.anisotropyEnable = true;
+                    create_info.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+                } else {
+                    create_info.anisotropyEnable = false;
+                    create_info.maxAnisotropy = 1.f;
+                }
+                create_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+                create_info.unnormalizedCoordinates = false;
+                create_info.compareEnable = false;
+                create_info.compareOp = VK_COMPARE_OP_ALWAYS;
+                create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+                create_info.mipLodBias = 0.f;
+                create_info.minLod = 0.f;
+                create_info.maxLod = 0.f;
+                if (vkCreateSampler(this->m_device, &create_info, nullptr, &this->m_sampler) != VK_SUCCESS) {
+                    throw std::runtime_error("[vulkan texture] could not create sampler");
+                }
             }
         }
     }

@@ -50,15 +50,15 @@ layout(std140, binding = 1) uniform fragment_uniform_buffer_t {
     texture_atlas_t texture_atlas;
     vec4 camera_position;
 } fragment_uniform_buffer;
-//layout(binding = 2) uniform sampler2D textures[30];
+layout(binding = 2) uniform sampler2D textures[30];
 layout(location = 0) out vec4 fragment_color;
-/*vec4 get_texture() {
+vec4 get_texture() {
     texture_dimensions_t dimensions = fragment_uniform_buffer.texture_atlas.texture_dimensions[block_id];
     vec2 uv_offset = vec2(dimensions.grid_position) / vec2(fragment_uniform_buffer.texture_atlas.grid_size);
     vec2 uv_scale = vec2(dimensions.texture_dimensions) / vec2(fragment_uniform_buffer.texture_atlas.texture_size);
     vec2 uv_coordinates = (uv * uv_scale) + uv_offset;
     return texture(textures[fragment_uniform_buffer.texture_atlas.image], uv_coordinates);
-}*/
+}
 vec3 calculate_ambient(light_t l) {
     return l.ambient_strength * l.color.xyz;
 }
@@ -104,8 +104,7 @@ vec3 calculate_light(int index, vec3 _fragment_color) {
     }
 }
 void main() {
-    // commented out in favor of placeholder
-    vec4 color = /*get_texture()*/vec4(1.0);
+    vec4 color = get_texture();
     vec3 output_color = vec3(0.0);
     for (int i = 0; i < fragment_uniform_buffer.light_count; i++) {
         output_color += calculate_light(i, color.xyz);

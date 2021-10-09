@@ -97,7 +97,6 @@ namespace bve {
             data.position = cmdlist->lights[i].first;
             this->m_fub_data.lights[i] = data;
         }
-        /*int32_t* sampler_data = this->m_sampler_data;
         for (size_t i = 0; i < max_texture_units; i++) {
             ref<graphics::texture> texture = this->m_textures[i];
             uint32_t texture_slot = (uint32_t)i;
@@ -106,8 +105,7 @@ namespace bve {
             } else {
                 this->m_placeholder_texture->bind(texture_slot);
             }
-            sampler_data[i] = (int32_t)i;
-        }*/
+        }
         cmdlist->pipeline->bind();
         this->m_current_shader->bind();
         this->set_uniform_data();
