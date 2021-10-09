@@ -43,7 +43,7 @@ namespace bve {
 
     // Compute power of two greater than or equal to `n`
     // From approach 4 documented at https://www.techiedelight.com/round-next-highest-power-2/
-    unsigned findNextPowerOf2(int32_t n)
+    static int32_t find_next_power_of_2(int32_t n)
     {
         // decrement `n` (to handle the case when `n` itself is a power of 2)
         n--;
@@ -59,24 +59,29 @@ namespace bve {
         return ++n;
     }
 
-
     texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures, ref<graphics::object_factory> object_factory) {
         constexpr int32_t channels = 4;
+        // the texture atlas is supposed to be aligned in rows!
+        constexpr int32_t max_row_size = 16;
 
         std::vector<std::pair<namespaced_name, texture_data>> textures_copy(textures.size());
         std::copy(textures.begin(), textures.end(), textures_copy.begin());
 
-        // Figure out the size of the atlas in blocks. We want to make sure that it is a power of 2.
-        // This texture probably doesn't need to be square but this is easy for now.
-        auto grid_size = findNextPowerOf2(static_cast<int32_t>(ceil(sqrt((float)textures_copy.size()))));
-        this->m_atlas_size = glm::ivec2(grid_size, grid_size);
+        int32_t texture_count = (int32_t)textures_copy.size();
+        if (texture_count > max_row_size) {
+            this->m_atlas_size.x = max_row_size;
+            this->m_atlas_size.y = find_next_power_of_2((texture_count - (texture_count % max_row_size)) / max_row_size + 1);
+        } else {
+            this->m_atlas_size.x = find_next_power_of_2(texture_count);
+            this->m_atlas_size.y = 1;
+        }
 
         glm::ivec2 largest_texture_size = glm::ivec2(0);
         for (auto& pair : textures_copy) {
             // If the texture has less than the desired number of channels, then create a copy with filler data.
             if (pair.second.channels != channels) {
                 if (pair.second.channels > channels) {
-                    throw std::runtime_error("[texture atlas] the image cannot have more than " + std::to_string(channels) + " channels");
+                    throw std::runtime_error("[texture atlas] an included texture cannot have more than " + std::to_string(channels) + " channels");
                 }
                 // this is very hacky but i had to make it work
                 std::vector<uint8_t> new_data(pair.second.data.size());
@@ -102,8 +107,8 @@ namespace bve {
             }
         }
         // Round the largest texture up to a power of two
-        largest_texture_size.x = findNextPowerOf2(largest_texture_size.x);
-        largest_texture_size.y = findNextPowerOf2(largest_texture_size.y);
+        largest_texture_size.x = find_next_power_of_2(largest_texture_size.x);
+        largest_texture_size.y = find_next_power_of_2(largest_texture_size.y);
 
         // The final texture size is based on the blocks row x columns and the largest texture size.
         this->m_texture_size = largest_texture_size * this->m_atlas_size;
@@ -111,6 +116,16 @@ namespace bve {
         // Copy individual textures into the final atlas texture.
         size_t buffer_size = (size_t)this->m_texture_size.x * this->m_texture_size.y * channels;
         std::vector<uint8_t> atlas_texture_data(buffer_size);
+        for (size_t i = 0; i < buffer_size; i += (size_t)channels) {
+            for (size_t j = 0; j < 3; j++) {
+                atlas_texture_data[i + j] = 0;
+            }
+            if (channels > 3) {
+                for (size_t j = 3; j < (size_t)channels; j++) {
+                    atlas_texture_data[i + j] = 255;
+                }
+            }
+        }
         for (size_t i = 0; i < textures_copy.size(); i++) {
             // Determine the atlas grid position for this texture
             glm::ivec2 atlas_position;
@@ -123,16 +138,19 @@ namespace bve {
             }
 
             // Copy the texture into the atlas texture
-            const auto& data = textures_copy[i].second;
+            const auto& pair = textures_copy[i];
+            const auto& data = pair.second;
             glm::ivec2 texture_size = glm::ivec2(data.width, data.height);
-            this->m_texture_dimensions[textures_copy[i].first] = { atlas_position, texture_size };
+            this->m_texture_dimensions[pair.first] = { atlas_position, texture_size };
             for (int32_t y = 0; y < texture_size.y; y++) {
                 glm::ivec2 atlas_buffer_position = (atlas_position * largest_texture_size) + glm::ivec2(0, y);
                 size_t atlas_buffer_index = (((size_t)atlas_buffer_position.y * this->m_texture_size.x) + atlas_buffer_position.x) * channels;
                 size_t texture_buffer_index = ((size_t)y * texture_size.x) * channels;
-                for (int32_t x = 0; x < texture_size.x * channels; x++) {
-                    size_t index_offset = (size_t)x;
-                    atlas_texture_data[atlas_buffer_index + index_offset] = data.data[texture_buffer_index + index_offset];
+                for (int32_t x = 0; x < texture_size.x; x++) {
+                    for (int32_t component = 0; component < channels; component++) {
+                        size_t index_offset = ((size_t)x * channels) + component;
+                        atlas_texture_data[atlas_buffer_index + index_offset] = data.data[texture_buffer_index + index_offset];
+                    }
                 }
             }
         }

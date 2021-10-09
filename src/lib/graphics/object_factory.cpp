@@ -26,7 +26,7 @@ namespace bve {
         }
         bool texture::load_image(const fs::path& path, std::vector<uint8_t>& data, int32_t& width, int32_t& height, int32_t& channels) {
             std::string string_path = path.string();
-            uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 4);
+            uint8_t* data_pointer = stbi_load(string_path.c_str(), &width, &height, &channels, 0);
             if (!data_pointer) {
                 spdlog::warn("[texture] could not open file: " + string_path);
                 return false;

@@ -57,7 +57,8 @@ vec4 get_texture() {
     vec2 uv_offset = vec2(dimensions.grid_position) / vec2(fragment_uniform_buffer.texture_atlas.grid_size);
     vec2 uv_scale = vec2(dimensions.texture_dimensions) / vec2(fragment_uniform_buffer.texture_atlas.texture_size);
     vec2 uv_coordinates = (uv * uv_scale) + uv_offset;
-    return texture(textures[fragment_uniform_buffer.texture_atlas.image], uv_coordinates);
+    int texture_index = fragment_uniform_buffer.texture_atlas.image;
+    return texture(textures[texture_index], uv_coordinates);
 }
 vec3 calculate_ambient(light_t l) {
     return l.ambient_strength * l.color.xyz;
