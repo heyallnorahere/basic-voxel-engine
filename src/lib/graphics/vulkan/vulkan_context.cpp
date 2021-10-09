@@ -161,11 +161,12 @@ namespace bve {
                 render_pass_info.framebuffer = this->m_framebuffers[this->m_current_image];
                 render_pass_info.renderArea.offset = { 0, 0 };
                 render_pass_info.renderArea.extent = this->m_swapchain_extent;
-                render_pass_info.clearValueCount = 1;
-                VkClearValue value;
-                util::zero(value);
-                memcpy(value.color.float32, &clear_color, sizeof(glm::vec4));
-                render_pass_info.pClearValues = &value;
+                std::array<VkClearValue, 2> clear_values;
+                util::zero(clear_values.data(), clear_values.size() * sizeof(VkClearValue));
+                memcpy(clear_values[0].color.float32, &clear_color, sizeof(glm::vec4));
+                clear_values[1].depthStencil = { 1.f, 0 };
+                render_pass_info.clearValueCount = (uint32_t)clear_values.size();
+                render_pass_info.pClearValues = clear_values.data();
                 vkCmdBeginRenderPass(this->m_command_buffers[this->m_current_image], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
             }
             void vulkan_context::make_current() {
@@ -336,8 +337,9 @@ namespace bve {
                 this->create_swap_chain(window_size);
                 this->create_image_views();
                 this->create_render_pass();
-                this->create_framebuffers();
                 this->create_command_pool();
+                this->create_depth_resources();
+                this->create_framebuffers();
                 this->alloc_command_buffers();
                 this->create_descriptor_pool();
                 this->create_sync_objects();
@@ -525,9 +527,25 @@ namespace bve {
             }
             void vulkan_context::create_image_views() {
                 for (size_t i = 0; i < this->m_swapchain_images.size(); i++) {
-                    auto image_view = create_image_view(this->m_swapchain_images[i], this->m_swapchain_image_format, this->m_device);
+                    auto image_view = create_image_view(this->m_swapchain_images[i], this->m_swapchain_image_format, VK_IMAGE_ASPECT_COLOR_BIT, this->m_device);
                     this->m_swapchain_image_views.push_back(image_view);
                 }
+            }
+            static VkFormat find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features, VkPhysicalDevice physical_device) {
+                for (VkFormat format : candidates) {
+                    VkFormatProperties properties;
+                    vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+                    if ((tiling == VK_IMAGE_TILING_LINEAR && (properties.linearTilingFeatures & features) == features) ||
+                        (tiling == VK_IMAGE_TILING_OPTIMAL && (properties.optimalTilingFeatures & features) == features)) {
+                        return format;
+                    }
+                }
+                throw std::runtime_error("[vulkan context] could not find a supported format");
+                return VK_FORMAT_UNDEFINED;
+            }
+            static VkFormat find_depth_format(VkPhysicalDevice physical_device) {
+                return find_supported_format({ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+                    VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT, physical_device);
             }
             void vulkan_context::create_render_pass() {
                 VkAttachmentDescription color_attachment;
@@ -540,27 +558,44 @@ namespace bve {
                 color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
                 color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
                 color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                VkAttachmentDescription depth_attachment;
+                util::zero(depth_attachment);
+                depth_attachment.format = find_depth_format(this->m_physical_device);
+                depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+                depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+                depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+                depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+                depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 VkAttachmentReference color_attachment_ref;
                 util::zero(color_attachment_ref);
                 color_attachment_ref.attachment = 0;
                 color_attachment_ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                VkAttachmentReference depth_attachment_ref;
+                util::zero(depth_attachment_ref);
+                depth_attachment_ref.attachment = 1;
+                depth_attachment_ref.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 VkSubpassDescription subpass;
                 util::zero(subpass);
                 subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
                 subpass.colorAttachmentCount = 1;
                 subpass.pColorAttachments = &color_attachment_ref;
+                subpass.pDepthStencilAttachment = &depth_attachment_ref;
                 VkSubpassDependency dependency;
                 util::zero(dependency);
                 dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
                 dependency.dstSubpass = 0;
-                dependency.srcStageMask = dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+                dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
                 dependency.srcAccessMask = 0;
-                dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                std::vector<VkAttachmentDescription> attachments = { color_attachment, depth_attachment };
                 VkRenderPassCreateInfo create_info;
                 util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-                create_info.attachmentCount = 1;
-                create_info.pAttachments = &color_attachment;
+                create_info.attachmentCount = (uint32_t)attachments.size();
+                create_info.pAttachments = attachments.data();
                 create_info.subpassCount = 1;
                 create_info.pSubpasses = &subpass;
                 create_info.dependencyCount = 1;
@@ -572,12 +607,13 @@ namespace bve {
             void vulkan_context::create_framebuffers() {
                 this->m_framebuffers.resize(this->m_swapchain_image_views.size());
                 for (size_t i = 0; i < this->m_swapchain_image_views.size(); i++) {
+                    std::vector<VkImageView> attachments = { this->m_swapchain_image_views[i], this->m_depth_image_view };
                     VkFramebufferCreateInfo create_info;
                     util::zero(create_info);
                     create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
                     create_info.renderPass = this->m_render_pass;
-                    create_info.attachmentCount = 1;
-                    create_info.pAttachments = &this->m_swapchain_image_views[i];
+                    create_info.attachmentCount = (uint32_t)attachments.size();
+                    create_info.pAttachments = attachments.data();
                     create_info.width = this->m_swapchain_extent.width;
                     create_info.height = this->m_swapchain_extent.height;
                     create_info.layers = 1;
@@ -647,7 +683,18 @@ namespace bve {
                     throw std::runtime_error("[vulkan context] could not create descriptor pool");
                 }
             }
+            void vulkan_context::create_depth_resources() {
+                VkFormat format = find_depth_format(this->m_physical_device);
+                create_image(this->m_swapchain_extent.width, this->m_swapchain_extent.height, format, VK_IMAGE_TILING_OPTIMAL,
+                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, this->m_device, this->m_physical_device,
+                    this->m_depth_image, this->m_depth_image_memory);
+                this->m_depth_image_view = create_image_view(this->m_depth_image, format, VK_IMAGE_ASPECT_DEPTH_BIT, this->m_device);
+                transition_image_layout(this->m_depth_image, format, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, this);
+            }
             void vulkan_context::cleanup_swapchain(bool* recreate_pipeline) {
+                vkDestroyImageView(this->m_device, this->m_depth_image_view, nullptr);
+                vkDestroyImage(this->m_device, this->m_depth_image, nullptr);
+                vkFreeMemory(this->m_device, this->m_depth_image_memory, nullptr);
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, (uint32_t)this->m_command_buffers.size(), this->m_command_buffers.data());
                 for (VkFramebuffer framebuffer : this->m_framebuffers) {
                     vkDestroyFramebuffer(this->m_device, framebuffer, nullptr);
@@ -681,6 +728,7 @@ namespace bve {
                 this->create_swap_chain(new_size);
                 this->create_image_views();
                 this->create_render_pass();
+                this->create_depth_resources();
                 this->create_framebuffers();
                 this->create_descriptor_pool();
                 this->alloc_command_buffers();

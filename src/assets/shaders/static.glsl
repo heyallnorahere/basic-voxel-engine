@@ -107,7 +107,7 @@ void main() {
     vec4 color = get_texture();
     vec3 output_color = vec3(0.0);
     for (int i = 0; i < fragment_uniform_buffer.light_count; i++) {
-        output_color += calculate_light(i, color.xyz);
+        output_color += calculate_light(i, color.rgb);
     }
     fragment_color = vec4(output_color, color.a);
 }

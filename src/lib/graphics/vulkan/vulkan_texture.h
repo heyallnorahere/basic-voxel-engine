@@ -8,7 +8,7 @@ namespace bve {
             void create_image(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkImage& image, VkDeviceMemory& memory);
             void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, ref<vulkan_context> context);
             void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, ref<vulkan_context> context);
-            VkImageView create_image_view(VkImage image, VkFormat format, VkDevice device);
+            VkImageView create_image_view(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, VkDevice device);
             class vulkan_texture : public texture {
             public:
                 static std::map<uint32_t, ref<vulkan_texture>> get_bound_textures();

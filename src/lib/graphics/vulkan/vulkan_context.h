@@ -47,6 +47,7 @@ namespace bve {
                 void alloc_command_buffers();
                 void create_sync_objects();
                 void create_descriptor_pool();
+                void create_depth_resources();
                 void cleanup_swapchain(bool* recreate_pipeline);
                 void recreate_swapchain(glm::ivec2 new_size);
                 uint32_t rate_device(VkPhysicalDevice device);
@@ -73,6 +74,9 @@ namespace bve {
                 std::vector<VkCommandBuffer> m_command_buffers;
                 std::vector<VkSemaphore> m_image_available_semaphores, m_render_finished_semaphores;
                 VkDescriptorPool m_descriptor_pool;
+                VkImage m_depth_image;
+                VkImageView m_depth_image_view;
+                VkDeviceMemory m_depth_image_memory;
                 size_t m_current_frame;
                 uint32_t m_current_image;
                 std::vector<const char*> m_layers, m_extensions, m_device_extensions;

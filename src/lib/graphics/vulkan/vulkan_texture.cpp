@@ -39,6 +39,7 @@ namespace bve {
                 }
                 vkBindImageMemory(device, image, memory, 0);
             }
+            static bool has_stencil_component(VkFormat format) { return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT; }
             void transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, ref<vulkan_context> context) {
                 VkCommandBuffer command_buffer = context->begin_single_time_commands();
                 VkImageMemoryBarrier barrier;
@@ -49,7 +50,14 @@ namespace bve {
                 barrier.newLayout = new_layout;
                 barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                 barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                if (new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+                    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+                    if (has_stencil_component(format)) {
+                        barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+                    }
+                } else {
+                    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                }
                 barrier.subresourceRange.baseMipLevel = 0;
                 barrier.subresourceRange.levelCount = 1;
                 barrier.subresourceRange.baseArrayLayer = 0;
@@ -65,6 +73,11 @@ namespace bve {
                     barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
                     source_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
                     destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+                } else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+                    barrier.srcAccessMask = 0;
+                    barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                    source_stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+                    destination_stage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
                 } else {
                     throw std::runtime_error("[vulkan texture] unsupported layout transition");
                 }
@@ -92,14 +105,14 @@ namespace bve {
                 vkCmdCopyBufferToImage(command_buffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
                 context->end_single_time_commands(command_buffer);
             }
-            VkImageView create_image_view(VkImage image, VkFormat format, VkDevice device) {
+            VkImageView create_image_view(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, VkDevice device) {
                 VkImageViewCreateInfo create_info;
                 util::zero(create_info);
                 create_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
                 create_info.image = image;
                 create_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
                 create_info.format = format;
-                create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                create_info.subresourceRange.aspectMask = aspect_flags;
                 create_info.subresourceRange.baseMipLevel = 0;
                 create_info.subresourceRange.levelCount = 1;
                 create_info.subresourceRange.baseArrayLayer = 0;
@@ -168,7 +181,7 @@ namespace bve {
             void vulkan_texture::create(const std::vector<uint8_t>& data, ref<vulkan_context> context) {
                 VkFormat format;
                 this->create_texture_image(data, context, format);
-                this->m_image_view = create_image_view(this->m_image, format, this->m_device);
+                this->m_image_view = create_image_view(this->m_image, format, VK_IMAGE_ASPECT_COLOR_BIT, this->m_device);
                 this->create_sampler(context);
                 util::zero(this->m_image_info);
                 this->m_image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
