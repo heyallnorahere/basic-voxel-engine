@@ -11,21 +11,13 @@ A Minecraft-like voxel engine, written in C++. To use the library on its own wit
 
 ## Dependencies
 
-- [entt](https://github.com/skypjack/entt/tree/v3.8.1)\*
-- [glad](https://github.com/Dav1dde/glad)\*
-- [GLFW](https://github.com/glfw/glfw/tree/3.3.4)\*
-- [GLM](https://github.com/g-truc/glm/tree/0.9.9.8)\*
-- [Dear ImGui](https://github.com/ocornut/imgui/tree/docking)\*
-- [spdlog](https://github.com/gabime/spdlog/tree/v1.9.1)\*
-- [stb](https://github.com/nothings/stb)\*
-- [mono](https://www.mono-project.com/download/stable)\*\*
+Submodule dependencies can be synced by running `git submodule update --init --recursive`. The following projects, however, need to be installed manually:
+
+- [mono](https://www.mono-project.com/download/stable)\*
 - [Vulkan](#installing-vulkan)
-- [shaderc](https://github.com/google/shaderc)\*
-- [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross)\*
 - [Python 3](https://www.python.org/downloads/)
 
-\* Already provided as a submodule. Use `git submodule update --init --recursive` to sync submodules.  
-\*\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR and `mono-msbuild` from the Community repository instead.
+\* On Arch Linux, the `mono` package is outdated. Install `mono-git` from the AUR and `mono-msbuild` from the Community repository instead.
 
 ## Installing Vulkan
 
