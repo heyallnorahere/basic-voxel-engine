@@ -176,6 +176,9 @@ namespace bve {
             set_field(light_name + ".specular_strength", &light_data.specular_strength, sizeof(float), 1, this->m_fragment_uniform_data);
             set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1, this->m_fragment_uniform_data);
             set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".constant", &light_data.constant, sizeof(float), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".linear_", &light_data.linear_, sizeof(float), 1, this->m_fragment_uniform_data);
+            set_field(light_name + ".quadratic", &light_data.quadratic, sizeof(float), 1, this->m_fragment_uniform_data);
         }
         set_atlas_data(this->m_fub_data.texture_atlas_, [set_field, this](const std::string& name, const void* data, size_t size) {
             set_field(name, data, size, 1, this->m_fragment_uniform_data);
