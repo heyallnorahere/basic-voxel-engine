@@ -1,5 +1,5 @@
 message(STATUS "Looking for mono...")
-find_path(mono_HEADERS "mono/jit/jit.h" HINTS "/usr/include" "/usr/local/lib" "C:\\Program Files\\Mono\\include" "C:\\Program Files (x86)\\Mono\\include" "/Library/Frameworks/Mono.framework/Versions/Current/include" PATH_SUFFIXES "mono-2.0")
+find_path(mono_HEADERS "mono/jit/jit.h" HINTS "/usr/include" "/usr/local/include" "C:\\Program Files\\Mono\\include" "C:\\Program Files (x86)\\Mono\\include" "/Library/Frameworks/Mono.framework/Versions/Current/include" PATH_SUFFIXES "mono-2.0")
 set(mono_LIBRARY_HINTS "/usr/lib" "/usr/local/lib" "C:\\Program Files\\Mono\\lib" "C:\\Program Files (x86)\\Mono\\lib" "/Library/Frameworks/Mono.framework/Versions/Current/lib")
 find_library(mono_LIBRARIES NAMES monosgen-2.0 mono-2.0-sgen HINTS ${mono_LIBRARY_HINTS})
 find_path(mono_ASSEMBLIES "mono/4.5" HINTS ${mono_LIBRARY_HINTS})
