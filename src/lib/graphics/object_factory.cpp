@@ -75,6 +75,22 @@ namespace bve {
                 return offset + field.type->find_offset(subname);
             }
         }
+        uint32_t reflection_output::get_descriptor_set_count() const {
+            uint32_t descriptor_set_count = 0;
+            for (const auto& [binding, resource_info] : this->uniform_buffers) {
+                uint32_t new_size = resource_info.descriptor_set + 1;
+                if (descriptor_set_count < new_size) {
+                    descriptor_set_count = new_size;
+                }
+            }
+            for (const auto& [binding, resource_info] : this->sampled_images) {
+                uint32_t new_size = resource_info.descriptor_set + 1;
+                if (descriptor_set_count < new_size) {
+                    descriptor_set_count = new_size;
+                }
+            }
+            return descriptor_set_count;
+        }
         void shader::reflect(shader_type type, const std::vector<uint32_t>& spirv) {
             shader_compiler compiler;
             compiler.reflect(spirv, type, this->m_reflection_data);

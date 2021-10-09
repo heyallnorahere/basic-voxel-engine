@@ -23,6 +23,7 @@ namespace bve {
         struct reflection_output {
             std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images;
             std::vector<std::shared_ptr<struct_data>> structs;
+            uint32_t get_descriptor_set_count() const;
         };
         class shader : public ref_counted {
         public:

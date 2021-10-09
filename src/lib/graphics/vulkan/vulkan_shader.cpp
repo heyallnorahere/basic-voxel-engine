@@ -205,12 +205,9 @@ namespace bve {
                 size_t image_count = context->get_swapchain_image_count();
                 this->m_descriptor_pool = context->get_descriptor_pool();
                 const auto& data = this->get_reflection_data();
-                uint32_t descriptor_set_count = 0;
-                for (const auto& [binding, buffer_info] : data.uniform_buffers) {
-                    uint32_t new_size = buffer_info.descriptor_set + 1;
-                    if (new_size > descriptor_set_count) {
-                        descriptor_set_count = new_size;
-                    }
+                uint32_t descriptor_set_count = data.get_descriptor_set_count();
+                if (descriptor_set_count == 0) {
+                    return;
                 }
                 std::map<uint32_t, std::map<uint32_t, layout_binding_t>> layout_bindings;
                 for (const auto& [binding, buffer_info] : data.uniform_buffers) {
