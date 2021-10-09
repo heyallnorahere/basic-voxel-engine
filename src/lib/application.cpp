@@ -10,6 +10,7 @@ namespace bve {
         return instance;
     }
     application::~application() {
+        code_host::remove_current();
         shader_compiler::cleanup_compiler();
     }
     void application::run() {

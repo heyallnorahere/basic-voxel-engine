@@ -277,6 +277,9 @@ namespace bve {
         };
     }
     static ref<code_host> current_code_host;
+    void code_host::remove_current() {
+        current_code_host.reset();
+    }
     ref<code_host> code_host::current() {
         return current_code_host;
     }

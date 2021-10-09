@@ -149,6 +149,7 @@ namespace bve {
     class code_host : public ref_counted {
     public:
         static std::unordered_map<std::string, void*> get_script_wrappers();
+        static void remove_current();
         static ref<code_host> current();
         code_host();
         ~code_host();

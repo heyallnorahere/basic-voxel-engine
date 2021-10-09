@@ -177,7 +177,7 @@ namespace bve {
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     if (!vk_pipeline->valid()) {
-                        throw std::runtime_error("[vulkan context] an invalid pipeline is bound");
+                        vk_pipeline->create();
                     }
                     this->m_bound_pipelines.push_back(pipeline);
                     vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());

@@ -42,8 +42,8 @@ namespace bve {
     private:
         void set_uniform_data();
         ref<graphics::object_factory> m_factory;
-        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer, m_texture_buffer;
-        buffer m_vertex_uniform_data, m_fragment_uniform_data, m_sampler_data;
+        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer;
+        buffer m_vertex_uniform_data, m_fragment_uniform_data;
         std::array<ref<graphics::texture>, max_texture_units> m_textures;
         ref<graphics::texture> m_placeholder_texture;
         ref<graphics::shader> m_current_shader;
