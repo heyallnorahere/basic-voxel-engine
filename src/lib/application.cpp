@@ -5,6 +5,17 @@
 #include "components.h"
 #include "shader_compiler.h"
 namespace bve {
+    static graphics::graphics_api get_graphics_api() {
+        static std::unordered_map<std::string, graphics::graphics_api> apis = {
+            { "VULKAN", graphics::graphics_api::VULKAN },
+            { "OPENGL", graphics::graphics_api::OPENGL }
+        };
+        std::string api_name = BVE_GRAPHICS_API;
+        for (size_t i = 0; i < api_name.length(); i++) {
+            api_name[i] = toupper(api_name[i]);
+        }
+        return apis[api_name];
+    }
     application& application::get() {
         static application instance;
         return instance;
@@ -66,7 +77,7 @@ namespace bve {
             auto load_content = app_class->get_method("*:LoadContent");
             app_class->invoke(load_content);
         }
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::VULKAN);
+        this->m_object_factory = graphics::object_factory::create(get_graphics_api());
         asset_manager& asset_manager_ = asset_manager::get();
         asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();

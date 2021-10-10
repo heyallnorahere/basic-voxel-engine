@@ -15,7 +15,7 @@ target_include_directories(${BVE_TARGET_NAME} PUBLIC "${PROJECT_SOURCE_DIR}/vend
 set(SPIRV_CROSS_LIBRARIES spirv-cross-core spirv-cross-glsl spirv-cross-hlsl)
 set(GLSLANG_LIBRARIES glslang OSDependent OGLCompiler SPIRV HLSL glslang-default-resource-limits)
 target_link_libraries(${BVE_TARGET_NAME} PUBLIC glfw glad spdlog EnTT imgui assimp ${mono_LIBRARIES} ${Vulkan_LIBRARIES} ${GLSLANG_LIBRARIES} ${SPIRV_CROSS_LIBRARIES})
-target_compile_definitions(${BVE_TARGET_NAME} PUBLIC "MONO_ASSEMBLIES=\"${mono_ASSEMBLIES}\"" "BVE_TARGET_NAME=\"${BVE_TARGET_NAME}\"")
+target_compile_definitions(${BVE_TARGET_NAME} PUBLIC "MONO_ASSEMBLIES=\"${mono_ASSEMBLIES}\"" "BVE_TARGET_NAME=\"${BVE_TARGET_NAME}\"" "BVE_GRAPHICS_API=\"${BVE_GRAPHICS_API}\"")
 if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.16)
     target_precompile_headers(${BVE_TARGET_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include/bve_pch.h")
 endif()
