@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "dx12_object_factory.h"
 #include "dx12_util.h"
+#include "dx12_context.h"
 namespace bve {
     namespace graphics {
         namespace dx12 {
@@ -14,7 +15,7 @@ namespace bve {
                 return nullptr; // todo: create index buffer
             }
             ref<context> dx12_object_factory::create_context() {
-                return nullptr; // todo: create context
+                return ref<dx12_context>::create(this);
             }
             ref<shader> dx12_object_factory::create_shader(const std::vector<fs::path>& sources) {
                 return nullptr; // todo: create shader
