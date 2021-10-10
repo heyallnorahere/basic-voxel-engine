@@ -5,7 +5,8 @@ namespace bve {
         namespace opengl {
             class opengl_context : public context {
             public:
-                virtual void clear() override;
+                static double get_version();
+                virtual void clear(glm::vec4 clear_color) override;
                 virtual void make_current() override;
                 virtual void draw_indexed(size_t index_count) override;
             private:
@@ -16,6 +17,7 @@ namespace bve {
                 virtual void init_imgui_backends() override;
                 virtual void shutdown_imgui_backends() override;
                 virtual void call_imgui_backend_newframe() override;
+                virtual void render_imgui_draw_data(ImDrawData* data) override;
             };
         }
     }

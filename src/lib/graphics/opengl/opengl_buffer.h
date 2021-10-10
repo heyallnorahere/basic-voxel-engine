@@ -11,7 +11,7 @@ namespace bve {
                 virtual void unbind() override;
             private:
                 GLenum m_target;
-                GLuint m_id;
+                uint32_t m_id;
             };
         }
     }

@@ -1,5 +1,4 @@
 #pragma once
-#include "buffer.h"
 namespace bve {
     namespace graphics {
         enum class vertex_attribute_type {
@@ -18,12 +17,15 @@ namespace bve {
             vertex_attribute_type type;
             bool normalize;
         };
-        class vao : public buffer {
+        class pipeline : public ref_counted {
         public:
-            vao() = default;
-            vao(const vao&) = delete;
-            vao& operator=(const vao&) = delete;
+            pipeline() = default;
+            virtual ~pipeline() = default;
+            pipeline(const pipeline&) = delete;
+            pipeline& operator=(const pipeline&) = delete;
             virtual void set_vertex_attributes(const std::vector<vertex_attribute>& attributes) = 0;
+            virtual void bind() = 0;
+            virtual void unbind() = 0;
         };
     }
 }

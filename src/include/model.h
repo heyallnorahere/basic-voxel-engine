@@ -13,7 +13,7 @@ namespace bve {
             std::unordered_map<std::string, size_t> texture_offsets;
             std::vector<ref<graphics::texture>> textures;
         };
-        model(const std::filesystem::path& path, ref<graphics::object_factory> object_factory);
+        model(const fs::path& path, ref<graphics::object_factory> object_factory);
         std::vector<vertex> get_vertices();
         std::vector<uint32_t> get_indices();
         size_t get_mesh_count();
@@ -21,7 +21,7 @@ namespace bve {
     private:
         struct loaded_texture {
             ref<graphics::texture> texture;
-            std::filesystem::path path;
+            fs::path path;
         };
         void load();
         void process_node(aiNode* node);
@@ -30,7 +30,7 @@ namespace bve {
         std::vector<ref<graphics::texture>> load_material_textures(aiMaterial* material, aiTextureType type);
         const aiScene* m_scene;
         std::unique_ptr<Assimp::Importer> m_importer;
-        std::filesystem::path m_path;
+        fs::path m_path;
         std::vector<vertex> m_vertices;
         std::vector<uint32_t> m_indices;
         std::unordered_map<aiMesh*, std::pair<aiNode*, mesh_data>> m_mesh_data;

@@ -14,13 +14,14 @@ namespace BasicVoxelEngine.Content.Blocks
     {
         protected override void Load(Factory factory, NamespacedName namespacedName)
         {
-            mLight = new Spotlight
+            mLight = new PointLight
             {
                 AmbientStrength = 0.01f,
                 SpecularStrength = 0.5f,
                 Color = new Vector3(1f),
-                Cutoff = Convert.ToSingle(Math.Cos(30 / (180 / Math.PI))),
-                Direction = new Vector3(0f, -1f, 0f)
+                Constant = 1f,
+                Linear = 0.09f,
+                Quadratic = 0.032f
             };
         }
         public override string FriendlyName => "Test block 2";

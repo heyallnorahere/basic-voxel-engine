@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "opengl_shader.h"
-#include "shader_parser.h"
+#include "opengl_context.h"
+#include "../../shader_compiler.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
@@ -89,45 +90,31 @@ namespace bve {
                 glGetUniformfv(this->m_program, this->get_location(name), &value[0][0]);
                 return value;
             }
-            opengl_shader::opengl_shader(const std::vector<std::filesystem::path>& sources) {
+            opengl_shader::opengl_shader(const std::vector<fs::path>& sources) {
                 this->m_sources = sources;
                 this->create();
             }
             void opengl_shader::create() {
-                auto parser = shader_parser(shader_language::GLSL, shader_language::GLSL);
+                auto parser = shader_parser(shader_parser::get_language(this->m_sources), shader_language::OpenGLGLSL);
                 for (const auto& source : this->m_sources) {
                     parser.parse(source);
                 }
-                std::vector<GLuint> shaders;
-                for (const auto& type : parser.get_parsed_shader_types()) {
-                    GLenum shader_type_;
-                    switch (type) {
-                    case shader_type::VERTEX:
-                        shader_type_ = GL_VERTEX_SHADER;
-                        break;
-                    case shader_type::FRAGMENT:
-                        shader_type_ = GL_FRAGMENT_SHADER;
-                        break;
-                    case shader_type::GEOMETRY:
-                        shader_type_ = GL_GEOMETRY_SHADER;
-                        break;
-                    default:
-                        throw std::runtime_error("[opengl shader] invalid shader type");
-                    }
+                std::vector<uint32_t> shaders;
+                for (shader_type type : parser.get_parsed_shader_types()) {
                     std::string source = parser.get_shader(type);
                     auto path = parser.get_shader_path(type);
-                    shaders.push_back(this->create_shader(source, shader_type_, path));
+                    shaders.push_back(this->create_shader(source, type, path));
                 }
                 spdlog::info("[opengl shader] linking shader program...");
                 this->m_program = glCreateProgram();
-                for (GLuint shader_ : shaders) {
+                for (uint32_t shader_ : shaders) {
                     glAttachShader(this->m_program, shader_);
                 }
                 glLinkProgram(this->m_program);
-                for (GLuint shader_ : shaders) {
+                for (uint32_t shader_ : shaders) {
                     glDeleteShader(shader_);
                 }
-                GLint status;
+                int32_t status;
                 glGetProgramiv(this->m_program, GL_LINK_STATUS, &status);
                 if (!status) {
                     GLchar info_log[512];
@@ -140,37 +127,51 @@ namespace bve {
             void opengl_shader::destroy() {
                 glDeleteProgram(this->m_program);
             }
-            GLuint opengl_shader::create_shader(const std::string& source, GLenum type, std::optional<std::filesystem::path> path) {
+            uint32_t opengl_shader::create_shader(const std::string& source, shader_type type, std::optional<fs::path> path) {
                 std::string shader_type;
+                GLenum gl_type;
                 switch (type) {
-                case GL_VERTEX_SHADER:
+                case shader_type::VERTEX:
                     shader_type = "vertex";
+                    gl_type = GL_VERTEX_SHADER;
                     break;
-                case GL_FRAGMENT_SHADER:
+                case shader_type::FRAGMENT:
                     shader_type = "fragment";
+                    gl_type = GL_FRAGMENT_SHADER;
                     break;
+                case shader_type::GEOMETRY:
+                    shader_type = "geometry";
+                    gl_type = GL_GEOMETRY_SHADER;
                 default:
-                    shader_type = "other";
+                    throw std::runtime_error("[opengl shader] this shader type is not supported yet");
                     break;
                 }
                 spdlog::info("[opengl shader] compiling " + shader_type + " shader... (" + (path ? path->string() : "cannot determine path") + ")");
-                const char* src = source.c_str();
-                GLuint id = glCreateShader(type);
-                glShaderSource(id, 1, &src, nullptr);
-                glCompileShader(id);
-                GLint status;
+                shader_compiler compiler;
+                std::vector<uint32_t> spirv = compiler.compile(source, shader_language::OpenGLGLSL, type);
+                this->reflect(type, spirv);
+                uint32_t id = glCreateShader(gl_type);
+                if (opengl_context::get_version() < 4.1) {
+                    throw std::runtime_error("[opengl shader] glShaderBinary is unavailable");
+                }
+                glShaderBinary(1, &id, GL_SHADER_BINARY_FORMAT_SPIR_V, spirv.data(), (GLsizei)(spirv.size() * sizeof(uint32_t)));
+                if (opengl_context::get_version() < 4.6) {
+                    throw std::runtime_error("[opengl shader] glSpecializeShader is unavailable");
+                }
+                // for some reason this isnt on docs.gl??????
+                glSpecializeShader(id, "main", 0, nullptr, nullptr);
+                int32_t status;
                 glGetShaderiv(id, GL_COMPILE_STATUS, &status);
                 if (!status) {
                     GLchar info_log[512];
                     glGetShaderInfoLog(id, 512, nullptr, info_log);
                     spdlog::warn("[opengl shader] error compiling " + shader_type + " shader: " + info_log);
-                }
-                else {
+                } else {
                     spdlog::info("[opengl shader] successfully compiled " + shader_type + " shader");
                 }
                 return id;
             }
-            GLint opengl_shader::get_location(const std::string& name) {
+            int32_t opengl_shader::get_location(const std::string& name) {
                 return glGetUniformLocation(this->m_program, name.c_str());
             }
         }

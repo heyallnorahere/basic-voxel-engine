@@ -11,14 +11,13 @@ namespace bve {
         void point_light::set_quadratic(float quadratic) {
             this->m_quadratic = quadratic;
         }
-        void point_light::set_uniforms(ref<graphics::shader> shader, const std::string& uniform_name) {
-            this->set_universal_values(shader, uniform_name);
-            shader->set_float(uniform_name + ".constant", this->m_constant);
-            shader->set_float(uniform_name + ".linear", this->m_linear);
-            shader->set_float(uniform_name + ".quadratic", this->m_quadratic);
-        }
         light_type point_light::get_type() {
             return light_type::POINT_LIGHT;
+        }
+        void point_light::get_uniform_data(uniform_data& data) {
+            data.constant = this->m_constant;
+            data.linear_ = this->m_linear;
+            data.quadratic = this->m_quadratic;
         }
     }
 }

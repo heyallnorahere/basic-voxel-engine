@@ -9,6 +9,16 @@ namespace bve {
         };
         class light : public ref_counted {
         public:
+            struct uniform_data {
+                int32_t type;
+                glm::vec3 position, color;
+                float ambient_strength, specular_strength;
+                // spotlight
+                glm::vec3 direction;
+                float cutoff;
+                // point light
+                float constant, linear_, quadratic;
+            };
             light() = default;
             virtual ~light() = default;
             light(const light&) = delete;
@@ -22,14 +32,18 @@ namespace bve {
             void set_specular_strength(float specular_strength) {
                 this->m_specular_strength = specular_strength;
             }
-            virtual void set_uniforms(ref<graphics::shader> shader, const std::string& uniform_name) = 0;
+            uniform_data get_uniform_data() {
+                uniform_data data;
+                data.type = (int32_t)this->get_type();
+                data.color = this->m_color;
+                data.ambient_strength = this->m_ambient_strength;
+                data.specular_strength = this->m_specular_strength;
+                this->get_uniform_data(data);
+                return data;
+            }
             virtual light_type get_type() = 0;
         protected:
-            void set_universal_values(ref<graphics::shader> shader, const std::string& uniform_name) {
-                shader->set_vec3(uniform_name + ".color", this->m_color);
-                shader->set_float(uniform_name + ".ambient_strength", this->m_ambient_strength);
-                shader->set_float(uniform_name + ".specular_strength", this->m_specular_strength);
-            }
+            virtual void get_uniform_data(uniform_data& data) { }
         private:
             glm::vec3 m_color;
             float m_ambient_strength, m_specular_strength;

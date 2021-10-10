@@ -23,6 +23,18 @@
 [submodule "vendor/assimp"]
 	path = vendor/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "vendor/spirv-cross"]
+	path = vendor/spirv-cross
+	url = https://github.com/khronosgroup/spirv-cross.git
+[submodule "vendor/glslang"]
+	path = vendor/glslang
+	url = https://github.com/KhronosGroup/glslang.git
 [submodule "vendor/FastNoiseLite"]
 	path = vendor/FastNoiseLite
 	url = https://github.com/Auburn/FastNoiseLite.git
+[submodule "vendor/SPIRV-Headers"]
+	path = vendor/SPIRV-Headers
+	url = https://github.com/KhronosGroup/SPIRV-Headers.git
+[submodule "vendor/SPIRV-Tools"]
+	path = vendor/SPIRV-Tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools.git

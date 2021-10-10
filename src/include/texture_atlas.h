@@ -5,11 +5,19 @@ namespace bve {
     class asset_manager;
     class texture_atlas : public ref_counted {
     public:
+        struct texture_dimensions_t {
+            glm::ivec2 grid_position, texture_dimensions;
+        };
+        struct uniform_data {
+            int32_t image;
+            glm::ivec2 texture_size, grid_size;
+            texture_dimensions_t texture_dimensions[64];
+        };
         texture_atlas(const texture_atlas&) = delete;
         texture_atlas& operator=(const texture_atlas&) = delete;
 
         
-        void set_uniform(ref<graphics::shader> shader_, const std::string& uniform_name, GLint texture_slot = 0);
+        uniform_data get_uniform_data();
         glm::ivec2 get_texture_size();
         glm::ivec2 get_atlas_size();
         ref<graphics::texture> get_texture();
