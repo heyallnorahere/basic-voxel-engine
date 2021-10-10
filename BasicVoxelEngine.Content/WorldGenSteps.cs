@@ -10,7 +10,7 @@ namespace BasicVoxelEngine.Content
         [GenerationStep(nameof(BasicWorldShape), GenerationStage = GenerationStage.World)]
         public static void BasicWorldShape(Builder builder)
         {
-            var chunkSize = new Vector3I(64, 256, 64);
+            var chunkSize = new Vector3I(128, 256, 128);
             var heightMap = new List<float>(chunkSize.X * chunkSize.Z); // a chunk
             var noise = new FastNoiseLite(builder.Seed);
             noise.SetNoiseType(FastNoiseLite.NoiseType.OpenSimplex2S);

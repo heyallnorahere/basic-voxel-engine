@@ -57,6 +57,10 @@ namespace BasicVoxelEngine.Content.Scripts
             {
                 Application.Quit();
             }
+            if (inputManager.GetKey(Key.E).Down)
+            {
+                inputManager.MouseEnabled = !inputManager.MouseEnabled;
+            }
             if (inputManager.GetMouseButton(InputManager.LeftMouseButton).Down)
             {
                 LeftClick();

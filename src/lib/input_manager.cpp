@@ -15,7 +15,11 @@ namespace bve {
     input_manager::input_manager(ref<window> window_) {
         this->m_mouse = this->m_last_mouse = this->m_current_offset = glm::vec2(0.f);
         this->m_window = window_;
+#ifdef NDEBUG
+        this->m_mouse_enabled = false;
+#else
         this->m_mouse_enabled = true;
+#endif
         window_map.insert({ this->m_window->m_window, this });
         glfwSetCursorPosCallback(this->m_window->m_window, mouse_callback);
         for (int32_t key : keys) {
