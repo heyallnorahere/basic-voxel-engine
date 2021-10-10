@@ -11,7 +11,9 @@ option(BVE_BUILD_EXECUTABLE "Build basic-voxel-engine as an executable" ${BVE_ST
 option(BVE_BUILD_MANAGED_CODE "Build managed BVE code" ${BVE_STANDALONE})
 option(BVE_BUFFER_TRACE "Trace allocating, copying, and freeing of memory buffers" OFF)
 set(GRAPHICS_API_DEFUALT "VULKAN")
-# todo: check for platforms like macos and windows and set GRAPHICS_API_DEFAULT to their respective graphics apis
+if(WIN32)
+    set(GRAPHICS_API_DEFUALT "DIRECTX12")
+endif()
 set(BVE_GRAPHICS_API ${GRAPHICS_API_DEFUALT} CACHE STRING "Rendering API to use")
 set(BVE_TARGET_NAME "basic-voxel-engine")
 add_subdirectory("vendor")

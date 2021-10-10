@@ -8,11 +8,15 @@ namespace bve {
     static graphics::graphics_api get_graphics_api() {
         static std::unordered_map<std::string, graphics::graphics_api> apis = {
             { "VULKAN", graphics::graphics_api::VULKAN },
-            { "OPENGL", graphics::graphics_api::OPENGL }
+            { "OPENGL", graphics::graphics_api::OPENGL },
+            { "DIRECTX12", graphics::graphics_api::DIRECTX12 }
         };
         std::string api_name = BVE_GRAPHICS_API;
         for (size_t i = 0; i < api_name.length(); i++) {
             api_name[i] = toupper(api_name[i]);
+        }
+        if (apis.find(api_name) == apis.end()) {
+            throw std::runtime_error("[application] invalid graphics api");
         }
         return apis[api_name];
     }
