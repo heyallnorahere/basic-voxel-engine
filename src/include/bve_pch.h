@@ -1,5 +1,6 @@
 #pragma once
 #include <glad/glad.h>
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -30,10 +31,19 @@
 #include <vector>
 #include <list>
 #include <array>
+#include <set>
 #include <typeinfo>
 #include <stdexcept>
 #include <functional>
+#if __has_include(<filesystem>)
 #include <filesystem>
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#error please compile using c++ 17
+#endif
 #include <initializer_list>
 #include <utility>
 #include <tuple>

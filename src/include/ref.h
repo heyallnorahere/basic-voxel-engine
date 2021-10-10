@@ -6,7 +6,7 @@ namespace bve {
             this->m_ref_count = 0;
         }
     private:
-        mutable uint32_t m_ref_count;
+        mutable int64_t m_ref_count;
         template<typename T> friend class ref;
     };
     template<typename T> class ref {
@@ -23,12 +23,10 @@ namespace bve {
             this->inrease_ref_count();
         }
         template<typename U> ref(const ref<U>& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             this->m_instance = (T*)other.m_instance;
             this->inrease_ref_count();
         }
         template<typename U> ref(ref<U>&& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             this->m_instance = (T*)other.m_instance;
             other.m_instance = nullptr;
         }
@@ -51,16 +49,14 @@ namespace bve {
             return *this;
         }
         template<typename U> ref& operator=(const ref<U>& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             other.inrease_ref_count();
             this->decrease_ref_count();
-            this->m_instance = other.m_instance;
+            this->m_instance = (T*)(void*)other.m_instance;
             return *this;
         }
         template<typename U> ref& operator=(ref<U>&& other) {
-            static_assert(std::is_base_of_v<T, U> || std::is_base_of_v<U, T>, "[ref] invalid conversion");
             this->decrease_ref_count();
-            this->m_instance = other.m_instance;
+            this->m_instance = (T*)(void*)other.m_instance;
             other.m_instance = nullptr;
             return *this;
         }
@@ -96,7 +92,8 @@ namespace bve {
             return ref<U>(*this);
         }
         template<typename... Args> static ref<T> create(Args&&... args) {
-            return ref<T>(new T(std::forward<Args>(args)...));
+            T* instance = new T(std::forward<Args>(args)...);
+            return ref<T>(instance);
         }
         bool operator==(const ref<T>& other) const {
             return this->m_instance == other.m_instance;
@@ -119,8 +116,8 @@ namespace bve {
         void decrease_ref_count() const {
             if (this->m_instance) {
                 this->m_instance->m_ref_count--;
-                if (this->m_instance->m_ref_count == 0) {
-                    delete m_instance;
+                if (this->m_instance->m_ref_count <= 0) {
+                    delete this->m_instance;
                     this->m_instance = nullptr;
                 }
             }

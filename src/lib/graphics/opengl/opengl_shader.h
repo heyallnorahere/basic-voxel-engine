@@ -1,11 +1,12 @@
 #pragma once
 #include "graphics/shader.h"
+#include "shader_parser.h"
 namespace bve {
     namespace graphics {
         namespace opengl {
             class opengl_shader : public shader {
             public:
-                opengl_shader(const std::vector<std::filesystem::path>& sources);
+                opengl_shader(const std::vector<fs::path>& sources);
                 virtual ~opengl_shader() override;
                 virtual void reload() override;
                 virtual void bind() override;
@@ -31,10 +32,10 @@ namespace bve {
             private:
                 void create();
                 void destroy();
-                GLuint create_shader(const std::string& source, GLenum type, std::optional<std::filesystem::path> path);
-                GLint get_location(const std::string& name);
-                GLuint m_program;
-                std::vector<std::filesystem::path> m_sources;
+                uint32_t create_shader(const std::string& source, shader_type type, std::optional<fs::path> path);
+                int32_t get_location(const std::string& name);
+                uint32_t m_program;
+                std::vector<fs::path> m_sources;
             };
         }
     }

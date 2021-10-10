@@ -26,6 +26,7 @@ namespace BasicVoxelEngine.Content
             }
             var blockRegister = Registry.GetRegister<Block>();
             int grassBlock = blockRegister.GetIndex<Grass>();
+            int lightBlock = blockRegister.GetIndex<TestLight>();
             for (int x = 0; x < chunkSize.X; x++)
             {
                 for (int z = 0; z < chunkSize.Z; z++)
@@ -34,25 +35,11 @@ namespace BasicVoxelEngine.Content
                     int y = (int)Math.Floor(height * chunkSize.Y);
                     var position = new Vector3I(x, y, z);
                     builder.SetBlock(position, grassBlock);
+                    if ((position * new Vector3I(1, 0, 1)).Length % 20f < 0.001f)
+                    {
+                        builder.SetBlock(position + new Vector3I(0, 2, 0), lightBlock);
+                    }
                 }
-            }
-        }
-        [GenerationStep(nameof(AddLights), GenerationStage = GenerationStage.Structures)]
-        public static void AddLights(Builder builder)
-        {
-            var chunkSize = new Vector3I(16, 256, 16);
-            var positions = new Vector3I[]
-            {
-                new Vector3I(0, chunkSize.Y - 1, 0),
-                new Vector3I(chunkSize.X - 1, chunkSize.Y - 1, 0),
-                new Vector3I(chunkSize.X - 1, chunkSize.Y - 1, chunkSize.Z - 1),
-                new Vector3I(0, chunkSize.Y - 1, chunkSize.Z - 1)
-            };
-            var blockRegister = Registry.GetRegister<Block>();
-            int testLight = blockRegister.GetIndex<TestLight>();
-            foreach (var position in positions)
-            {
-                builder.SetBlock(position, testLight);
             }
         }
     }

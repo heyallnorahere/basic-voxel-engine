@@ -1,6 +1,30 @@
 #pragma once
+#include "../shader_parser.h"
 namespace bve {
     namespace graphics {
+        struct struct_data;
+        struct field_data {
+            size_t offset;
+            struct_data* type;
+        };
+        struct struct_data {
+            std::string name;
+            size_t size, array_stride;
+            uint32_t array_size;
+            std::map<std::string, field_data> fields;
+            size_t find_offset(const std::string& field_name);
+        };
+        struct reflection_resource_data {
+            std::string name;
+            std::shared_ptr<struct_data> type;
+            shader_type stage;
+            uint32_t descriptor_set;
+        };
+        struct reflection_output {
+            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images;
+            std::vector<std::shared_ptr<struct_data>> structs;
+            uint32_t get_descriptor_set_count() const;
+        };
         class shader : public ref_counted {
         public:
             shader() = default;
@@ -28,6 +52,13 @@ namespace bve {
             virtual glm::vec3 get_vec3(const std::string& name) = 0;
             virtual glm::vec4 get_vec4(const std::string& name) = 0;
             virtual glm::mat4 get_mat4(const std::string& name) = 0;
+            const reflection_output& get_reflection_data() {
+                return this->m_reflection_data;
+            }
+        protected:
+            void reflect(shader_type type, const std::vector<uint32_t>& spirv);
+        private:
+            reflection_output m_reflection_data;
         };
     }
 }

@@ -11,6 +11,7 @@ namespace bve {
     class application {
     public:
         static application& get();
+        ~application();
         application(const application&) = delete;
         application& operator=(const application&) = delete;
         void run();

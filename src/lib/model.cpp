@@ -8,7 +8,7 @@ namespace bve {
         }
         return vector;
     }
-    model::model(const std::filesystem::path& path, ref<graphics::object_factory> object_factory) {
+    model::model(const fs::path& path, ref<graphics::object_factory> object_factory) {
         this->m_path = path;
         this->m_importer = std::make_unique<Assimp::Importer>();
         this->m_object_factory = object_factory;
@@ -100,7 +100,7 @@ namespace bve {
         for (size_t i = 0; i < material->GetTextureCount(type); i++) {
             aiString path_;
             material->GetTexture(type, i, &path_);
-            std::filesystem::path path = path_.C_Str();
+            fs::path path = path_.C_Str();
             bool found = false;
             for (const auto& loaded_texture_ : this->m_loaded_textures) {
                 if (loaded_texture_.path == path) {
@@ -110,7 +110,7 @@ namespace bve {
                 }
             }
             if (!found) {
-                std::filesystem::path texture_path;
+                fs::path texture_path;
                 if (path.is_absolute()) {
                     texture_path = path;
                 } else {

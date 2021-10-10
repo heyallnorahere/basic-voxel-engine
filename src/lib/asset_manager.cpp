@@ -6,9 +6,7 @@ namespace bve {
         static asset_manager instance;
         return instance;
     }
-
-    void asset_manager::reload(const std::vector<std::filesystem::path>& resource_packs) {
-        namespace fs = std::filesystem;
+    void asset_manager::reload(const std::vector<fs::path>& resource_packs) {
 
         // Copy all of the resource packs into a temp directory. This allows resource packs 
         // to overwrite resources in packs that come before them.
@@ -21,11 +19,10 @@ namespace bve {
             fs::copy(path, this->m_asset_directory, options);
         }
     }
-
-    std::filesystem::path asset_manager::get_asset_path(const std::string& asset_name) {
+    fs::path asset_manager::get_asset_path(const std::string& asset_name) {
         constexpr char separator = ':';
-        std::filesystem::path asset_path = this->m_asset_directory;
-
+        fs::path asset_path = this->m_asset_directory;
+        
         // If there is no namespace on the asset then just use the name directly.
         if (asset_name.find(separator) == std::string::npos) {
             this->m_asset_directory /= asset_name;

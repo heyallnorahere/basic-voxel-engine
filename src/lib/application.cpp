@@ -3,10 +3,26 @@
 #include "block.h"
 #include "asset_manager.h"
 #include "components.h"
+#include "shader_compiler.h"
 namespace bve {
+    static graphics::graphics_api get_graphics_api() {
+        static std::unordered_map<std::string, graphics::graphics_api> apis = {
+            { "VULKAN", graphics::graphics_api::VULKAN },
+            { "OPENGL", graphics::graphics_api::OPENGL }
+        };
+        std::string api_name = BVE_GRAPHICS_API;
+        for (size_t i = 0; i < api_name.length(); i++) {
+            api_name[i] = toupper(api_name[i]);
+        }
+        return apis[api_name];
+    }
     application& application::get() {
         static application instance;
         return instance;
+    }
+    application::~application() {
+        code_host::remove_current();
+        shader_compiler::cleanup_compiler();
     }
     void application::run() {
         auto& block_register = registry::get().get_register<block>();
@@ -53,7 +69,8 @@ namespace bve {
         return this->m_shaders[name];
     }
     application::application() {
-        spdlog::info("[application] starting BVE, working directory: {0}", std::filesystem::current_path().string());
+        spdlog::info("[application] starting BVE, working directory: {0}", fs::current_path().string());
+        shader_compiler::initialize_compiler();
         this->m_code_host = ref<code_host>::create();
         this->load_assemblies();
         {
@@ -61,15 +78,15 @@ namespace bve {
             auto load_content = app_class->get_method("*:LoadContent");
             managed::class_::invoke(load_content);
         }
-        this->m_object_factory = graphics::object_factory::create(graphics::graphics_api::OPENGL); // todo: switch with cmake options
+        this->m_object_factory = graphics::object_factory::create(get_graphics_api());
         asset_manager& asset_manager_ = asset_manager::get();
-        asset_manager_.reload({ std::filesystem::current_path() / "assets" });
+        asset_manager_.reload({ fs::current_path() / "assets" });
         this->m_world = ref<world>::create();
         this->m_world->generate();
         this->m_window = ref<window>::create(1600, 900, this->m_object_factory->create_context());
         this->m_atlas = asset_manager_.create_texture_atlas(this->m_object_factory);
-        this->m_shaders["block"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") });
-        this->m_renderer = ref<renderer>::create();
+        this->m_shaders["static"] = this->m_object_factory->create_shader({ asset_manager_.get_asset_path("shaders:static.glsl") }); // todo: revert back to hlsl
+        this->m_renderer = ref<renderer>::create(this->m_object_factory);
         this->m_input_manager = ref<input_manager>::create(this->m_window);
         this->m_running = false;
         this->m_delta_time = 0.0;
@@ -83,13 +100,13 @@ namespace bve {
         this->m_world->update();
     }
     void application::render() {
-        this->m_window->get_context()->clear();
+        this->m_renderer->set_shader(this->m_shaders["static"]);
         auto cmdlist = this->m_renderer->create_command_list();
         for (auto& mesh_ : this->m_meshes) {
             this->m_renderer->add_mesh(cmdlist, mesh_);
         }
         this->m_renderer->add_lights(cmdlist, this->m_lights);
-        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes(), this->m_object_factory);
+        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes());
 
         // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();
@@ -108,15 +125,15 @@ namespace bve {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
             this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
         }
-
-        this->m_renderer->render(cmdlist, this->m_shaders["block"], this->m_window->get_context(), this->m_atlas);
-        this->m_renderer->destroy_command_list(cmdlist);
+        this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
+        this->m_renderer->render(cmdlist, this->m_window->get_context(), this->m_atlas);
         this->m_window->swap_buffers();
+        this->m_renderer->destroy_command_list(cmdlist);
     }
     void application::load_assemblies() {
-        std::vector<std::filesystem::path> assembly_paths = {
-            std::filesystem::current_path() / "BasicVoxelEngine.dll",
-            std::filesystem::current_path() / "BasicVoxelEngine.Content.dll",
+        std::vector<fs::path> assembly_paths = {
+            fs::current_path() / "BasicVoxelEngine.dll",
+            fs::current_path() / "BasicVoxelEngine.Content.dll",
         };
         auto mods_dir = std::filesystem::current_path() / "mods";
         if (std::filesystem::is_directory(mods_dir)) {

@@ -1,6 +1,7 @@
 #include "bve_pch.h"
 #include "code_host.h"
 #include "script_wrappers.h"
+#include "util.h"
 namespace bve {
     static void parse_name(const std::string& full_name, std::string& namespace_name, std::string& class_name) {
         size_t period_position = full_name.find_last_of('.');
@@ -362,6 +363,9 @@ namespace bve {
         };
     }
     static ref<code_host> current_code_host;
+    void code_host::remove_current() {
+        current_code_host.reset();
+    }
     ref<code_host> code_host::current() {
         return current_code_host;
     }
@@ -385,7 +389,7 @@ namespace bve {
     MonoDomain* code_host::get_domain() {
         return this->m_domain;
     }
-    void code_host::load_assembly(const std::filesystem::path& path, bool ref_only) {
+    void code_host::load_assembly(const fs::path& path, bool ref_only) {
         std::string string_path = path.string();
         // old-fashioned c-style file reading
         FILE* f = fopen(string_path.c_str(), "rb");
@@ -400,7 +404,7 @@ namespace bve {
             fclose(f);
             throw std::runtime_error("[code host] application ran out of memory");
         }
-        memset(file_data, 0, file_size * sizeof(char));
+        util::zero(file_data, file_size * sizeof(char));
         size_t bytes_read = fread(file_data, sizeof(char), file_size, f);
         if (bytes_read != file_size) {
             fclose(f);
