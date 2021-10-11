@@ -164,7 +164,7 @@ namespace bve {
                 this->m_factory->m_current_context = this;
             }
             void vulkan_context::draw_indexed(size_t index_count) {
-                auto pipeline = this->m_factory->m_current_pipeline;
+                auto pipeline = this->m_factory->get_current_pipeline();
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     if (!vk_pipeline->valid()) {
@@ -693,7 +693,7 @@ namespace bve {
                 }
                 this->m_framebuffers.clear();
                 if (recreate_pipeline && this->m_factory->m_current_pipeline) {
-                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
                     *recreate_pipeline = false;
                     if (pipeline->valid()) {
                         pipeline->destroy();
@@ -728,7 +728,7 @@ namespace bve {
                     shader->create_descriptor_sets();
                 }
                 if (recreate_pipeline) {
-                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
                     pipeline->create();
                 }
                 // imgui will crash; cant do anything about it now, i dont think

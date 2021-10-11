@@ -5,6 +5,10 @@
 namespace bve {
     namespace graphics {
         namespace dx12 {
+            dx12_object_factory::dx12_object_factory() {
+                this->m_current_context = nullptr;
+                this->m_current_pipeline = nullptr;
+            }
             ref<pipeline> dx12_object_factory::create_pipeline() {
                 return nullptr; // todo: create pipeline
             }

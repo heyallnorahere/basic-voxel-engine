@@ -4,20 +4,19 @@
 #include "util.h"
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_dx12.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 namespace bve {
     namespace graphics {
         namespace dx12 {
             dx12_context::dx12_context(ref<dx12_object_factory> factory) {
                 this->m_factory = factory;
             }
-            dx12_context::~dx12_context() {
-                // todo: clean up
-            }
             void dx12_context::clear(glm::vec4 clear_color) {
                 // todo: clear screen
             }
             void dx12_context::make_current() {
-                // todo: make current
+                this->m_factory->m_current_context = this;
             }
             void dx12_context::draw_indexed(size_t index_count) {
                 // todo: draw bound pipeline
@@ -31,6 +30,15 @@ namespace bve {
             void dx12_context::setup_context() {
                 this->enable_debug_layer();
                 this->create_device();
+                // todo: NOT THIS
+                this->m_command_queue = this->create_command_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                int32_t width, height;
+                glfwGetFramebufferSize(this->m_window, &width, &height);
+                this->create_swapchain(glm::ivec2(width, height));
+                this->m_current_backbuffer = this->m_swapchain->GetCurrentBackBufferIndex();
+                this->m_rtv_descriptor_heap = this->create_descriptor_heap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, backbuffer_count);
+                this->m_rtv_descriptor_size = this->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+                this->update_render_target_views();
             }
             void dx12_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 // todo: recreate swapchain and related objects
@@ -40,13 +48,25 @@ namespace bve {
                 // todo: init dx12 imgui backend
             }
             void dx12_context::shutdown_imgui_backends() {
-                // todo: shutdown imgui
+                ImGui_ImplDX12_Shutdown();
+                ImGui_ImplGlfw_Shutdown();
             }
             void dx12_context::call_imgui_backend_newframe() {
-                // todo: call NewFrame()
+                ImGui_ImplDX12_NewFrame();
+                ImGui_ImplGlfw_NewFrame();
             }
             void dx12_context::render_imgui_draw_data(ImDrawData* data) {
-                // todo: draw
+                ImGui_ImplDX12_RenderDrawData(data, nullptr); // todo: pass command list
+            }
+            void dx12_context::update_render_target_views() {
+                CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(this->m_rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart());
+                for (uint32_t i = 0; i < backbuffer_count; i++) {
+                    ComPtr<ID3D12Resource> backbuffer;
+                    check_hresult(this->m_swapchain->GetBuffer(i, IID_PPV_ARGS(&backbuffer)), "[dx12 context] could not get backbuffer " + std::to_string(i));
+                    this->m_device->CreateRenderTargetView(backbuffer.Get(), nullptr, rtv_handle);
+                    this->m_backbuffers[i] = backbuffer;
+                    rtv_handle.Offset(this->m_rtv_descriptor_size);
+                }
             }
             void dx12_context::enable_debug_layer() {
 #ifndef NDEBUG
@@ -113,6 +133,70 @@ namespace bve {
                     check_hresult(info_queue->PushStorageFilter(&filter), "[dx12 context] could not push storage filter to info queue");
                 }
 #endif
+            }
+            ComPtr<ID3D12CommandQueue> dx12_context::create_command_queue(D3D12_COMMAND_LIST_TYPE type) {
+                D3D12_COMMAND_QUEUE_DESC desc;
+                util::zero(desc);
+                desc.Type = type;
+                desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+                ComPtr<ID3D12CommandQueue> command_queue;
+                check_hresult(this->m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&command_queue)), "[dx12 context] could not create command queue");
+                return command_queue;
+            }
+            static bool check_tearing_support() {
+                bool allow_tearing = false;
+                ComPtr<IDXGIFactory4> factory_4;
+                if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory_4)))) {
+                    ComPtr<IDXGIFactory5> factory_5;
+                    if (SUCCEEDED(factory_4.As(&factory_5))) {
+                        BOOL win32_allow_tearing = false;
+                        if (FAILED(factory_5->CheckFeatureSupport(DXGI_FEATURE_PRESENT_ALLOW_TEARING, &win32_allow_tearing, sizeof(BOOL)))) {
+                            win32_allow_tearing = false;
+                        }
+                        allow_tearing = win32_allow_tearing;
+                    }
+                }
+                return allow_tearing;
+            }
+            void dx12_context::create_swapchain(glm::ivec2 size) {
+                ComPtr<IDXGIFactory4> factory;
+                create_dxgi_factory(factory);
+                DXGI_SWAP_CHAIN_DESC1 desc;
+                util::zero(desc);
+                desc.Width = (uint32_t)size.x;
+                desc.Height = (uint32_t)size.y;
+                desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+                desc.Stereo = false;
+                desc.SampleDesc = { 1, 0 };
+                desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+                desc.BufferCount = backbuffer_count;
+                desc.Scaling = DXGI_SCALING_STRETCH;
+                desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+                desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
+                if (check_tearing_support()) {
+                    desc.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
+                }
+                ComPtr<IDXGISwapChain1> swapchain_1;
+                HWND hwnd = glfwGetWin32Window(this->m_window);
+                check_hresult(factory->CreateSwapChainForHwnd(
+                    this->m_command_queue.Get(),
+                    hwnd,
+                    &desc,
+                    nullptr,
+                    nullptr,
+                    &swapchain_1
+                ), "[dx12 context] could not create swapchain");
+                check_hresult(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER), "[dx12 context] could not make window association");
+                check_hresult(swapchain_1.As(&this->m_swapchain), "[dx12 context] could not cast IDXGISwapChain1 to IDXGISwapChain4");
+            }
+            ComPtr<ID3D12DescriptorHeap> dx12_context::create_descriptor_heap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t descriptor_count) {
+                D3D12_DESCRIPTOR_HEAP_DESC desc;
+                util::zero(desc);
+                desc.NumDescriptors = descriptor_count;
+                desc.Type = type;
+                ComPtr<ID3D12DescriptorHeap> descriptor_heap;
+                check_hresult(this->m_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap)), "[dx12 context] could not create descriptor heap");
+                return descriptor_heap;
             }
         }
     }

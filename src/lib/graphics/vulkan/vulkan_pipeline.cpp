@@ -11,6 +11,7 @@ namespace bve {
                 this->m_layout = nullptr;
             }
             vulkan_pipeline::~vulkan_pipeline() {
+                this->unbind();
                 if (this->m_pipeline) {
                     this->destroy();
                 }
@@ -20,11 +21,11 @@ namespace bve {
             }
             void vulkan_pipeline::bind() {
                 this->m_factory->m_current_pipeline = this;
-                this->m_context = this->m_factory->m_current_context;
+                this->m_context = this->m_factory->get_current_context();
             }
             void vulkan_pipeline::unbind() {
                 if (this->m_factory->m_current_pipeline == this) {
-                    this->m_factory->m_current_pipeline.reset();
+                    this->m_factory->m_current_pipeline = nullptr;
                 }
             }
             void vulkan_pipeline::bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {

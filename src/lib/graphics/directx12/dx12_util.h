@@ -10,8 +10,6 @@ using namespace Microsoft::WRL;
 #include <D3Dcompiler.h>
 #include <dxgi1_6.h>
 #include <dxgidebug.h>
-#define GLFW_EXPOSE_NATIVE_WIN32
-#include <GLFW/glfw3native.h>
 namespace bve {
     namespace graphics {
         namespace dx12 {
