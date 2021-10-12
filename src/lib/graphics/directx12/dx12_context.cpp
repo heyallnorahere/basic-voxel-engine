@@ -26,25 +26,18 @@ namespace bve {
             }
             dx12_context::dx12_context(ref<dx12_object_factory> factory) {
                 this->m_factory = factory;
-                this->m_fence_value = 0;
-                util::zero(this->m_frame_fence_values.data(), this->m_frame_fence_values.size() * sizeof(uint64_t));
-            }
-            dx12_context::~dx12_context() {
-                this->flush(this->m_command_queue, this->m_fence, this->m_fence_event, this->m_fence_value);
-                ::CloseHandle(this->m_fence_event);
+                util::zero(this->m_fence_values.data(), this->m_fence_values.size() * sizeof(uint64_t));
             }
             void dx12_context::clear(glm::vec4 clear_color) {
-                auto command_allocator = this->m_command_allocators[this->m_current_backbuffer];
                 auto backbuffer = this->m_backbuffers[this->m_current_backbuffer];
-                command_allocator->Reset();
-                this->m_command_list->Reset(command_allocator.Get(), nullptr);
+                this->m_current_command_list = this->m_command_queues[D3D12_COMMAND_LIST_TYPE_DIRECT]->get_command_list();
                 CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
                     backbuffer.Get(),
                     D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-                this->m_command_list->ResourceBarrier(1, &barrier);
+                this->m_current_command_list->ResourceBarrier(1, &barrier);
                 CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(this->m_rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart(),
                     this->m_current_backbuffer, this->m_rtv_descriptor_size);
-                this->m_command_list->ClearRenderTargetView(rtv, &clear_color.x, 0, nullptr);
+                this->m_current_command_list->ClearRenderTargetView(rtv, &clear_color.x, 0, nullptr);
             }
             void dx12_context::make_current() {
                 this->m_factory->m_current_context = this;
@@ -57,11 +50,10 @@ namespace bve {
                 CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
                     backbuffer.Get(),
                     D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-                this->m_command_list->ResourceBarrier(1, &barrier);
-                check_hresult(this->m_command_list->Close(), "[dx12 context] could not close command list");
-                ID3D12CommandList* cmdlist = this->m_command_list.Get();
-                this->m_command_queue->ExecuteCommandLists(1, &cmdlist);
-                this->m_frame_fence_values[this->m_current_backbuffer] = this->signal(this->m_command_queue, this->m_fence, this->m_fence_value);
+                this->m_current_command_list->ResourceBarrier(1, &barrier);
+                auto command_queue = this->m_command_queues[D3D12_COMMAND_LIST_TYPE_DIRECT];
+                this->m_fence_values[this->m_current_backbuffer] = command_queue->execute_command_list(this->m_current_command_list);
+                this->m_current_command_list.Reset();
                 constexpr bool vsync = true;
                 uint32_t present_flags = 0;
                 uint32_t sync_interval = 0;
@@ -72,7 +64,7 @@ namespace bve {
                 }
                 check_hresult(this->m_swapchain->Present(sync_interval, present_flags), "[dx12 context] could not present");
                 this->m_current_backbuffer = this->m_swapchain->GetCurrentBackBufferIndex();
-                this->wait_for_fence_value(this->m_fence, this->m_frame_fence_values[this->m_current_backbuffer], this->m_fence_event);
+                command_queue->wait_for_fence_value(this->m_fence_values[this->m_current_backbuffer]);
             }
             void dx12_context::setup_glfw() {
                 glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -80,7 +72,15 @@ namespace bve {
             void dx12_context::setup_context() {
                 this->enable_debug_layer();
                 this->create_device();
-                this->m_command_queue = this->create_command_queue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+                std::vector<D3D12_COMMAND_LIST_TYPE> command_queue_types = {
+                    D3D12_COMMAND_LIST_TYPE_DIRECT,
+                    D3D12_COMMAND_LIST_TYPE_COPY,
+                    D3D12_COMMAND_LIST_TYPE_COMPUTE
+                };
+                for (auto type : command_queue_types) {
+                    auto queue = ref<dx12_command_queue>::create(this->m_device, type);
+                    this->m_command_queues.insert({ type, queue });
+                }
                 int32_t width, height;
                 glfwGetFramebufferSize(this->m_window, &width, &height);
                 this->create_swapchain(glm::ivec2(width, height));
@@ -89,17 +89,15 @@ namespace bve {
                 this->m_rtv_descriptor_size = this->m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
                 this->m_srv_descriptor_heap = this->create_descriptor_heap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1);
                 this->update_render_target_views();
-                for (uint32_t i = 0; i < backbuffer_count; i++) {
-                    this->m_command_allocators[i] = this->create_command_allocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
-                }
-                this->m_command_list = this->create_command_list(this->m_command_allocators[this->m_current_backbuffer], D3D12_COMMAND_LIST_TYPE_DIRECT);
             }
             void dx12_context::resize_viewport(int32_t x, int32_t y, int32_t width, int32_t height) {
                 glm::ivec2 window_size = util::get_new_window_size(this->m_window);
-                this->flush(this->m_command_queue, this->m_fence, this->m_fence_event, this->m_fence_value);
+                for (auto [type, queue] : this->m_command_queues) {
+                    queue->flush();
+                }
                 for (uint32_t i = 0; i < backbuffer_count; i++) {
                     this->m_backbuffers[i].Reset();
-                    this->m_frame_fence_values[i] = this->m_frame_fence_values[this->m_current_backbuffer];
+                    this->m_fence_values[i] = this->m_fence_values[this->m_current_backbuffer];
                 }
                 DXGI_SWAP_CHAIN_DESC desc;
                 util::zero(desc);
@@ -126,7 +124,7 @@ namespace bve {
                 ImGui_ImplGlfw_NewFrame();
             }
             void dx12_context::render_imgui_draw_data(ImDrawData* data) {
-                ImGui_ImplDX12_RenderDrawData(data, this->m_command_list.Get());
+                ImGui_ImplDX12_RenderDrawData(data, this->m_current_command_list.Get());
             }
             void dx12_context::update_render_target_views() {
                 CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(this->m_rtv_descriptor_heap->GetCPUDescriptorHandleForHeapStart());
@@ -204,15 +202,6 @@ namespace bve {
                 }
 #endif
             }
-            ComPtr<ID3D12CommandQueue> dx12_context::create_command_queue(D3D12_COMMAND_LIST_TYPE type) {
-                D3D12_COMMAND_QUEUE_DESC desc;
-                util::zero(desc);
-                desc.Type = type;
-                desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-                ComPtr<ID3D12CommandQueue> command_queue;
-                check_hresult(this->m_device->CreateCommandQueue(&desc, IID_PPV_ARGS(&command_queue)), "[dx12 context] could not create command queue");
-                return command_queue;
-            }
             void dx12_context::create_swapchain(glm::ivec2 size) {
                 ComPtr<IDXGIFactory4> factory;
                 create_dxgi_factory(factory);
@@ -234,7 +223,7 @@ namespace bve {
                 ComPtr<IDXGISwapChain1> swapchain_1;
                 HWND hwnd = glfwGetWin32Window(this->m_window);
                 check_hresult(factory->CreateSwapChainForHwnd(
-                    this->m_command_queue.Get(),
+                    this->m_command_queues[D3D12_COMMAND_LIST_TYPE_DIRECT]->get_command_queue().Get(),
                     hwnd,
                     &desc,
                     nullptr,
@@ -252,43 +241,6 @@ namespace bve {
                 ComPtr<ID3D12DescriptorHeap> descriptor_heap;
                 check_hresult(this->m_device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap)), "[dx12 context] could not create descriptor heap");
                 return descriptor_heap;
-            }
-            ComPtr<ID3D12CommandAllocator> dx12_context::create_command_allocator(D3D12_COMMAND_LIST_TYPE type) {
-                ComPtr<ID3D12CommandAllocator> command_allocator;
-                check_hresult(this->m_device->CreateCommandAllocator(type, IID_PPV_ARGS(&command_allocator)), "[dx12 context] could not create command allocator");
-                return command_allocator;
-            }
-            ComPtr<ID3D12GraphicsCommandList> dx12_context::create_command_list(ComPtr<ID3D12CommandAllocator> allocator, D3D12_COMMAND_LIST_TYPE type) {
-                ComPtr<ID3D12GraphicsCommandList> command_list;
-                check_hresult(this->m_device->CreateCommandList(0, type, allocator.Get(), nullptr, IID_PPV_ARGS(&command_list)), "[dx12 context] could not create command list");
-                return command_list;
-            }
-            ComPtr<ID3D12Fence> dx12_context::create_fence() {
-                ComPtr<ID3D12Fence> fence;
-                check_hresult(this->m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)), "[dx12 context] could not create fence");
-                return fence;
-            }
-            void* dx12_context::create_event_handle() {
-                void* fence_event = ::CreateEvent(nullptr, false, false, nullptr);
-                if (!fence_event) {
-                    throw std::runtime_error("[dx12 context] could not create fence event");
-                }
-                return fence_event;
-            }
-            uint64_t dx12_context::signal(ComPtr<ID3D12CommandQueue> queue, ComPtr<ID3D12Fence> fence, uint64_t& fence_value) {
-                uint64_t fence_value_for_signal = ++fence_value;
-                check_hresult(queue->Signal(fence.Get(), fence_value_for_signal), "[dx12 context] could not signal fence");
-                return fence_value_for_signal;
-            }
-            void dx12_context::wait_for_fence_value(ComPtr<ID3D12Fence> fence, uint64_t fence_value, void* fence_event, std::chrono::milliseconds duration) {
-                if (fence->GetCompletedValue() < fence_value) {
-                    check_hresult(fence->SetEventOnCompletion(fence_value, fence_event), "[dx12 context] could not set fence \"OnCompletion\" event");
-                    ::WaitForSingleObject(fence_event, (DWORD)duration.count());
-                }
-            }
-            void dx12_context::flush(ComPtr<ID3D12CommandQueue> queue, ComPtr<ID3D12Fence> fence, void* fence_event, uint64_t& fence_value) {
-                uint64_t fence_value_for_signal = this->signal(queue, fence, fence_value);
-                this->wait_for_fence_value(fence, fence_value_for_signal, fence_event);
             }
         }
     }
