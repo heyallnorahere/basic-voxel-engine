@@ -18,8 +18,8 @@ namespace bve {
                 void set_shader(ref<vulkan_shader> shader) { this->m_shader = shader; }
                 ref<vulkan_shader> get_shader() { return this->m_shader; }
                 void bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer);
-                void unbind_buffer(VkBufferUsageFlags type);
-                const std::map<VkBufferUsageFlags, ref<vulkan_buffer>>& get_bound_buffers() { return this->m_buffers; }
+                void unbind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer);
+                const std::map<VkBufferUsageFlags, std::list<ref<vulkan_buffer>>>& get_bound_buffers() { return this->m_buffers; }
                 void create();
                 void destroy();
                 bool valid() { return this->m_pipeline != nullptr && this->m_layout != nullptr; }
@@ -27,7 +27,7 @@ namespace bve {
                 ref<vulkan_object_factory> m_factory;
                 ref<vulkan_context> m_context;
                 ref<vulkan_shader> m_shader;
-                std::map<VkBufferUsageFlags, ref<vulkan_buffer>> m_buffers;
+                std::map<VkBufferUsageFlags, std::list<ref<vulkan_buffer>>> m_buffers;
                 std::vector<vertex_attribute> m_vertex_attributes;
                 VkPipeline m_pipeline;
                 VkPipelineLayout m_layout;

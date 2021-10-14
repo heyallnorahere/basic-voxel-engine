@@ -86,7 +86,7 @@ namespace bve {
                 auto pipeline = this->m_factory->get_current_pipeline();
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
-                    vk_pipeline->unbind_buffer(this->m_usage);
+                    vk_pipeline->unbind_buffer(this->m_usage, this);
                 }
             }
         }

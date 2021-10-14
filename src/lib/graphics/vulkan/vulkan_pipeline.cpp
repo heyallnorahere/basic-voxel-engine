@@ -30,13 +30,12 @@ namespace bve {
             }
             void vulkan_pipeline::bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {
                 if (buffer) {
-                    this->m_buffers.insert({ type, buffer });
+                    this->unbind_buffer(type, buffer);
+                    this->m_buffers[type].push_back(buffer);
                 }
             }
-            void vulkan_pipeline::unbind_buffer(VkBufferUsageFlags type) {
-                if (this->m_buffers.find(type) != this->m_buffers.end()) {
-                    this->m_buffers.erase(type);
-                }
+            void vulkan_pipeline::unbind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {
+                this->m_buffers[type].remove_if([buffer](ref<vulkan_buffer> buf) { return buffer == buf; });
             }
             void vulkan_pipeline::create() {
                 if (this->m_factory->m_current_pipeline != this) {
