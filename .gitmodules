@@ -38,3 +38,6 @@
 [submodule "vendor/SPIRV-Tools"]
 	path = vendor/SPIRV-Tools
 	url = https://github.com/KhronosGroup/SPIRV-Tools.git
+[submodule "vendor/DirectX-Headers"]
+	path = vendor/DirectX-Headers
+	url = https://github.com/microsoft/DirectX-Headers.git

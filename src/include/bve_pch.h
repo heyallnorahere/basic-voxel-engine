@@ -32,6 +32,7 @@
 #include <list>
 #include <array>
 #include <set>
+#include <queue>
 #include <typeinfo>
 #include <stdexcept>
 #include <functional>

@@ -164,7 +164,7 @@ namespace bve {
                 this->m_factory->m_current_context = this;
             }
             void vulkan_context::draw_indexed(size_t index_count) {
-                auto pipeline = this->m_factory->m_current_pipeline;
+                auto pipeline = this->m_factory->get_current_pipeline();
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     if (!vk_pipeline->valid()) {
@@ -257,16 +257,6 @@ namespace bve {
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, 1, &command_buffer);
             }
             void vulkan_context::swap_buffers() {
-                auto resize_swapchain = [this]() mutable {
-                    int32_t width = 0, height = 0;
-                    glfwGetFramebufferSize(this->m_window, &width, &height);
-                    if (width == 0 || height == 0) {
-                        // why do we do this again?
-                        glfwGetFramebufferSize(this->m_window, &width, &height);
-                        glfwWaitEvents();
-                    }
-                    this->recreate_swapchain(glm::ivec2(width, height));
-                };
                 vkCmdEndRenderPass(this->m_command_buffers[this->m_current_image]);
                 if (vkEndCommandBuffer(this->m_command_buffers[this->m_current_image]) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not finish recording a command buffer");
@@ -281,7 +271,7 @@ namespace bve {
                 uint32_t current_image;
                 VkResult result = vkAcquireNextImageKHR(this->m_device, this->m_swap_chain, UINT64_MAX, this->m_image_available_semaphores[this->m_current_frame], fence, &current_image);
                 if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-                    resize_swapchain();
+                    this->recreate_swapchain(util::get_new_window_size(this->m_window));
                 } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
                     throw std::runtime_error("[vulkan context] could not acquire next swapchain image");
                 }
@@ -317,7 +307,7 @@ namespace bve {
                 result = vkQueuePresentKHR(this->m_present_queue, &present_info);
                 if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || this->m_resize_swapchain) {
                     this->m_resize_swapchain = false;
-                    resize_swapchain();
+                    this->recreate_swapchain(util::get_new_window_size(this->m_window));
                 } else if (result != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not present");
                 }
@@ -707,7 +697,7 @@ namespace bve {
                 }
                 this->m_framebuffers.clear();
                 if (recreate_pipeline && this->m_factory->m_current_pipeline) {
-                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
                     *recreate_pipeline = false;
                     if (pipeline->valid()) {
                         pipeline->destroy();
@@ -742,7 +732,7 @@ namespace bve {
                     shader->create_descriptor_sets();
                 }
                 if (recreate_pipeline) {
-                    auto pipeline = this->m_factory->m_current_pipeline.as<vulkan_pipeline>();
+                    auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
                     pipeline->create();
                 }
                 // imgui will crash; cant do anything about it now, i dont think

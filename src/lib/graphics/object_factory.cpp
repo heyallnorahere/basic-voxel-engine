@@ -2,6 +2,9 @@
 #include "graphics/object_factory.h"
 #include "opengl/opengl_object_factory.h"
 #include "vulkan/vulkan_object_factory.h"
+#ifdef BVE_DX12_BACKEND_ENABLED
+#include "directx12/dx12_object_factory.h"
+#endif
 #include "../shader_compiler.h"
 // todo: add check to see if stb_image was already implemented
 #define STBI_NO_SIMD
@@ -18,8 +21,13 @@ namespace bve {
             case graphics_api::VULKAN:
                 factory = ref<vulkan::vulkan_object_factory>::create();
                 break;
+#ifdef BVE_DX12_BACKEND_ENABLED
+            case graphics_api::DIRECTX12:
+                factory = ref<dx12::dx12_object_factory>::create();
+                break;
+#endif
             default:
-                return nullptr;
+                throw std::runtime_error("[object factory] the requested graphics api is not supported on this platform");
             }
             factory->m_graphics_api = api;
             return factory;

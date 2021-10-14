@@ -9,6 +9,10 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            vulkan_object_factory::vulkan_object_factory() {
+                this->m_current_context = nullptr;
+                this->m_current_pipeline = nullptr;
+            }
             ref<pipeline> vulkan_object_factory::create_pipeline() {
                 return ref<vulkan_pipeline>::create(this);
             }
@@ -29,12 +33,6 @@ namespace bve {
             }
             ref<uniform_buffer> vulkan_object_factory::create_uniform_buffer(size_t size, uint32_t binding) {
                 return ref<vulkan_uniform_buffer>::create(size, binding, this);
-            }
-            ref<context> vulkan_object_factory::get_current_context() {
-                return this->m_current_context;
-            }
-            ref<pipeline> vulkan_object_factory::get_current_pipeline() {
-                return this->m_current_pipeline;
             }
         }
     }

@@ -2,12 +2,12 @@
 #include "graphics/object_factory.h"
 namespace bve {
     namespace graphics {
-        namespace vulkan {
-            class vulkan_context;
-            class vulkan_pipeline;
-            class vulkan_object_factory : public object_factory {
+        namespace dx12 {
+            class dx12_context;
+            class dx12_pipeline;
+            class dx12_object_factory : public object_factory {
             public:
-                vulkan_object_factory();
+                dx12_object_factory();
                 virtual ref<pipeline> create_pipeline() override;
                 virtual ref<buffer> create_vertex_buffer(const void* data, size_t size) override;
                 virtual ref<buffer> create_index_buffer(const std::vector<uint32_t>& data) override;
@@ -20,8 +20,8 @@ namespace bve {
             private:
                 context* m_current_context;
                 pipeline* m_current_pipeline;
-                friend class vulkan_context;
-                friend class vulkan_pipeline;
+                friend class dx12_context;
+                friend class dx12_pipeline;
             };
         }
     }
