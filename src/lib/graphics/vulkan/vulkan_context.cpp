@@ -174,19 +174,33 @@ namespace bve {
                     auto shader = vk_pipeline->get_shader();
                     shader->update_descriptor_sets(this->m_current_image);
                     vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
-                    auto bound_buffers = vk_pipeline->get_bound_buffers();
+                    const auto& bound_buffers = vk_pipeline->get_bound_buffers();
+                    bool bound_buffer = false;
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
-                        auto buffer = bound_buffers[VK_BUFFER_USAGE_VERTEX_BUFFER_BIT];
-                        VkBuffer buf = buffer->get_buffer();
-                        VkDeviceSize offset = 0;
-                        vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, 1, &buf, &offset);
-                    } else {
+                        const auto& bound_vertex_buffers = bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)->second;
+                        if (!bound_vertex_buffers.empty()) {
+                            std::vector<VkBuffer> vk_buffers;
+                            for (auto buffer : bound_vertex_buffers) {
+                                vk_buffers.push_back(buffer->get_buffer());
+                            }
+                            std::vector<VkDeviceSize> offsets(vk_buffers.size(), 0);
+                            vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, vk_buffers.size(), vk_buffers.data(), offsets.data());
+                            bound_buffer = true;
+                        }
+                    }
+                    if (!bound_buffer) {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without a vertex buffer");
                     }
+                    bound_buffer = false;
                     if (bound_buffers.find(VK_BUFFER_USAGE_INDEX_BUFFER_BIT) != bound_buffers.end()) {
-                        auto buffer = bound_buffers[VK_BUFFER_USAGE_INDEX_BUFFER_BIT];
-                        vkCmdBindIndexBuffer(this->m_command_buffers[this->m_current_image], buffer->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
-                    } else {
+                        const auto& bound_index_buffers = bound_buffers.find(VK_BUFFER_USAGE_INDEX_BUFFER_BIT)->second;
+                        if (!bound_index_buffers.empty()) {
+                            auto front = *bound_index_buffers.begin();
+                            vkCmdBindIndexBuffer(this->m_command_buffers[this->m_current_image], front->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
+                            bound_buffer = true;
+                        }
+                    }
+                    if (!bound_buffer) {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
                     }
                     const auto& sets = shader->get_descriptor_sets();
