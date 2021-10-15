@@ -1,7 +1,5 @@
 using BasicVoxelEngine.Graphics;
 using BasicVoxelEngine.Lighting;
-using System;
-using System.Runtime.CompilerServices;
 
 namespace BasicVoxelEngine
 {
@@ -21,10 +19,9 @@ namespace BasicVoxelEngine
         /// Use <see cref="Model.LoadModel(string, Factory)" /> to load a model.
         /// </summary>
         public virtual Model? Model => null;
-        public virtual Light? Light => null;
         /// <summary>
-        /// The friendly name of this block.
+        /// The light that this block emits.
         /// </summary>
-        public abstract string FriendlyName { get; }
+        public virtual Light? Light => null;
     }
 }

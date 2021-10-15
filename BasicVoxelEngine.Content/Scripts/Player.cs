@@ -1,10 +1,25 @@
 using BasicVoxelEngine.Components;
+using BasicVoxelEngine.Content.Items;
 using System;
 
 namespace BasicVoxelEngine.Content.Scripts
 {
     public sealed class Player : Script
     {
+        const int InventoryWidth = 9;
+        const int InventoryHeight = 3;
+        public Player()
+        {
+            int inventorySize = InventoryWidth * (InventoryHeight + 1);
+            mInventory = new ItemStack[inventorySize];
+            for (int i = 0; i < inventorySize; i++)
+            {
+                mInventory[i] = null;
+            }
+            mHotbarIndex = 0;
+            var itemRegister = Registry.GetRegister<Item>();
+            mInventory[GetInventoryIndex(0, InventoryHeight)] = new ItemStack(itemRegister.GetInstance<TestItem>());
+        }
         public override void OnAttach()
         {
             mCurrentMouseOffset = new Vector2(0f);
@@ -70,10 +85,26 @@ namespace BasicVoxelEngine.Content.Scripts
                 RightClick();
             }
             mCurrentMouseOffset = inputManager.Mouse;
+            for (int i = 0; i < 9; i++)
+            {
+                Key key = Key.N1 + i;
+                if (inputManager.GetKey(key).Down)
+                {
+                    mHotbarIndex = i;
+                }
+            }
         }
         private void LeftClick()
         {
-            Logger.Print(Logger.Severity.Info, "left clicked");
+            var stack = mInventory[(InventoryWidth * InventoryHeight) + mHotbarIndex];
+            if (stack != null)
+            {
+                Logger.Print(Logger.Severity.Info, "Currently selected item: {0}", stack.Item.FriendlyName);
+            }
+            else
+            {
+                Logger.Print(Logger.Severity.Info, "No item is currently selected!");
+            }
         }
         private void RightClick()
         {
@@ -116,7 +147,10 @@ namespace BasicVoxelEngine.Content.Scripts
             };
             camera.Direction = newDirection.Normalized;
         }
+        private int GetInventoryIndex(int x, int y) => (y * InventoryWidth) + x;
         private float mCameraSensitivity;
         private Vector2 mCurrentMouseOffset;
+        private int mHotbarIndex;
+        private readonly ItemStack?[] mInventory;
     }
 }

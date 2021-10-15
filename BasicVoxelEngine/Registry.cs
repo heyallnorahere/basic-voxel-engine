@@ -79,6 +79,10 @@ namespace BasicVoxelEngine
         /// </summary>
         protected virtual void Load(Factory factory, NamespacedName namespacedName) { }
         internal void DoLoad(Factory factory, NamespacedName namespacedName) => Load(factory, namespacedName);
+        /// <summary>
+        /// The friendly name of this block.
+        /// </summary>
+        public virtual string FriendlyName => Registry.GetRegister<T>().GetNamespacedName(RegisterIndex)?.FullName ?? (GetType().FullName ?? "Unknown object");
         public int RegisterIndex { get; internal set; } = -1;
     }
     public sealed class Register<T> : IReadOnlyList<T> where T : RegisteredObject<T>

@@ -125,4 +125,10 @@ namespace bve {
         mutable T* m_instance;
         template<typename U> friend class ref;
     };
+    template<typename T> struct hash_ref {
+        size_t operator()(const ref<T>& to_hash) const {
+            std::hash<const T*> hasher;
+            return hasher(to_hash.raw());
+        }
+    };
 }

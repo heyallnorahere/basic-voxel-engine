@@ -32,6 +32,7 @@
 #include <list>
 #include <array>
 #include <set>
+#include <unordered_set>
 #include <typeinfo>
 #include <stdexcept>
 #include <functional>
