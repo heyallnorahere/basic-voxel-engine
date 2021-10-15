@@ -1,5 +1,4 @@
 #pragma once
-#include "registry.h"
 #include "graphics/object_factory.h"
 namespace bve {
     class asset_manager;
@@ -21,17 +20,17 @@ namespace bve {
         glm::ivec2 get_texture_size();
         glm::ivec2 get_atlas_size();
         ref<graphics::texture> get_texture();
-        std::vector<namespaced_name> get_included_block_names();
+        std::vector<size_t> get_included_block_ids();
 
     private:
         struct texture_data {
             std::vector<uint8_t> data;
             int32_t width, height, channels;
         };
-        texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures, ref<graphics::object_factory> object_factory);
+        texture_atlas(const std::vector<std::pair<size_t, texture_data>>& textures, ref<graphics::object_factory> object_factory);
         ref<graphics::texture> m_texture;
         glm::ivec2 m_texture_size, m_atlas_size;
-        std::unordered_map<namespaced_name, std::pair<glm::ivec2, glm::ivec2>, namespaced_name::hash_function> m_texture_dimensions;
+        std::unordered_map<size_t, std::pair<glm::ivec2, glm::ivec2>> m_texture_dimensions;
         friend class asset_manager;
     };
 }

@@ -1,3 +1,4 @@
+using BasicVoxelEngine.Graphics;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -73,89 +74,20 @@ namespace BasicVoxelEngine
     }
     public abstract class RegisteredObject<T> where T : RegisteredObject<T>
     {
-        public IntPtr? NativeAddress { get; internal set; }
-        ~RegisteredObject()
-        {
-            if (NativeAddress != null)
-            {
-                DestroyRef_Native(NativeAddress ?? throw new NullReferenceException());
-            }
-        }
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void DestroyRef_Native(IntPtr nativeAddress);
-        internal void SetIndex(int index)
-        {
-            mIndex = index;
-        }
-        public int? Index => mIndex;
-        private int? mIndex;
-        public override bool Equals(object? obj)
-        {
-            if (obj is RegisteredObject<T> registeredObject)
-            {
-                if (NativeAddress != null)
-                {
-                    if (registeredObject.NativeAddress != null)
-                    {
-                        return NativeAddress == registeredObject.NativeAddress;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            return base.Equals(obj);
-        }
-        public override int GetHashCode()
-        {
-            if (NativeAddress != null)
-            {
-                return NativeAddress.GetHashCode();
-            }
-            else
-            {
-                return base.GetHashCode();
-            }
-        }
+        /// <summary>
+        /// This function is called just before the game runs and after every other registered object is registered
+        /// </summary>
+        protected virtual void Load(Factory factory, NamespacedName namespacedName) { }
+        internal void DoLoad(Factory factory, NamespacedName namespacedName) => Load(factory, namespacedName);
+        public int RegisterIndex { get; internal set; } = -1;
     }
-    public sealed class Register<T> : RegisteredObject<Register<T>>, IReadOnlyList<T> where T : RegisteredObject<T>, new()
+    public sealed class Register<T> : IReadOnlyList<T> where T : RegisteredObject<T>
     {
-        private struct Enumerator : IEnumerator<T>
+        internal Register()
         {
-            public Enumerator(Register<T> register)
-            {
-                mRegistry = register;
-                mCurrentIndex = -1;
-            }
-            public T Current => mRegistry[mCurrentIndex];
-            object IEnumerator.Current => Current;
-            public void Dispose()
-            {
-                GC.SuppressFinalize(this);
-            }
-            public bool MoveNext()
-            {
-                if (mCurrentIndex < mRegistry.Count - 1)
-                {
-                    mCurrentIndex++;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            public void Reset()
-            {
-                mCurrentIndex = -1;
-            }
-            private readonly Register<T> mRegistry;
-            private int mCurrentIndex;
-        }
-        internal Register(IntPtr nativeAddress)
-        {
-            base.NativeAddress = nativeAddress;
+            mItems = new List<T>();
+            mNameMap = new Dictionary<NamespacedName, int>();
+            mIdMap = new Dictionary<int, NamespacedName>();
         }
         public T this[int index]
         {
@@ -165,16 +97,7 @@ namespace BasicVoxelEngine
                 {
                     throw new IndexOutOfRangeException();
                 }
-                if (IsManaged_Native(index, typeof(T), NativeAddress))
-                {
-                    return GetManagedObject_Native(index, typeof(T), NativeAddress);
-                }
-                else
-                {
-                    var @object = new T();
-                    @object.NativeAddress = CreateRef_Native(index, typeof(T), NativeAddress);
-                    return @object;
-                }
+                return mItems[index];
             }
         }
         public T this[NamespacedName name]
@@ -194,11 +117,14 @@ namespace BasicVoxelEngine
         }
         public int RegisterObject(T @object, NamespacedName namespacedName)
         {
-            int index = RegisterObject_Native(@object, namespacedName, typeof(T), NativeAddress);
-            @object.SetIndex(index);
+            int index = Count;
+            @object.RegisterIndex = index;
+            mItems.Add(@object);
+            mNameMap.Add(namespacedName, index);
+            mIdMap.Add(index, namespacedName);
             return index;
         }
-        public bool GetInstance<T2>(out T2? instance) where T2 : T
+        public bool GetInstance<T2>(out T2? instance) where T2 : class, T
         {
             if (typeof(T2) == typeof(T))
             {
@@ -215,7 +141,7 @@ namespace BasicVoxelEngine
             instance = null;
             return false;
         }
-        public T2 GetInstance<T2>() where T2 : T
+        public T2 GetInstance<T2>() where T2 : class, T
         {
             T2? instance;
             if (GetInstance(out instance))
@@ -229,10 +155,9 @@ namespace BasicVoxelEngine
         }
         public int? GetIndex(NamespacedName namespacedName)
         {
-            int index;
-            if (GetIndex_Native(namespacedName, typeof(T), NativeAddress, out index))
+            if (mNameMap.ContainsKey(namespacedName))
             {
-                return index;
+                return mNameMap[namespacedName];
             }
             else
             {
@@ -257,10 +182,9 @@ namespace BasicVoxelEngine
         }
         public NamespacedName? GetNamespacedName(int index)
         {
-            NamespacedName namespacedName;
-            if (GetNamespacedName_Native(index, typeof(T), NativeAddress, out namespacedName))
+            if (mIdMap.ContainsKey(index))
             {
-                return namespacedName;
+                return mIdMap[index];
             }
             else
             {
@@ -293,52 +217,28 @@ namespace BasicVoxelEngine
                 throw new ArgumentException("Cannot find the name for an unregistered object!");
             }
         }
-        public IEnumerator<T> GetEnumerator()
-        {
-            return new Enumerator(this);
-        }
+        public IEnumerator<T> GetEnumerator() => mItems.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public int Count => GetCount_Native(typeof(T), NativeAddress);
-        private new IntPtr NativeAddress => base.NativeAddress ?? throw new NullReferenceException();
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern IntPtr CreateRef_Native(int index, Type type, IntPtr address);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int GetCount_Native(Type type, IntPtr address);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool GetIndex_Native(NamespacedName namespacedName, Type type, IntPtr address, out int index);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool GetNamespacedName_Native(int index, Type type, IntPtr address, out NamespacedName namespacedName);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int RegisterObject_Native(T @object, NamespacedName namespacedName, Type type, IntPtr address);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool IsManaged_Native(int index, Type type, IntPtr address);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern T GetManagedObject_Native(int index, Type type, IntPtr address);
+        public int Count => mItems.Count;
+        private readonly List<T> mItems;
+        private readonly Dictionary<NamespacedName, int> mNameMap;
+        private readonly Dictionary<int, NamespacedName> mIdMap;
     }
     public static class Registry
     {
         static Registry()
         {
-            RegisterTypes_Native();
+            mRegisters = new Dictionary<Type, object>();
         }
-        public static bool RegisterExists<T>() where T : RegisteredObject<T>, new()
+        public static Register<T> GetRegister<T>() where T : RegisteredObject<T>
         {
-            return RegisterExists_Native(typeof(T));
-        }
-        public static Register<T> GetRegister<T>() where T : RegisteredObject<T>, new()
-        {
-            if (!RegisterExists<T>())
+            if (!mRegisters.ContainsKey(typeof(T)))
             {
-                throw new ArgumentException("The specified register does not exist!");
+                mRegisters.Add(typeof(T), new Register<T>());
             }
-            IntPtr address = CreateRegisterRef_Native(typeof(T));
-            return new Register<T>(address);
+            return (Register<T>)mRegisters[typeof(T)];
         }
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void RegisterTypes_Native();
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern bool RegisterExists_Native(Type type);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern IntPtr CreateRegisterRef_Native(Type type);
+        public static ICollection<Type> UsedRegisterTypes => mRegisters.Keys;
+        private static readonly Dictionary<Type, object> mRegisters;
     }
 }

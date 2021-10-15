@@ -1,6 +1,5 @@
 #include "bve_pch.h"
 #include "application.h"
-#include "block.h"
 #include "asset_manager.h"
 #include "components.h"
 #include "shader_compiler.h"
@@ -25,19 +24,11 @@ namespace bve {
         shader_compiler::cleanup_compiler();
     }
     void application::run() {
-        auto& block_register = registry::get().get_register<block>();
-        for (const auto& name : block_register.get_names()) {
-            ref<block> block_ = block_register[name];
-            block_->load(this->m_object_factory, name);
-        }
-#ifndef NDEBUG
         {
-            auto app_class = this->m_code_host->find_class("BasicVoxelEngine.Application");
-            auto testmethod = app_class->get_method("*:TestMethod");
-            managed::class_::invoke(testmethod);
-            testmethod = app_class->get_method("*:TestMethod2");
+            auto contentloader_class = this->m_code_host->find_class("BasicVoxelEngine.ContentLoading.ContentLoader");
+            auto loadregisteredobjects = contentloader_class->get_method("*:LoadRegisteredObjects");
+            managed::class_::invoke(loadregisteredobjects);
         }
-#endif
         auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
             mesh_factory factory(world_);
             this->m_meshes.clear();

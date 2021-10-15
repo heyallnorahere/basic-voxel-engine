@@ -1,6 +1,5 @@
 #include "bve_pch.h"
 #include "world.h"
-#include "block.h"
 #include "components.h"
 #include "code_host.h"
 namespace bve {
@@ -34,37 +33,25 @@ namespace bve {
     void world::on_block_changed(on_block_changed_callback callback) {
         this->m_on_block_changed.push_back(callback);
     }
-    void world::get_block(glm::ivec3 position, namespaced_name& block_type) {
-        auto& block_register = registry::get().get_register<block>();
-        size_t index;
-        this->get_block(position, index);
-        auto name = block_register.get_name(index);
-        if (name) {
-            block_type = *name;
-        } else {
-            throw std::runtime_error("[world] could not find the namespaced id of the specified block");
-        }
-    }
     void world::get_block(glm::ivec3 position, size_t& block_type) {
         if (this->m_voxel_types.find(position) == this->m_voxel_types.end()) {
             block_type = 0;
             return;
         }
-        auto& block_register = registry::get().get_register<block>();
         uint8_t index = this->m_voxel_types[position];
         block_type = (size_t)index;        
     }
-    void world::set_block(glm::ivec3 position, const namespaced_name& block_type) {
-        auto& block_register = registry::get().get_register<block>();
-        std::optional<size_t> index = block_register.get_index(block_type);
-        if (!index) {
-            throw std::runtime_error("[world] attempted to access a block that did not exist");
-        }
-        this->set_block(position, *index);
-    }
     void world::set_block(glm::ivec3 position, size_t block_type) {
-        auto& block_register = registry::get().get_register<block>();
-        if (block_type >= block_register.size()) {
+        auto host = code_host::current();
+        auto helpers_class = host->find_class("BasicVoxelEngine.Helpers");
+        auto getregister = helpers_class->get_method("*:GetRegister");
+        auto block_class = host->find_class("BasicVoxelEngine.Block");
+        auto type_object = managed::type::get_type(block_class)->get_object();
+        auto register_object = managed::class_::invoke(getregister, type_object);
+        auto register_class = managed::class_::get_class(register_object);
+        auto count_property = register_class->get_property("Count");
+        int32_t count = register_object->get(count_property)->unbox<int32_t>();
+        if (block_type >= (size_t)count) {
             throw std::runtime_error("[world] attempted to access an unregistered block");
         }
         if (block_type == 0) {

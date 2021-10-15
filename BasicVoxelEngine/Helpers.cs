@@ -12,6 +12,12 @@ namespace BasicVoxelEngine
         {
             return baseType.MakeGenericType(@params);
         }
+        internal static object? GetRegister(Type type)
+        {
+            var baseMethod = typeof(Registry).GetMethod("GetRegister");
+            var getRegister = baseMethod?.MakeGenericMethod(new Type[] { type });
+            return getRegister?.Invoke(null, null);
+        }
         public static bool DerivesFrom(this Type type, Type baseType)
         {
             Type? currentType = type;

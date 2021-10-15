@@ -1,6 +1,5 @@
 #include "bve_pch.h"
 #include "texture_atlas.h"
-#include "block.h"
 
 namespace bve {
     texture_atlas::uniform_data texture_atlas::get_uniform_data() {
@@ -8,15 +7,9 @@ namespace bve {
         data.image = 0; // lets just hardcode this, shall we?
         data.texture_size = this->m_texture_size;
         data.grid_size = this->m_atlas_size;
-        auto& block_register = registry::get().get_register<block>();
-        for (const std::pair<namespaced_name, std::pair<glm::ivec2, glm::ivec2>>& pair : this->m_texture_dimensions) {
-            std::optional<size_t> index_optional = block_register.get_index(pair.first);
-            if (!index_optional) {
-                throw std::runtime_error("[texture atlas] the specified block does not exist");
-            }
-            size_t index = *index_optional;
-            data.texture_dimensions[index].grid_position = pair.second.first;
-            data.texture_dimensions[index].texture_dimensions = pair.second.second;
+        for (const auto& [id, dimensions] : this->m_texture_dimensions) {
+            data.texture_dimensions[id].grid_position = dimensions.first;
+            data.texture_dimensions[id].texture_dimensions = dimensions.second;
         }
         return data;
     }
@@ -33,12 +26,12 @@ namespace bve {
         return this->m_texture;
     }
 
-    std::vector<namespaced_name> texture_atlas::get_included_block_names() {
-        std::vector<namespaced_name> names;
+    std::vector<size_t> texture_atlas::get_included_block_ids() {
+        std::vector<size_t> ids;
         for (const auto& pair : this->m_texture_dimensions) {
-            names.push_back(pair.first);
+            ids.push_back(pair.first);
         }
-        return names;
+        return ids;
     }
 
     // Compute power of two greater than or equal to `n`
@@ -59,12 +52,12 @@ namespace bve {
         return ++n;
     }
 
-    texture_atlas::texture_atlas(const std::vector<std::pair<namespaced_name, texture_data>>& textures, ref<graphics::object_factory> object_factory) {
+    texture_atlas::texture_atlas(const std::vector<std::pair<size_t, texture_data>>& textures, ref<graphics::object_factory> object_factory) {
         constexpr int32_t channels = 4;
         // the texture atlas is supposed to be aligned in rows!
         constexpr int32_t max_row_size = 16;
 
-        std::vector<std::pair<namespaced_name, texture_data>> textures_copy(textures.size());
+        std::vector<std::pair<size_t, texture_data>> textures_copy(textures.size());
         std::copy(textures.begin(), textures.end(), textures_copy.begin());
 
         int32_t texture_count = (int32_t)textures_copy.size();

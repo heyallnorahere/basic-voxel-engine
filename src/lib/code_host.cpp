@@ -68,32 +68,9 @@ namespace bve {
             }
             return returned_object;
         }
-        ref<object> object::get(MonoProperty* property) {
-            MonoObject* _object = mono_gchandle_get_target(this->m_handle);
-            MonoObject* exc = nullptr;
-            MonoObject* value = mono_property_get_value(property, _object, nullptr, &exc);
-            if (exc) {
-                ref<object> exception = ref<object>::create(exc, this->get_domain());
-                handle_exception(exception);
-            }
-            ref<object> returned_object;
-            if (value) {
-                returned_object = ref<object>::create(value, this->get_domain());
-            }
-            return returned_object;
-        }
         void object::set(MonoClassField* field, void* value) {
             MonoObject* _object = mono_gchandle_get_target(this->m_handle);
             mono_field_set_value(_object, field, value);
-        }
-        void object::set(MonoProperty* property, void* value) {
-            MonoObject* _object = mono_gchandle_get_target(this->m_handle);
-            MonoObject* exc = nullptr;
-            mono_property_set_value(property, _object, &value, &exc);
-            if (exc) {
-                ref<object> exception = ref<object>::create(exc, this->get_domain());
-                handle_exception(exception);
-            }
         }
         std::string object::get_string() {
             MonoObject* _object = mono_gchandle_get_target(this->m_handle);
@@ -240,26 +217,6 @@ namespace bve {
             pair("BasicVoxelEngine.Logger::PrintInfo_Native", BasicVoxelEngine_Logger_PrintInfo),
             pair("BasicVoxelEngine.Logger::PrintWarning_Native", BasicVoxelEngine_Logger_PrintWarning),
             pair("BasicVoxelEngine.Logger::PrintError_Native", BasicVoxelEngine_Logger_PrintError),
-
-            pair("BasicVoxelEngine.Registry::RegisterTypes_Native", BasicVoxelEngine_Registry_RegisterTypes),
-            pair("BasicVoxelEngine.Registry::RegisterExists_Native", BasicVoxelEngine_Registry_RegisterExists),
-            pair("BasicVoxelEngine.Registry::CreateRegisterRef_Native", BasicVoxelEngine_Registry_CreateRegisterRef),
-
-            pair("BasicVoxelEngine.Register`1::CreateRef_Native", BasicVoxelEngine_Register_CreateRef),
-            pair("BasicVoxelEngine.Register`1::GetCount_Native", BasicVoxelEngine_Register_GetCount),
-            pair("BasicVoxelEngine.Register`1::GetIndex_Native", BasicVoxelEngine_Register_GetIndex),
-            pair("BasicVoxelEngine.Register`1::GetNamespacedName_Native", BasicVoxelEngine_Register_GetNamespacedName),
-            pair("BasicVoxelEngine.Register`1::RegisterObject_Native", BasicVoxelEngine_Register_RegisterObject),
-            pair("BasicVoxelEngine.Register`1::IsManaged_Native", BasicVoxelEngine_Register_IsManaged),
-            pair("BasicVoxelEngine.Register`1::GetManagedObject_Native", BasicVoxelEngine_Register_GetManagedObject),
-
-            pair("BasicVoxelEngine.RegisteredObject`1::DestroyRef_Native", BasicVoxelEngine_RegisteredObject_DestroyRef),
-
-            pair("BasicVoxelEngine.Block::GetOpacity_Native", BasicVoxelEngine_Block_GetOpacity),
-            pair("BasicVoxelEngine.Block::GetSolid_Native", BasicVoxelEngine_Block_GetSolid),
-            pair("BasicVoxelEngine.Block::GetFriendlyName_Native", BasicVoxelEngine_Block_GetFriendlyName),
-            pair("BasicVoxelEngine.Block::GetModel_Native", BasicVoxelEngine_Block_GetModel),
-            pair("BasicVoxelEngine.Block::GetLight_Native", BasicVoxelEngine_Block_GetLight),
 
             pair("BasicVoxelEngine.Graphics.Factory::DestroyRef_Native", BasicVoxelEngine_Graphics_Factory_DestroyRef),
             pair("BasicVoxelEngine.Graphics.Factory::CreateTexture_Native", BasicVoxelEngine_Graphics_Factory_CreateTexture),

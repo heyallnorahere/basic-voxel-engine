@@ -1,3 +1,4 @@
+using BasicVoxelEngine.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -186,6 +187,28 @@ namespace BasicVoxelEngine.ContentLoading
             }
             derivedBase = null;
             return false;
+        }
+        internal static void LoadRegisteredObjectsGeneric<T>(Factory factory) where T : RegisteredObject<T>
+        {
+            var register = Registry.GetRegister<T>();
+            for (int i = 0; i < register.Count; i++)
+            {
+                var namespacedName = register.GetNamespacedName(i);
+                if (namespacedName != null)
+                {
+                    register[i].DoLoad(factory, (NamespacedName)namespacedName);
+                }
+            }
+        }
+        internal static void LoadRegisteredObjects()
+        {
+            Factory factory = Application.Factory;
+            foreach (Type type in Registry.UsedRegisterTypes)
+            {
+                var loadObjectsBase = typeof(ContentLoader).GetMethod("LoadRegisteredObjectsGeneric", BindingFlags.NonPublic | BindingFlags.Static);
+                var loadObjects = loadObjectsBase?.MakeGenericMethod(new Type[] { type });
+                loadObjects?.Invoke(null, new object[] { factory });
+            }
         }
     }
 }

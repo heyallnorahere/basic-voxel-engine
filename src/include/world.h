@@ -1,5 +1,4 @@
 #pragma once
-#include "registry.h"
 namespace bve {
     template<glm::length_t L, typename T> struct hash_vector {
         using vector = glm::vec<L, T>;
@@ -42,9 +41,7 @@ namespace bve {
         void update();
         entity create();
         void on_block_changed(on_block_changed_callback callback);
-        void get_block(glm::ivec3 position, namespaced_name& block_type);
         void get_block(glm::ivec3 position, size_t& block_type);
-        void set_block(glm::ivec3 position, const namespaced_name& block_type);
         void set_block(glm::ivec3 position, size_t block_type);
         std::vector<entity> get_cameras();
         std::vector<glm::ivec3> get_set_blocks();

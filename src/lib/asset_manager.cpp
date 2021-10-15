@@ -1,6 +1,6 @@
 #include "bve_pch.h"
 #include "asset_manager.h"
-#include "block.h"
+#include "code_host.h"
 namespace bve {
     asset_manager& asset_manager::get() {
         static asset_manager instance;
@@ -38,24 +38,44 @@ namespace bve {
         }
         return asset_path;
     }
-
+    struct namespaced_name {
+        MonoString* namespace_name;
+        MonoString* local_name;
+    };
     ref<texture_atlas> asset_manager::create_texture_atlas(ref<graphics::object_factory> object_factory) {
         using texture_data = texture_atlas::texture_data;
 
         // For each type of block, look for an image based on the block name. 
         // Load and collect all of those images and use them to initialize a texture atlas.
-        object_register<block>& block_register = registry::get().get_register<block>();
-        std::vector<namespaced_name> register_names = block_register.get_names();
-        std::vector<std::pair<namespaced_name, texture_data>> textures;
-        for (const auto& name : register_names) {
-            ref<block> block_ = block_register[name];
+        auto host = code_host::current();
+        auto block_class = host->find_class("BasicVoxelEngine.Block");
+        auto block_type = managed::type::get_type(block_class)->get_object();
+        auto helpers_class = host->find_class("BasicVoxelEngine.Helpers");
+        auto getregister = helpers_class->get_method("*:GetRegister");
+        auto register_object = managed::class_::invoke(getregister, block_type);
+        auto register_class = managed::class_::get_class(register_object);
+        auto count_property = register_class->get_property("Count");
+        int32_t count = register_object->get(count_property)->unbox<int32_t>();
+        auto getnamespacedname = register_class->get_method("*:GetNamespacedName(int)");
+        std::unordered_map<size_t, std::string> register_names;
+        MonoDomain* domain = host->get_domain();
+        for (int32_t i = 0; i < count; i++) {
+            auto name = register_object->invoke(getnamespacedname, &i)->unbox<namespaced_name>();
+            auto string_object = ref<managed::object>::create((MonoObject*)name.namespace_name, domain);
+            std::string namespace_name = string_object->get_string();
+            string_object = ref<managed::object>::create((MonoObject*)name.local_name, domain);
+            std::string local_name = string_object->get_string();
+            register_names.insert({ (size_t)i, namespace_name + ":" + local_name });
+        }
+        std::vector<std::pair<size_t, texture_data>> textures;
+        for (const auto& [id, name] : register_names) {
             // For now, we only have a single texture per block
-            auto path = this->get_asset_path("block:" + name.get_full_name() + ".png");
+            auto path = this->get_asset_path("block:" + name + ".png");
             texture_data data;
             if (!graphics::texture::load_image(path, data.data, data.width, data.height, data.channels)) {
                 continue;
             }
-            textures.push_back({ name, data });
+            textures.push_back({ id, data });
         }
         return ref<texture_atlas>(new texture_atlas(textures, object_factory));
     }

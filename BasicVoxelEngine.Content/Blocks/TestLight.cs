@@ -1,6 +1,5 @@
 using BasicVoxelEngine.Graphics;
 using BasicVoxelEngine.Lighting;
-using System;
 
 namespace BasicVoxelEngine.Content.Blocks
 {

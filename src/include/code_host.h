@@ -18,9 +18,37 @@ namespace bve {
             object(const std::string& string, MonoDomain* domain);
             virtual ~object() override;
             ref<object> get(MonoClassField* field);
-            ref<object> get(MonoProperty* property);
+            template<typename... Args> ref<object> get(MonoProperty* property, Args*... args) {
+                MonoObject* _object = mono_gchandle_get_target(this->m_handle);
+                MonoObject* exc = nullptr;
+                std::vector<void*> args_vector = { std::forward<Args*>(args)... };
+                void** args_ptr = args_vector.empty() ? nullptr : args_vector.data();
+                MonoObject* value = mono_property_get_value(property, _object, args_ptr, &exc);
+                if (exc) {
+                    ref<object> exception = ref<object>::create(exc, this->get_domain());
+                    handle_exception(exception);
+                }
+                ref<object> returned_object;
+                if (value) {
+                    returned_object = ref<object>::create(value, this->get_domain());
+                }
+                return returned_object;
+            }
             void set(MonoClassField* field, void* value);
-            void set(MonoProperty* property, void* value);
+            template<typename... Args> void set(MonoProperty* property, void* value, Args*... args) {
+                MonoObject* _object = mono_gchandle_get_target(this->m_handle);
+                MonoObject* exc = nullptr;
+                std::vector<void*> args_vector = { value };
+                std::vector<void*> passed_args = { std::forward<Args*>(args)... };
+                for (void* passed_arg : passed_args) {
+                    args_vector.push_back(passed_arg);
+                }
+                mono_property_set_value(property, _object, args_vector.data(), &exc);
+                if (exc) {
+                    ref<object> exception = ref<object>::create(exc, this->get_domain());
+                    handle_exception(exception);
+                }
+            }
             std::string get_string();
             template<typename T> const T& unbox() {
                 MonoObject* _object = mono_gchandle_get_target(this->m_handle);

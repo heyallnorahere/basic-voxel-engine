@@ -1,7 +1,8 @@
 #include "bve_pch.h"
 #include "mesh_factory.h"
-#include "registry.h"
-#include "block.h"
+#include "code_host.h"
+#include "model.h"
+// todo: rework mesh generation
 namespace bve {
     struct vertex {
         glm::vec3 position, normal;
@@ -114,9 +115,49 @@ namespace bve {
     mesh_factory::mesh_factory(ref<world> _world) {
         this->m_world = _world;
     }
+    static ref<managed::object> get_block_register() {
+        auto host = code_host::current();
+        auto block_class = host->find_class("BasicVoxelEngine.Block");
+        auto block_type = managed::type::get_type(block_class)->get_object();
+        auto helpers_class = host->find_class("BasicVoxelEngine.Helpers");
+        auto getregister = helpers_class->get_method("*:GetRegister");
+        return managed::class_::invoke(getregister, block_type);
+    }
+    static ref<managed::object> get_block(ref<managed::object> block_register, size_t index) {
+        int32_t i = (int32_t)index;
+        auto register_class = managed::class_::get_class(block_register);
+        auto index_operator = register_class->get_property("Item");
+        return block_register->get(index_operator, &i);
+    }
+    static ref<lighting::light> get_block_light(ref<managed::object> block) {
+        auto block_class = managed::class_::get_class(block);
+        auto light_property = block_class->get_property("Light");
+        auto light_object = block->get(light_property);
+        ref<lighting::light> light;
+        if (light_object && light_object->get()) {
+            auto light_class = managed::class_::get_class(light_object);
+            auto address_field = light_class->get_field("mAddress");
+            auto ref_ptr = light_object->get(address_field)->unbox<void*>();
+            light = *(ref<lighting::light>*)ref_ptr;
+        }
+        return light;
+    }
+    static ref<model> get_block_model(ref<managed::object> block) {
+        auto block_class = managed::class_::get_class(block);
+        auto model_property = block_class->get_property("Model");
+        auto model_object = block->get(model_property);
+        ref<model> model_;
+        if (model_object && model_object->get()) {
+            auto model_class = managed::class_::get_class(model_object);
+            auto address_field = model_class->get_field("mNativeAddress");
+            auto ref_ptr = model_object->get(address_field)->unbox<void*>();
+            model_ = *(ref<model>*)ref_ptr;
+        }
+        return model_;
+    }
     std::vector<std::vector<mesh_factory::processed_voxel>> mesh_factory::get_clusters(std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights) {
         lights.clear();
-        auto& block_register = registry::get().get_register<block>();
+        auto block_register = get_block_register();
         std::vector<glm::ivec3> offsets = {
             glm::ivec3(-1, 0, 0), glm::ivec3(1, 0, 0),
             glm::ivec3(0, -1, 0), glm::ivec3(0, 1, 0),
@@ -130,8 +171,8 @@ namespace bve {
             if (block_id == 0) {
                 continue;
             }
-            ref<block> block_ = block_register[block_id];
-            ref<lighting::light> light = block_->get_light();
+            auto block = get_block(block_register, block_id);
+            ref<lighting::light> light = get_block_light(block);
             if (light) {
                 lights.push_back({ glm::vec3(position), light });
             }
@@ -166,12 +207,12 @@ namespace bve {
             0, 1, 3,
             1, 2, 3
         };
-        auto& block_register = registry::get().get_register<block>();
+        auto block_register = get_block_register();
         for (const auto& voxel : voxels) {
             size_t block_id;
             this->m_world->get_block(voxel.position, block_id);
-            ref<block> block_ = block_register[block_id];
-            ref<model> block_model = block_->get_model();
+            auto block = get_block(block_register, block_id);
+            ref<model> block_model = get_block_model(block);
             std::vector<vertex> voxel_vertices;
             if (block_model) {
                 size_t index_offset = vertices.size() + voxel_vertices.size();
@@ -191,8 +232,8 @@ namespace bve {
                         glm::ivec3 neighbor_position = voxel.position + pair.first;
                         size_t neighbor_block_id;
                         this->m_world->get_block(neighbor_position, neighbor_block_id);
-                        ref<block> neighbor = block_register[neighbor_block_id];
-                        ref<model> neighbor_model = neighbor->get_model();
+                        auto neighbor = get_block(block_register, neighbor_block_id);
+                        ref<model> neighbor_model = get_block_model(neighbor);
                         if (!neighbor_model) {
                             continue;
                         }

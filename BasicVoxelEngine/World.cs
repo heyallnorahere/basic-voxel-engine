@@ -33,7 +33,12 @@ namespace BasicVoxelEngine
         }
         public void SetBlock(Vector3I position, Block block)
         {
-            SetBlock(position, block.Index ?? throw new ArgumentException($"{block.FriendlyName} is not registered!"));
+            int index = block.RegisterIndex;
+            if (index < 0)
+            {
+                throw new ArgumentException($"{block.FriendlyName} is not registered!");
+            }
+            SetBlock(position, index);
         }
         public void SetBlock(Vector3I position, int index)
         {
