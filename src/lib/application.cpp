@@ -92,12 +92,6 @@ namespace bve {
     }
     void application::render() {
         this->m_renderer->set_shader(this->m_shaders["static"]);
-        auto cmdlist = this->m_renderer->create_command_list();
-        for (auto& mesh_ : this->m_meshes) {
-            this->m_renderer->add_mesh(cmdlist, mesh_);
-        }
-        this->m_renderer->add_lights(cmdlist, this->m_lights);
-        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes());
 
         // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();
@@ -114,12 +108,19 @@ namespace bve {
         }
         if (main_camera) {
             glm::vec2 size = glm::vec2(this->m_window->get_framebuffer_size());
-            this->m_renderer->set_camera_data(*main_camera, size.x / size.y);
+            float aspect_ratio = size.x / size.y;
+            components::camera_component::calculate(*main_camera, this->m_object_factory->get_graphics_api(), aspect_ratio, this->m_projection, this->m_view);
+            const auto& transform = main_camera->get_component<components::transform_component>();
+            this->m_camera_position = transform.translation;
         }
+        this->m_renderer->new_frame();
         this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
-        this->m_renderer->render(cmdlist, this->m_window->get_context(), this->m_atlas);
+        this->render_terrain();
         this->m_window->swap_buffers();
-        this->m_renderer->destroy_command_list(cmdlist);
+        for (auto cmdlist : this->m_rendered_command_lists) {
+            this->m_renderer->destroy_command_list(cmdlist);
+        }
+        this->m_rendered_command_lists.clear();
     }
     void application::load_assemblies() {
         std::vector<fs::path> assembly_paths = {
@@ -142,5 +143,66 @@ namespace bve {
         for (const auto& pair : code_host::get_script_wrappers()) {
             this->m_code_host->register_function(pair.first, pair.second);
         }
+    }
+    using set_field_callback = std::function<void(const std::string&, const void*, size_t)>;
+    static void set_atlas_data(const texture_atlas::uniform_data& data, set_field_callback set_field) {
+        std::string base_name = "texture_atlas";
+        set_field(base_name + ".image", &data.image, sizeof(int32_t));
+        set_field(base_name + ".texture_size", &data.texture_size, sizeof(glm::ivec2));
+        set_field(base_name + ".grid_size", &data.grid_size, sizeof(glm::ivec2));
+        for (size_t i = 0; i < 64; i++) {
+            std::string entry_name = base_name + ".texture_dimensions[" + std::to_string(i) + "]";
+            set_field(entry_name + ".grid_position", &data.texture_dimensions[i].grid_position, sizeof(glm::ivec2));
+            set_field(entry_name + ".texture_dimensions", &data.texture_dimensions[i].texture_dimensions, sizeof(glm::ivec2));
+        }
+    }
+    void application::render_terrain() {
+        auto atlas_uniform_data = this->m_atlas->get_uniform_data();
+        this->m_renderer->set_texture(atlas_uniform_data.image, this->m_atlas->get_texture());
+        if (this->m_lights.size() > 30) {
+            throw std::runtime_error("[application] scene cannot contain more than 30 lights!");
+        }
+        auto reflection_data = this->m_shaders["static"]->get_reflection_data();
+        auto set_field = [reflection_data, this](const std::string& name, const void* data, size_t size, uint32_t uniform_buffer) mutable {
+            auto type = reflection_data.uniform_buffers[uniform_buffer].type;
+            size_t offset = type->find_offset(name);
+            auto& buffers = this->m_renderer->get_uniform_buffers();
+            buffers[uniform_buffer].copy(data, size, offset);
+        };
+        set_field("projection", &this->m_projection, sizeof(glm::mat4), 0);
+        set_field("view", &this->m_view, sizeof(glm::mat4), 0);
+        int32_t light_count = (int32_t)this->m_lights.size();
+        set_field("light_count", &light_count, sizeof(int32_t), 1);
+        std::vector<lighting::light::uniform_data> light_uniform_data;
+        for (auto light : this->m_lights) {
+            auto light_data = light.second->get_uniform_data();
+            light_data.position = light.first;
+            light_uniform_data.push_back(light_data);
+        }
+        for (int32_t i = 0; i < light_count; i++) {
+            std::string light_name = "lights[" + std::to_string(i) + "]";
+            const auto& light_data = light_uniform_data[i];
+            set_field(light_name + ".type", &light_data.type, sizeof(int32_t), 1);
+            set_field(light_name + ".position", &light_data.position, sizeof(glm::vec3), 1);
+            set_field(light_name + ".color", &light_data.color, sizeof(glm::vec3), 1);
+            set_field(light_name + ".ambient_strength", &light_data.ambient_strength, sizeof(float), 1);
+            set_field(light_name + ".specular_strength", &light_data.specular_strength, sizeof(float), 1);
+            set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1);
+            set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1);
+            set_field(light_name + ".constant", &light_data.constant, sizeof(float), 1);
+            set_field(light_name + ".linear_", &light_data.linear_, sizeof(float), 1);
+            set_field(light_name + ".quadratic", &light_data.quadratic, sizeof(float), 1);
+        }
+        set_atlas_data(atlas_uniform_data, [set_field, this](const std::string& name, const void* data, size_t size) mutable {
+            set_field(name, data, size, 1);
+        });
+        set_field("camera_position", &this->m_camera_position, sizeof(glm::vec3), 1);
+        auto cmdlist = this->m_renderer->create_command_list();
+        for (auto& mesh_ : this->m_meshes) {
+            this->m_renderer->add_mesh(cmdlist, mesh_);
+        }
+        this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes());
+        this->m_renderer->render(cmdlist, this->m_window->get_context());
+        this->m_rendered_command_lists.push_back(cmdlist);
     }
 }

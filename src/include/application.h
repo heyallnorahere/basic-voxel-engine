@@ -30,6 +30,7 @@ namespace bve {
         void update();
         void render();
         void load_assemblies();
+        void render_terrain();
         ref<world> m_world;
         ref<renderer> m_renderer;
         ref<input_manager> m_input_manager;
@@ -42,5 +43,8 @@ namespace bve {
         std::vector<ref<mesh>> m_meshes;
         bool m_running;
         double m_delta_time, m_last_frame;
+        glm::mat4 m_projection, m_view;
+        glm::vec3 m_camera_position;
+        std::vector<command_list*> m_rendered_command_lists;
     };
 }

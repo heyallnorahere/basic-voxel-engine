@@ -16,16 +16,6 @@ namespace bve {
     };
     class renderer : public ref_counted {
     public:
-        // see /src/assets/shaders/static.glsl
-        struct vertex_uniform_buffer_t {
-            glm::mat4 projection, view;
-        };
-        struct fragment_uniform_buffer_t {
-            lighting::light::uniform_data lights[30];
-            int32_t light_count;
-            texture_atlas::uniform_data texture_atlas_;
-            glm::vec3 camera_position;
-        };
         static const size_t max_texture_units = 30;
         renderer(ref<graphics::object_factory> factory);
         renderer(const renderer&) = delete;
@@ -33,21 +23,18 @@ namespace bve {
         command_list* create_command_list();
         void destroy_command_list(command_list* cmdlist);
         void add_mesh(command_list* cmdlist, ref<mesh> mesh_);
-        void add_lights(command_list* cmdlist, const std::vector<std::pair<glm::vec3, ref<lighting::light>>>& lights);
         void close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes);
-        void render(command_list* cmdlist, ref<graphics::context> context, ref<texture_atlas> atlas = nullptr);
-        void set_camera_data(glm::vec3 position, glm::vec3 direction, float aspect_ratio, glm::vec3 up = glm::vec3(0.f, 1.f, 0.f), float near_plane = 0.1f, float far_plane = 100.f);
-        void set_camera_data(entity camera_entity, float aspect_ratio);
+        void new_frame();
+        void render(command_list* cmdlist, ref<graphics::context> context);
         void set_shader(ref<graphics::shader> shader_);
+        void set_texture(size_t index, ref<graphics::texture> texture) { this->m_textures[index] = texture; }
+        std::map<uint32_t, buffer>& get_uniform_buffers() { return this->m_uniform_buffers; }
     private:
-        void set_uniform_data();
         ref<graphics::object_factory> m_factory;
-        ref<graphics::uniform_buffer> m_vertex_uniform_buffer, m_fragment_uniform_buffer;
-        buffer m_vertex_uniform_data, m_fragment_uniform_data;
         std::array<ref<graphics::texture>, max_texture_units> m_textures;
+        std::map<uint32_t, buffer> m_uniform_buffers;
         ref<graphics::texture> m_placeholder_texture;
         ref<graphics::shader> m_current_shader;
-        vertex_uniform_buffer_t m_vub_data;
-        fragment_uniform_buffer_t m_fub_data;
+        std::vector<ref<graphics::uniform_buffer>> m_created_uniform_buffers;
     };
 }

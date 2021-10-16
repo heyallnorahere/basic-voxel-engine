@@ -1,6 +1,7 @@
 #pragma once
 #include "code_host.h"
 #include "world.h"
+#include "graphics/object_factory.h"
 namespace bve {
     namespace components {
         struct transform_component {
@@ -27,6 +28,16 @@ namespace bve {
             camera_component() = default;
             camera_component(const camera_component&) = default;
             camera_component& operator=(const camera_component&) = default;
+            static void calculate(entity ent, graphics::graphics_api graphics_api, float aspect_ratio, glm::mat4& projection, glm::mat4& view) {
+                const auto& camera = ent.get_component<camera_component>();
+                const auto& transform = ent.get_component<transform_component>();
+                projection = glm::perspective(glm::radians(45.f), aspect_ratio, camera.near_plane, camera.far_plane);
+                if (graphics_api != graphics::graphics_api::OPENGL) {
+                    // i have no idea why i have to do this but it renders upside-down if i don't
+                    projection[1][1] *= -1.f;
+                }
+                view = glm::lookAt(transform.translation, transform.translation + camera.direction, camera.up);
+            }
         };
         struct script_component {
             struct script {
