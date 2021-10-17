@@ -13,6 +13,7 @@ namespace BasicVoxelEngine
         {
             Destroy_Native(mAddress);
         }
+        public Entity CreateEntity() => new Entity(CreateEntity_Native(mAddress), this);
         public Block GetBlock(Vector3I position)
         {
             int index;
@@ -67,6 +68,8 @@ namespace BasicVoxelEngine
         private static extern void SetBlock_Native(IntPtr address, Vector3I position, int index);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void AddOnBlockChangedCallback_Native(IntPtr address, Delegate callback);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern uint CreateEntity_Native(IntPtr address);
         internal readonly IntPtr mAddress;
     }
 }

@@ -297,6 +297,10 @@ namespace bve {
                 delegate_copy->invoke(&position, instance->get());
             });
         }
+        uint BasicVoxelEngine_World_CreateEntity(IntPtr address) {
+            auto _world = get_world_ref(address);
+            return (uint32_t)_world->create();
+        }
 
         template<typename T> void* add_component(entity ent) {
             return &ent.add_component<T>();
@@ -414,7 +418,7 @@ namespace bve {
             ((components::camera_component*)address)->far_plane = value;
         }
 
-        object BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address) {
+        MonoObject* BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address) {
             auto& script_component = *(components::script_component*)address;
             MonoDomain* domain = mono_domain_get();
             auto script_type = ref<managed::type>::create(type, domain)->get_class();
@@ -444,6 +448,12 @@ namespace bve {
                 free(ptr);
             }
             return (MonoObject*)script.script_object->get();
+        }
+        int32_t BasicVoxelEngine_Components_ScriptComponent_GetScriptCount(IntPtr address) {
+            return (int32_t)((components::script_component*)address)->scripts.size();
+        }
+        MonoObject* BasicVoxelEngine_Components_ScriptComponent_GetScript(int32_t index, IntPtr address) {
+            return (MonoObject*)((components::script_component*)address)->scripts[(size_t)index].script_object->get();
         }
 
         static ref<input_manager> get_input_manager(void* address) {

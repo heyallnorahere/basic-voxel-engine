@@ -96,7 +96,7 @@ namespace BasicVoxelEngine.Content.Scripts
         }
         private void LeftClick()
         {
-            var stack = mInventory[(InventoryWidth * InventoryHeight) + mHotbarIndex];
+            var stack = mInventory[GetInventoryIndex(mHotbarIndex, InventoryHeight)];
             if (stack != null)
             {
                 Logger.Print(Logger.Severity.Info, "Currently selected item: {0}", stack.Item.FriendlyName);

@@ -72,6 +72,7 @@ namespace bve {
         int32_t BasicVoxelEngine_World_GetBlock(IntPtr address, Vector3I position);
         void BasicVoxelEngine_World_SetBlock(IntPtr address, Vector3I position, int32_t index);
         void BasicVoxelEngine_World_AddOnBlockChangedCallback(IntPtr address, MonoObject* callback);
+        uint BasicVoxelEngine_World_CreateEntity(IntPtr address);
 
         object BasicVoxelEngine_Entity_AddComponent(uint id, IntPtr world, Type type);
         object BasicVoxelEngine_Entity_GetComponent(uint id, IntPtr world, Type type);
@@ -97,7 +98,9 @@ namespace bve {
         float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
         void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
 
-        object BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address);
+        MonoObject* BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address);
+        int32_t BasicVoxelEngine_Components_ScriptComponent_GetScriptCount(IntPtr address);
+        MonoObject* BasicVoxelEngine_Components_ScriptComponent_GetScript(int32_t index, IntPtr address);
 
         void BasicVoxelEngine_InputManager_DestroyRef(IntPtr address);
         bool BasicVoxelEngine_InputManager_GetMouseEnabled(IntPtr address);

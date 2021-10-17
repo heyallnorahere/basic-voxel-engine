@@ -270,6 +270,7 @@ namespace bve {
             pair("BasicVoxelEngine.World::GetBlock_Native", BasicVoxelEngine_World_GetBlock),
             pair("BasicVoxelEngine.World::SetBlock_Native", BasicVoxelEngine_World_SetBlock),
             pair("BasicVoxelEngine.World::AddOnBlockChangedCallback_Native", BasicVoxelEngine_World_AddOnBlockChangedCallback),
+            pair("BasicVoxelEngine.World::CreateEntity_Native", BasicVoxelEngine_World_CreateEntity),
 
             pair("BasicVoxelEngine.Entity::AddComponent_Native", BasicVoxelEngine_Entity_AddComponent),
             pair("BasicVoxelEngine.Entity::GetComponent_Native", BasicVoxelEngine_Entity_GetComponent),
@@ -296,6 +297,8 @@ namespace bve {
             pair("BasicVoxelEngine.Components.CameraComponent::SetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetFarPlane),
 
             pair("BasicVoxelEngine.Components.ScriptComponent::Bind_Native", BasicVoxelEngine_Components_ScriptComponent_Bind),
+            pair("BasicVoxelEngine.Components.ScriptComponent::GetScriptCount_Native", BasicVoxelEngine_Components_ScriptComponent_GetScriptCount),
+            pair("BasicVoxelEngine.Components.ScriptComponent::GetScript_Native", BasicVoxelEngine_Components_ScriptComponent_GetScript),
 
             pair("BasicVoxelEngine.InputManager::DestroyRef_Native", BasicVoxelEngine_InputManager_DestroyRef),
             pair("BasicVoxelEngine.InputManager::GetMouseEnabled_Native", BasicVoxelEngine_InputManager_GetMouseEnabled),
