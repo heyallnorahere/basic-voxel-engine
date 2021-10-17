@@ -233,6 +233,7 @@ namespace bve {
             pair("BasicVoxelEngine.Graphics.Factory::CreateTexture_Native", BasicVoxelEngine_Graphics_Factory_CreateTexture),
             pair("BasicVoxelEngine.Graphics.Factory::CreateContext_Native", BasicVoxelEngine_Graphics_Factory_CreateContext),
             pair("BasicVoxelEngine.Graphics.Factory::CreateShader_Native", BasicVoxelEngine_Graphics_Factory_CreateShader),
+            pair("BasicVoxelEngine.Graphics.Factory::GetGraphicsAPI_Native", BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI),
 
             pair("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
             pair("BasicVoxelEngine.Model::DestroyRef_Native", BasicVoxelEngine_Model_DestroyRef),

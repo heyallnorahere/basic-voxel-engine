@@ -18,7 +18,15 @@ namespace BasicVoxelEngine.Content.Scripts
             Factory factory = Application.Factory;
             mShader = factory.CreateShader(new string[] { AssetManager.GetAssetPath("shaders:ui.glsl") });
         }
-        private Vector2 ConvertCoords(Vector2 coords) => (coords - 0.5f) * 2f;
+        private Vector2 ConvertCoords(Vector2 coords)
+        {
+            Vector2 newCoords = coords;
+            if (Application.Factory.API == GraphicsAPI.OPENGL)
+            {
+                newCoords.Y = 1f - newCoords.Y;
+            }
+            return (newCoords - 0.5f) * 2f;
+        }
         public override void DrawQuad(Texture texture, Vector2I origin, Vector2I size)
         {
             Texture key = texture;

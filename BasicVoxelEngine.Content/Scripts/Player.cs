@@ -56,11 +56,10 @@ namespace BasicVoxelEngine.Content.Scripts
                     Vector2I windowSize = Application.Window.FramebufferSize;
                     var origin = new Vector2I
                     {
-                        X = (windowSize.X - size.X * 3) / 2,
+                        X = (windowSize.X - size.X) / 2,
                         Y = windowSize.Y - size.Y
                     };
                     uiController.DrawQuad(image, origin, size);
-                    uiController.DrawQuad(image, origin + new Vector2I(size.X * 2, 0), size);
                 }
             }
         }

@@ -4,6 +4,11 @@ using System.Runtime.CompilerServices;
 
 namespace BasicVoxelEngine.Graphics
 {
+    public enum GraphicsAPI
+    {
+        OPENGL = 1 << 0,
+        VULKAN = 1 << 1
+    }
     internal sealed class ShaderSourceList
     {
         public ShaderSourceList(IEnumerable<string> paths)
@@ -33,6 +38,7 @@ namespace BasicVoxelEngine.Graphics
         public Texture CreateTexture(string path) => CreateTexture(ImageData.Load(path));
         public Context CreateContext() => new Context(CreateContext_Native(mNativeAddress));
         public Shader CreateShader(IEnumerable<string> paths) => new Shader(CreateShader_Native(mNativeAddress, new ShaderSourceList(paths)));
+        public GraphicsAPI API => GetGraphicsAPI_Native(mNativeAddress);
         internal readonly IntPtr mNativeAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
@@ -42,5 +48,7 @@ namespace BasicVoxelEngine.Graphics
         private static extern IntPtr CreateContext_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr CreateShader_Native(IntPtr address, ShaderSourceList sourceList);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern GraphicsAPI GetGraphicsAPI_Native(IntPtr address);
     }
 }

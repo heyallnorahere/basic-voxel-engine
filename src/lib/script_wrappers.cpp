@@ -128,6 +128,10 @@ namespace bve {
             auto shader = factory->create_shader(sources);
             return new ref<graphics::shader>(shader);
         }
+        graphics::graphics_api BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI(IntPtr address) {
+            auto factory = get_factory_ref(address);
+            return factory->get_graphics_api();
+        }
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory) {
             fs::path native_path = get_string(path);

@@ -35,6 +35,7 @@ namespace bve {
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateTexture(IntPtr address, MonoObject* imageData);
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateContext(IntPtr address);
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateShader(IntPtr address, MonoObject* sourceList);
+        graphics::graphics_api BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI(IntPtr address);
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory);
         void BasicVoxelEngine_Model_DestroyRef(IntPtr address);
