@@ -147,6 +147,7 @@ namespace BasicVoxelEngine.ContentLoading
                     registerMethod.Invoke(register, new object[] { verifiedPair.Key, verifiedPair.Value });
                 }
             }
+            loaders.Sort((a, b) => ((a.GetType().Assembly.FullName ?? string.Empty) == "BasicVoxelEngine.Content") ? -1 : 0);
             foreach (var loader in loaders)
             {
                 loader.OnLoaded();

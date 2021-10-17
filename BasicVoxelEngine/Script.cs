@@ -3,7 +3,8 @@ namespace BasicVoxelEngine
     public abstract class Script
     {
         public virtual void OnAttach() { }
-        public abstract void Update();
+        public virtual void Update() { }
+        public virtual void Render(Renderer renderer) { }
         public Entity Parent { get; internal set; } = new Entity();
         protected T AddComponent<T>()
         {

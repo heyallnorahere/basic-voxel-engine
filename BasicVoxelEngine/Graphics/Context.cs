@@ -15,7 +15,7 @@ namespace BasicVoxelEngine.Graphics
         }
         public void MakeCurrent() => MakeCurrent_Native(mAddress);
         public void DrawIndexed(int indexCount) => DrawIndexed_Native(mAddress, indexCount);
-        private readonly IntPtr mAddress;
+        internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]

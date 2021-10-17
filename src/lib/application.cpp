@@ -89,6 +89,10 @@ namespace bve {
         this->m_last_frame = current_frame;
         this->m_input_manager->update();
         this->m_world->update();
+        for (entity ent : this->m_world->get_scripted_entities()) {
+            auto& script_component = ent.get_component<components::script_component>();
+            script_component.update();
+        }
     }
     void application::render() {
         this->m_renderer->set_shader(this->m_shaders["static"]);
@@ -115,7 +119,16 @@ namespace bve {
         }
         this->m_renderer->new_frame();
         this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
+
+        // render static blocks
         this->render_terrain();
+
+        // render entities and ui
+        for (entity ent : this->m_world->get_scripted_entities()) {
+            auto& script_component = ent.get_component<components::script_component>();
+            script_component.render(this->m_renderer);
+        }
+
         this->m_window->swap_buffers();
         for (auto cmdlist : this->m_rendered_command_lists) {
             this->m_renderer->destroy_command_list(cmdlist);

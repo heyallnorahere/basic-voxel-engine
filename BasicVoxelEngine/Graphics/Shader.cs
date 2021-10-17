@@ -31,7 +31,7 @@ namespace BasicVoxelEngine.Graphics
             Get_Native(mAddress, name, returnValue, typeof(T));
             return (T?)returnValue.Data;
         }
-        private readonly IntPtr mAddress;
+        internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]

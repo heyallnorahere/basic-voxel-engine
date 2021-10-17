@@ -44,6 +44,7 @@ namespace bve {
         void get_block(glm::ivec3 position, size_t& block_type);
         void set_block(glm::ivec3 position, size_t block_type);
         std::vector<entity> get_cameras();
+        std::vector<entity> get_scripted_entities();
         std::vector<glm::ivec3> get_set_blocks();
     private:
         template<typename T> void on_component_added(T& component, entity ent);

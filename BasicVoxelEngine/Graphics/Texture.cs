@@ -60,7 +60,7 @@ namespace BasicVoxelEngine.Graphics
         }
         public Vector2I Size => GetSize_Native(mAddress);
         public int Channels => GetChannels_Native(mAddress);
-        private readonly IntPtr mAddress;
+        internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]

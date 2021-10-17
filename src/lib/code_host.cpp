@@ -317,6 +317,20 @@ namespace bve {
             pair("BasicVoxelEngine.Graphics.Context::DestroyRef_Native", BasicVoxelEngine_Graphics_Context_DestroyRef),
             pair("BasicVoxelEngine.Graphics.Context::MakeCurrent_Native", BasicVoxelEngine_Graphics_Context_MakeCurrent),
             pair("BasicVoxelEngine.Graphics.Context::DrawIndexed_Native", BasicVoxelEngine_Graphics_Context_DrawIndexed),
+
+            pair("BasicVoxelEngine.Mesh::AllocVertexBuffer_Native", BasicVoxelEngine_Mesh_AllocVertexBuffer),
+            pair("BasicVoxelEngine.Mesh::CopyVertex_Native", BasicVoxelEngine_Mesh_CopyVertex),
+            pair("BasicVoxelEngine.Mesh::FreeVertexBuffer_Native", BasicVoxelEngine_Mesh_FreeVertexBuffer),
+
+            pair("BasicVoxelEngine.CommandList::Create_Native", BasicVoxelEngine_CommandList_Create),
+            pair("BasicVoxelEngine.CommandList::Destroy_Native", BasicVoxelEngine_CommandList_Destroy),
+            pair("BasicVoxelEngine.CommandList::AddMesh_Native", BasicVoxelEngine_CommandList_AddMesh),
+            pair("BasicVoxelEngine.CommandList::Close_Native", BasicVoxelEngine_CommandList_Close),
+
+            pair("BasicVoxelEngine.Renderer::DestroyRef_Native", BasicVoxelEngine_Renderer_DestroyRef),
+            pair("BasicVoxelEngine.Renderer::Render_Native", BasicVoxelEngine_Renderer_Render),
+            pair("BasicVoxelEngine.Renderer::SetShader_Native", BasicVoxelEngine_Renderer_SetShader),
+            pair("BasicVoxelEngine.Renderer::SetTexture_Native", BasicVoxelEngine_Renderer_SetTexture),
         };
     }
     static ref<code_host> current_code_host;

@@ -18,12 +18,7 @@ namespace bve {
         managed::class_::invoke(generate, world_instance->get(), &seed);
     }
     void world::update() {
-        auto script_view = this->m_registry.view<components::script_component>();
-        script_view.each([](components::script_component& sc) {
-            for (auto& script : sc.scripts) {
-                script.update();
-            }
-        });
+        // todo: update blocks
     }
     entity world::create() {
         entity ent = entity(this->m_registry.create(), this);
@@ -67,6 +62,14 @@ namespace bve {
         auto camera_view = this->m_registry.view<components::camera_component>();
         std::vector<entity> entities;
         for (entt::entity ent : camera_view) {
+            entities.push_back(entity(ent, this));
+        }
+        return entities;
+    }
+    std::vector<entity> world::get_scripted_entities() {
+        auto script_view = this->m_registry.view<components::script_component>();
+        std::vector<entity> entities;
+        for (entt::entity ent : script_view) {
             entities.push_back(entity(ent, this));
         }
         return entities;

@@ -2,6 +2,7 @@
 #include "code_host.h"
 #include "world.h"
 #include "graphics/object_factory.h"
+#include "renderer.h"
 namespace bve {
     namespace components {
         struct transform_component {
@@ -49,6 +50,16 @@ namespace bve {
                         return;
                     }
                     this->script_object->invoke(method);
+                }
+                void render(ref<renderer> renderer_, ref<code_host> host) {
+                    MonoMethod* method = this->script_type->get_method("*:Render(Renderer)");
+                    if (!method) {
+                        return;
+                    }
+                    auto renderer_class = host->find_class("BasicVoxelEngine.Renderer");
+                    auto ptr = new ref<renderer>(renderer_);
+                    auto renderer_object = renderer_class->instantiate(&ptr);
+                    this->script_object->invoke(method, renderer_object->get());
                 }
                 void on_attach(entity ent, ref<code_host> host) {
                     ref<world>* ptr = new ref<world>(ent.get_world());
@@ -99,6 +110,16 @@ namespace bve {
                     throw std::runtime_error("[script component] no such class found");
                 }
                 return this->bind(script_type, std::forward<Args*>(args)...);
+            }
+            void update() {
+                for (auto& script : this->scripts) {
+                    script.update();
+                }
+            }
+            void render(ref<renderer> renderer_) {
+                for (auto& script : this->scripts) {
+                    script.render(renderer_, this->host);
+                }
             }
         };
     }

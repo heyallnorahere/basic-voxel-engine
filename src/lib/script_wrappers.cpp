@@ -591,5 +591,118 @@ namespace bve {
             auto context = get_context_ref(address);
             context->draw_indexed((size_t)indexCount);
         }
+
+        IntPtr BasicVoxelEngine_Mesh_AllocVertexBuffer(int32_t totalSize) {
+            return malloc((size_t)totalSize);
+        }
+        void BasicVoxelEngine_Mesh_CopyVertex(IntPtr buffer, int32_t index, int32_t stride, void* address) {
+            size_t offset = (size_t)index * (size_t)stride;
+            void* destination = (void*)((size_t)buffer + offset);
+            memcpy(destination, address, (size_t)stride);
+        }
+        void BasicVoxelEngine_Mesh_FreeVertexBuffer(IntPtr address) {
+            free(address);
+        }
+
+        class managed_mesh : public mesh {
+        public:
+            managed_mesh(ref<managed::object> mesh_object) {
+                this->m_object = mesh_object;
+                this->m_class = managed::class_::get_class(this->m_object);
+            }
+            virtual ~managed_mesh() override = default;
+            virtual const void* vertex_buffer_data() const override {
+                auto field = this->m_class->get_field("mVertexBuffer");
+                return this->m_object->get(field)->unbox<void*>();
+            }
+            virtual size_t vertex_buffer_data_size() const override {
+                auto field = this->m_class->get_field("mVertexSize");
+                size_t vertex_size = (size_t)this->m_object->get(field)->unbox<int32_t>();
+                return vertex_size * this->vertex_count();
+            }
+            virtual size_t vertex_count() const override {
+                auto field = this->m_class->get_field("mVertexCount");
+                return (size_t)this->m_object->get(field)->unbox<int32_t>();
+            }
+            virtual std::vector<uint32_t> index_buffer_data() const override {
+                auto field = this->m_class->get_field("mIndices");
+                auto indices_list = this->m_object->get(field);
+                std::vector<uint32_t> indices;
+                if (indices_list && indices_list->get()) {
+                    auto uint_list_class = managed::class_::get_class(indices_list);
+                    auto property = uint_list_class->get_property("Count");
+                    int32_t count = indices_list->get(property)->unbox<int32_t>();
+                    property = uint_list_class->get_property("Item");
+                    for (int32_t i = 0; i < count; i++) {
+                        uint32_t index = indices_list->get(property, &i)->unbox<uint32_t>();
+                        indices.push_back(index);
+                    }
+                }
+                return indices;
+            }
+        private:
+            mutable ref<managed::object> m_object;
+            mutable ref<managed::class_> m_class;
+        };
+        struct managed_vertex_attribute {
+            int32_t stride, offset, type;
+            bool normalized;
+        };
+        IntPtr BasicVoxelEngine_CommandList_Create(IntPtr rendererAddress) {
+            auto renderer_ = *(ref<renderer>*)rendererAddress;
+            return renderer_->create_command_list();
+        }
+        void BasicVoxelEngine_CommandList_Destroy(IntPtr address, IntPtr rendererAddress) {
+            auto renderer_ = *(ref<renderer>*)rendererAddress;
+            renderer_->destroy_command_list((command_list*)address);
+        }
+        void BasicVoxelEngine_CommandList_AddMesh(MonoObject* mesh, IntPtr address, IntPtr rendererAddress) {
+            MonoDomain* domain = mono_domain_get();
+            auto mesh_object = ref<managed::object>::create(mesh, domain);
+            auto renderer_ = *(ref<renderer>*)rendererAddress;
+            auto cmdlist = (command_list*)address;
+            renderer_->add_mesh(cmdlist, ref<managed_mesh>::create(mesh_object));
+        }
+        void BasicVoxelEngine_CommandList_Close(MonoObject* vertexAttributes, IntPtr address, IntPtr rendererAddress) {
+            MonoDomain* domain = mono_domain_get();
+            auto va_list = ref<managed::object>::create(vertexAttributes, domain);
+            auto va_list_class = managed::class_::get_class(va_list);
+            auto property = va_list_class->get_property("Count");
+            int32_t count = va_list->get(property)->unbox<int32_t>();
+            property = va_list_class->get_property("Item");
+            std::vector<graphics::vertex_attribute> vertex_attributes;
+            for (int32_t i = 0; i < count; i++) {
+                auto managed_va = va_list->get(property, &i)->unbox<managed_vertex_attribute>();
+                graphics::vertex_attribute va;
+                va.stride = (size_t)managed_va.stride;
+                va.offset = (size_t)managed_va.offset;
+                va.type = (graphics::vertex_attribute_type)managed_va.type;
+                va.normalize = managed_va.normalized;
+                vertex_attributes.push_back(va);
+            }
+            auto renderer_ = *(ref<renderer>*)rendererAddress;
+            auto cmdlist = (command_list*)address;
+            renderer_->close_command_list(cmdlist, vertex_attributes);
+        }
+
+        void BasicVoxelEngine_Renderer_DestroyRef(IntPtr address) {
+            delete (ref<renderer>*)address;
+        }
+        void BasicVoxelEngine_Renderer_Render(IntPtr commandListAddress, IntPtr contextAddress, IntPtr address) {
+            auto renderer_ = *(ref<renderer>*)address;
+            auto context = *(ref<graphics::context>*)contextAddress;
+            auto cmdlist = (command_list*)commandListAddress;
+            renderer_->render(cmdlist, context);
+        }
+        void BasicVoxelEngine_Renderer_SetShader(IntPtr shaderAddress, IntPtr address) {
+            auto renderer_ = *(ref<renderer>*)address;
+            auto shader = *(ref<graphics::shader>*)shaderAddress;
+            renderer_->set_shader(shader);
+        }
+        void BasicVoxelEngine_Renderer_SetTexture(int32_t index, IntPtr textureAddress, IntPtr address) {
+            auto renderer_ = *(ref<renderer>*)address;
+            auto texture = *(ref<graphics::texture>*)textureAddress;
+            renderer_->set_texture((size_t)index, texture);
+        }
     }
 }

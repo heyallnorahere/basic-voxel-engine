@@ -130,5 +130,19 @@ namespace bve {
         void BasicVoxelEngine_Graphics_Context_DestroyRef(IntPtr address);
         void BasicVoxelEngine_Graphics_Context_MakeCurrent(IntPtr address);
         void BasicVoxelEngine_Graphics_Context_DrawIndexed(IntPtr address, int32_t indexCount);
+
+        IntPtr BasicVoxelEngine_Mesh_AllocVertexBuffer(int32_t totalSize);
+        void BasicVoxelEngine_Mesh_CopyVertex(IntPtr buffer, int32_t index, int32_t stride, void* address);
+        void BasicVoxelEngine_Mesh_FreeVertexBuffer(IntPtr address);
+
+        IntPtr BasicVoxelEngine_CommandList_Create(IntPtr rendererAddress);
+        void BasicVoxelEngine_CommandList_Destroy(IntPtr address, IntPtr rendererAddress);
+        void BasicVoxelEngine_CommandList_AddMesh(MonoObject* mesh, IntPtr address, IntPtr rendererAddress);
+        void BasicVoxelEngine_CommandList_Close(MonoObject* vertexAttributes, IntPtr address, IntPtr rendererAddress);
+
+        void BasicVoxelEngine_Renderer_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Renderer_Render(IntPtr commandListAddress, IntPtr contextAddress, IntPtr address);
+        void BasicVoxelEngine_Renderer_SetShader(IntPtr shaderAddress, IntPtr address);
+        void BasicVoxelEngine_Renderer_SetTexture(int32_t index, IntPtr textureAddress, IntPtr address);
     }
 }
