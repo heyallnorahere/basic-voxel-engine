@@ -18,8 +18,6 @@ namespace BasicVoxelEngine.Content.Scripts
                 mInventory[i] = null;
             }
             mHotbarIndex = 0;
-            var itemRegister = Registry.GetRegister<Item>();
-            mInventory[GetInventoryIndex(0, InventoryHeight)] = new ItemStack(itemRegister.GetInstance<TestItem>());
         }
         public override void OnAttach()
         {
@@ -31,6 +29,18 @@ namespace BasicVoxelEngine.Content.Scripts
             uiControllerEntity.AddComponent<ScriptComponent>().Bind<UserInterfaceController>();
             uiControllerEntity.RemoveComponent<TransformComponent>();
             UIController.Instance = uiControllerEntity;
+            var itemRegister = Registry.GetRegister<Item>();
+            var hotbarItems = new Item[]
+            {
+                itemRegister.GetInstance<Grass>(),
+                itemRegister.GetInstance<Dirt>(),
+                itemRegister.GetInstance<TestLight>(),
+                itemRegister.GetInstance<TestItem>(),
+            };
+            for (int i = 0; i < (hotbarItems.Length > InventoryWidth ? InventoryWidth : hotbarItems.Length); i++)
+            {
+                mInventory[GetInventoryIndex(i, InventoryHeight)] = new ItemStack(hotbarItems[i]);
+            }
         }
         public override void Update()
         {
@@ -129,11 +139,11 @@ namespace BasicVoxelEngine.Content.Scripts
             var stack = mInventory[GetInventoryIndex(mHotbarIndex, InventoryHeight)];
             if (stack != null)
             {
-                Logger.Print(Logger.Severity.Info, "Currently selected item: {0}", stack.Item.FriendlyName);
+                stack.Item.LeftClick(Parent);
             }
             else
             {
-                Logger.Print(Logger.Severity.Info, "No item is currently selected!");
+                Item.Actions.Punch(Parent);
             }
         }
         private void RightClick()

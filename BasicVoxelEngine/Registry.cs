@@ -154,7 +154,7 @@ namespace BasicVoxelEngine
             }
             else
             {
-                throw new ArgumentException("No block of the given type was registered!");
+                throw new ArgumentException($"No object of type {typeof(T2)} was registered!");
             }
         }
         public int? GetIndex(NamespacedName namespacedName)
@@ -168,22 +168,23 @@ namespace BasicVoxelEngine
                 return null;
             }
         }
-        public int GetIndex<T2>() where T2 : T
+        public int GetIndex(Type type)
         {
-            if (typeof(T2) == typeof(T))
+            if (!type.DerivesFrom(typeof(T)))
             {
-                throw new ArgumentException("Cannot determine an index based off of base type!");
+                throw new ArgumentException($"The given type does not derive from {typeof(T)}");
             }
             for (int i = 0; i < Count; i++)
             {
                 T element = this[i];
-                if (element is T2)
+                if (element.GetType() == type)
                 {
                     return i;
                 }
             }
             return -1;
         }
+        public int GetIndex<T2>() where T2 : T => GetIndex(typeof(T2));
         public NamespacedName? GetNamespacedName(int index)
         {
             if (mIdMap.ContainsKey(index))
@@ -195,9 +196,9 @@ namespace BasicVoxelEngine
                 return null;
             }
         }
-        public bool GetNamespacedName<T2>(out NamespacedName? namespacedName) where T2 : T
+        public bool GetNamespacedName(Type type, out NamespacedName? namespacedName)
         {
-            int index = GetIndex<T2>();
+            int index = GetIndex(type);
             if (index != -1)
             {
                 namespacedName = GetNamespacedName(index);
@@ -209,18 +210,20 @@ namespace BasicVoxelEngine
                 return false;
             }
         }
-        public NamespacedName GetNamespacedName<T2>() where T2 : T
+        public bool GetNamespacedName<T2>(out NamespacedName? namespacedName) where T2 : T => GetNamespacedName(typeof(T2), out namespacedName);
+        public NamespacedName GetNamespacedName(Type type)
         {
             NamespacedName? namespacedName;
-            if (GetNamespacedName<T2>(out namespacedName))
+            if (GetNamespacedName(type, out namespacedName))
             {
-                return (NamespacedName)(namespacedName ?? throw new NullReferenceException());
+                return namespacedName ?? throw new NullReferenceException();
             }
             else
             {
                 throw new ArgumentException("Cannot find the name for an unregistered object!");
             }
         }
+        public NamespacedName GetNamespacedName<T2>() where T2 : T => GetNamespacedName(typeof(T2));
         public IEnumerator<T> GetEnumerator() => mItems.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         public int Count => mItems.Count;

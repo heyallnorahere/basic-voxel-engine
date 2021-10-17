@@ -40,7 +40,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="**\*.cs" />
+    <Compile Include="Blocks\Air.cs" />
+    <Compile Include="Blocks\TestLight.cs" />
+    <Compile Include="BVEContentLoader.cs" />
+    <Compile Include="Items\BlockItems.cs" />
+    <Compile Include="Items\TestItem.cs" />
+    <Compile Include="Scripts\Player.cs" />
+    <Compile Include="WorldGenSteps.cs" />
+    <Compile Include="Scripts\UserInterfaceController.cs" />
+    <Compile Include="Blocks\BasicBlocks.cs" />
     <Compile Remove="obj\**\*.cs" />
   </ItemGroup>
   <ItemGroup>

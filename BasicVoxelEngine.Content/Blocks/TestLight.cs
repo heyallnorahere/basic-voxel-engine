@@ -3,9 +3,10 @@ using BasicVoxelEngine.Lighting;
 
 namespace BasicVoxelEngine.Content.Blocks
 {
-    [AutoRegister("bve:test_light")]
+    [AutoRegister(RegisterName)]
     public class TestLight : Block
     {
+        public const string RegisterName = "bve:test_light";
         protected override void Load(Factory factory, NamespacedName namespacedName)
         {
             mLight = new PointLight
