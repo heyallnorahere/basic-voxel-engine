@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace BasicVoxelEngine
@@ -42,6 +43,8 @@ namespace BasicVoxelEngine
             }
             return false;
         }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool AreRefsEqual(IntPtr ref1, IntPtr ref2);
         public static float ToRadians(this float value)
         {
             return value / (float)Factor;

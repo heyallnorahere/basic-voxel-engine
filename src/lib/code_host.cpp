@@ -347,6 +347,8 @@ namespace bve {
             pair("BasicVoxelEngine.Renderer::Render_Native", BasicVoxelEngine_Renderer_Render),
             pair("BasicVoxelEngine.Renderer::SetShader_Native", BasicVoxelEngine_Renderer_SetShader),
             pair("BasicVoxelEngine.Renderer::SetTexture_Native", BasicVoxelEngine_Renderer_SetTexture),
+
+            pair("BasicVoxelEngine.Helpers::AreRefsEqual", BasicVoxelEngine_Helpers_AreRefsEqual),
         };
     }
     static ref<code_host> current_code_host;

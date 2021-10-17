@@ -11,12 +11,22 @@ namespace BasicVoxelEngine.Components
         }
         public Vector3 Direction
         {
-            get => GetDirection_Native(mAddress);
+            get
+            {
+                Vector3 direction;
+                GetDirection_Native(mAddress, out direction);
+                return direction;
+            }
             set => SetDirection_Native(mAddress, value);
         }
         public Vector3 Up
         {
-            get => GetUp_Native(mAddress);
+            get
+            {
+                Vector3 up;
+                GetUp_Native(mAddress, out up);
+                return up;
+            }
             set => SetUp_Native(mAddress, value);
         }
         public bool Primary
@@ -36,11 +46,11 @@ namespace BasicVoxelEngine.Components
         }
         private readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern Vector3 GetDirection_Native(IntPtr address);
+        private static extern void GetDirection_Native(IntPtr address, out Vector3 value);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void SetDirection_Native(IntPtr address, Vector3 value);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern Vector3 GetUp_Native(IntPtr address);
+        private static extern void GetUp_Native(IntPtr address, out Vector3 value);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void SetUp_Native(IntPtr address, Vector3 value);
         [MethodImpl(MethodImplOptions.InternalCall)]

@@ -83,7 +83,7 @@ namespace bve {
                 for (auto buffer : vulkan_uniform_buffer::get_active_uniform_buffers()) {
                     uint32_t binding = buffer->get_binding();
                     if (reflection_data.uniform_buffers.find(binding) == reflection_data.uniform_buffers.end()) {
-                        throw std::runtime_error("[vulkan context] invalid uniform buffer binding");
+                        continue;
                     }
                     const auto& buffer_info = reflection_data.uniform_buffers.find(binding)->second;
                     uint32_t descriptor_set = buffer_info.descriptor_set;
@@ -125,6 +125,9 @@ namespace bve {
                         write.pImageInfo = &texture->get_image_info();
                         descriptor_writes.push_back(write);
                     }
+                }
+                if (descriptor_writes.empty()) {
+                    return;
                 }
                 vkUpdateDescriptorSets(this->m_device, (uint32_t)descriptor_writes.size(), descriptor_writes.data(), 0, nullptr);
             }

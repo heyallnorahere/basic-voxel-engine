@@ -10,7 +10,7 @@ namespace BasicVoxelEngine.Content.Items
             mImage = factory.CreateTexture(AssetManager.GetAssetPath($"item:{namespacedName}.png"));
         }
         public override string FriendlyName => "Test item";
-        public override Texture Image => mImage;
+        public override Texture? Image => mImage;
         private Texture? mImage;
     }
 }

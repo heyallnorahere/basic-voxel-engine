@@ -1,5 +1,6 @@
 using BasicVoxelEngine.Components;
 using BasicVoxelEngine.Content.Items;
+using BasicVoxelEngine.Graphics;
 using System;
 
 namespace BasicVoxelEngine.Content.Scripts
@@ -26,12 +27,34 @@ namespace BasicVoxelEngine.Content.Scripts
             mCameraSensitivity = 0.1f;
             GetComponent<TransformComponent>().Translation = new Vector3(5f, 64f, 5f);
             AddComponent<CameraComponent>().Direction = new Vector3(-1f);
+            Entity uiControllerEntity = Parent.World.CreateEntity();
+            uiControllerEntity.AddComponent<ScriptComponent>().Bind<UserInterfaceController>();
+            uiControllerEntity.RemoveComponent<TransformComponent>();
+            UIController.Instance = uiControllerEntity;
         }
         public override void Update()
         {
             TakeInput();
             UpdateCameraDirection();
-            // todo: some sort of debug menu
+            RenderUI();
+        }
+        private void RenderUI()
+        {
+            var scriptComponent = UIController.Instance.GetComponent<ScriptComponent>();
+            if (!scriptComponent.HasScriptBound<UIController>())
+            {
+                return;
+            }
+            var uiController = scriptComponent.GetScript<UIController>();
+            ItemStack? heldItem = mInventory[GetInventoryIndex(mHotbarIndex, InventoryHeight)];
+            if (heldItem != null)
+            {
+                Texture? image = heldItem.Item.Image;
+                if (image != null)
+                {
+                    uiController.DrawQuad(image, new Vector2I(0), image.Size);
+                }
+            }
         }
         private void TakeInput()
         {

@@ -44,6 +44,13 @@ namespace bve {
             struct script {
                 ref<managed::object> script_object;
                 ref<managed::class_> script_type;
+                void new_frame() {
+                    MonoMethod* method = this->script_type->get_method("*:NewFrame()");
+                    if (!method) {
+                        return;
+                    }
+                    this->script_object->invoke(method);
+                }
                 void update() {
                     MonoMethod* method = this->script_type->get_method("*:Update()");
                     if (!method) {
@@ -114,6 +121,11 @@ namespace bve {
                     throw std::runtime_error("[script component] no such class found");
                 }
                 return this->bind(script_type, std::forward<Args*>(args)...);
+            }
+            void new_frame() {
+                for (auto& script : this->scripts) {
+                    script.new_frame();
+                }
             }
             void update() {
                 for (auto& script : this->scripts) {

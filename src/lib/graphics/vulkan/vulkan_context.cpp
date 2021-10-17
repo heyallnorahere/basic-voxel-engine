@@ -173,7 +173,6 @@ namespace bve {
                     this->m_bound_pipelines.push_back(pipeline);
                     auto shader = vk_pipeline->get_shader();
                     shader->update_descriptor_sets(this->m_current_image);
-                    vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
                     const auto& bound_buffers = vk_pipeline->get_bound_buffers();
                     bool bound_buffer = false;
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
@@ -184,7 +183,7 @@ namespace bve {
                                 vk_buffers.push_back(buffer->get_buffer());
                             }
                             std::vector<VkDeviceSize> offsets(vk_buffers.size(), 0);
-                            vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, vk_buffers.size(), vk_buffers.data(), offsets.data());
+                            vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, (uint32_t)vk_buffers.size(), vk_buffers.data(), offsets.data());
                             bound_buffer = true;
                         }
                     }
@@ -203,6 +202,7 @@ namespace bve {
                     if (!bound_buffer) {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
                     }
+                    vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
                     const auto& sets = shader->get_descriptor_sets();
                     std::vector<VkDescriptorSet> sets_to_bind;
                     for (const auto& set : sets) {

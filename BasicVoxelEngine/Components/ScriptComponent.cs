@@ -24,7 +24,7 @@ namespace BasicVoxelEngine.Components
                 return scripts;
             }
         }
-        public bool ScriptBound<T>() where T : Script
+        public bool HasScriptBound<T>() where T : Script
         {
             int scriptCount = GetScriptCount_Native(mAddress);
             for (int i = 0; i < scriptCount; i++)

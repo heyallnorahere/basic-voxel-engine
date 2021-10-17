@@ -6,8 +6,8 @@ namespace BasicVoxelEngine
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector2
     {
-        public float X { get; set; }
-        public float Y { get; set; }
+        public float X;
+        public float Y;
         public Vector2(float scalar)
         {
             X = Y = scalar;
@@ -16,6 +16,11 @@ namespace BasicVoxelEngine
         {
             X = x;
             Y = y;
+        }
+        public Vector2(Vector2I vector)
+        {
+            X = vector.X;
+            Y = vector.Y;
         }
         public float Length => Convert.ToSingle(Math.Sqrt(X * X + Y * Y));
         /// <summary>
@@ -76,8 +81,8 @@ namespace BasicVoxelEngine
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector2I
     {
-        public int X { get; set; }
-        public int Y { get; set; }
+        public int X;
+        public int Y;
         public Vector2I(int scalar)
         {
             X = Y = scalar;

@@ -368,33 +368,33 @@ namespace bve {
             register_component_type<components::script_component>(host, "BasicVoxelEngine.Components.ScriptComponent");
         }
 
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address) {
-            return ((components::transform_component*)address)->translation;
+        void BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address, Vector3* value) {
+            *value = ((components::transform_component*)address)->translation;
         }
         void BasicVoxelEngine_Components_TransformComponent_SetTranslation(IntPtr address, Vector3 value) {
             ((components::transform_component*)address)->translation = value;
         }
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address) {
-            return ((components::transform_component*)address)->rotation;
+        void BasicVoxelEngine_Components_TransformComponent_GetRotation(IntPtr address, Vector3* value) {
+            *value = ((components::transform_component*)address)->rotation;
         }
         void BasicVoxelEngine_Components_TransformComponent_SetRotation(IntPtr address, Vector3 value) {
             ((components::transform_component*)address)->rotation = value;
         }
-        Vector3 BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address) {
-            return ((components::transform_component*)address)->scale;
+        void BasicVoxelEngine_Components_TransformComponent_GetScale(IntPtr address, Vector3* value) {
+            *value = ((components::transform_component*)address)->scale;
         }
         void BasicVoxelEngine_Components_TransformComponent_SetScale(IntPtr address, Vector3 value) {
             ((components::transform_component*)address)->scale = value;
         }
 
-        Vector3 BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address) {
-            return ((components::camera_component*)address)->direction;
+        void BasicVoxelEngine_Components_CameraComponent_GetDirection(IntPtr address, Vector3* value) {
+            *value = ((components::camera_component*)address)->direction;
         }
         void BasicVoxelEngine_Components_CameraComponent_SetDirection(IntPtr address, Vector3 value) {
             ((components::camera_component*)address)->direction = value;
         }
-        Vector3 BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address) {
-            return ((components::camera_component*)address)->up;
+        void BasicVoxelEngine_Components_CameraComponent_GetUp(IntPtr address, Vector3* value) {
+            *value = ((components::camera_component*)address)->up;
         }
         void BasicVoxelEngine_Components_CameraComponent_SetUp(IntPtr address, Vector3 value) {
             ((components::camera_component*)address)->up = value;
@@ -521,9 +521,9 @@ namespace bve {
         void BasicVoxelEngine_Graphics_Texture_DestroyRef(IntPtr address) {
             delete (ref<graphics::texture>*)address;
         }
-        Vector2I BasicVoxelEngine_Graphics_Texture_GetSize(IntPtr address) {
+        void BasicVoxelEngine_Graphics_Texture_GetSize(IntPtr address, Vector2I* size) {
             auto texture = get_texture_ref(address);
-            return texture->get_size();
+            *size = texture->get_size();
         }
         int32_t BasicVoxelEngine_Graphics_Texture_GetChannels(IntPtr address) {
             auto texture = get_texture_ref(address);
@@ -540,9 +540,9 @@ namespace bve {
             auto window_ = get_window_ref(address);
             return new ref<graphics::context>(window_->get_context());
         }
-        Vector2I BasicVoxelEngine_Window_GetFramebufferSize(IntPtr address) {
+        void BasicVoxelEngine_Window_GetFramebufferSize(IntPtr address, Vector2I* size) {
             auto window_ = get_window_ref(address);
-            return window_->get_framebuffer_size();
+            *size = window_->get_framebuffer_size();
         }
 
         static ref<graphics::shader> get_shader_ref(void* address) {
@@ -691,13 +691,15 @@ namespace bve {
             int32_t stride, offset, type;
             bool normalized;
         };
-        IntPtr BasicVoxelEngine_CommandList_Create(IntPtr rendererAddress) {
+        IntPtr BasicVoxelEngine_CommandList_Create(IntPtr rendererAddress, IntPtr* refCopy) {
             auto renderer_ = *(ref<renderer>*)rendererAddress;
+            *refCopy = new ref<renderer>(renderer_);
             return renderer_->create_command_list();
         }
         void BasicVoxelEngine_CommandList_Destroy(IntPtr address, IntPtr rendererAddress) {
             auto renderer_ = *(ref<renderer>*)rendererAddress;
             renderer_->destroy_command_list((command_list*)address);
+            delete (ref<renderer>*)rendererAddress;
         }
         void BasicVoxelEngine_CommandList_AddMesh(MonoObject* mesh, IntPtr address, IntPtr rendererAddress) {
             MonoDomain* domain = mono_domain_get();
@@ -746,6 +748,9 @@ namespace bve {
             auto renderer_ = *(ref<renderer>*)address;
             auto texture = *(ref<graphics::texture>*)textureAddress;
             renderer_->set_texture((size_t)index, texture);
+        }
+        bool BasicVoxelEngine_Helpers_AreRefsEqual(IntPtr ref1, IntPtr ref2) {
+            return ((ref<ref_counted>*)ref1)->raw() == ((ref<ref_counted>*)ref2)->raw();
         }
     }
 }

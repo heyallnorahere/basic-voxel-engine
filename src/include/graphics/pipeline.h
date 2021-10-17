@@ -2,15 +2,15 @@
 namespace bve {
     namespace graphics {
         enum class vertex_attribute_type {
-            FLOAT,
-            INT,
-            VEC2,
-            IVEC2,
-            VEC3,
-            IVEC3,
-            VEC4,
-            IVEC4,
-            MAT4
+            FLOAT = 1 << 0,
+            INT = 1 << 1,
+            VEC2 = 1 << 2,
+            IVEC2 = 1 << 3,
+            VEC3 = 1 << 4,
+            IVEC3 = 1 << 5,
+            VEC4 = 1 << 6,
+            IVEC4 = 1 << 7,
+            MAT4 = 1 << 8
         };
         struct vertex_attribute {
             size_t stride, offset;

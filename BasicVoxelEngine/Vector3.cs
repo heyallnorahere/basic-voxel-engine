@@ -6,9 +6,9 @@ namespace BasicVoxelEngine
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector3
     {
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Z { get; set; }
+        public float X;
+        public float Y;
+        public float Z;
         public Vector3(float scalar)
         {
             X = Y = Z = scalar;
@@ -105,9 +105,9 @@ namespace BasicVoxelEngine
     [StructLayout(LayoutKind.Sequential)]
     public struct Vector3I
     {
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Z { get; set; }
+        public int X;
+        public int Y;
+        public int Z;
         public Vector3I(int scalar)
         {
             X = Y = Z = scalar;

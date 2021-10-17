@@ -41,7 +41,12 @@ namespace bve {
         this->m_world->on_block_changed(on_block_changed);
         this->m_running = true;
         while (!this->m_window->should_close() && this->m_running) {
+            this->m_renderer->new_frame();
             this->m_window->new_frame();
+            for (entity ent : this->m_world->get_scripted_entities()) {
+                auto& script_component = ent.get_component<components::script_component>();
+                script_component.new_frame();
+            }
             this->update();
             this->render();
             bve::window::poll_events();
@@ -117,7 +122,6 @@ namespace bve {
             const auto& transform = main_camera->get_component<components::transform_component>();
             this->m_camera_position = transform.translation;
         }
-        this->m_renderer->new_frame();
         this->m_window->get_context()->clear(glm::vec4(0.f, 0.f, 0.f, 1.f));
 
         // render static blocks

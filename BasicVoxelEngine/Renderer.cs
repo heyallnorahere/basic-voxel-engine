@@ -12,7 +12,7 @@ namespace BasicVoxelEngine
         {
             FreeVertexBuffer();
             mVertexCount = vertices.Count;
-            mVertexSize = sizeof(T);
+            mVertexSize = Marshal.SizeOf(typeof(T));
             mVertexBuffer = AllocVertexBuffer_Native(mVertexSize * mVertexCount);
             for (int i = 0; i < mVertexCount; i++)
             {
@@ -48,41 +48,39 @@ namespace BasicVoxelEngine
     }
     public enum VertexAttributeType
     {
-        Float,
-        Int,
-        Vector2,
-        Vector2I,
-        Vector3,
-        Vector3I,
-        Vector4,
-        Vector4I,
-        Matrix4
+        Float = 1 << 0,
+        Int = 1 << 1,
+        Vector2 = 1 << 2,
+        Vector2I = 1 << 3,
+        Vector3 = 1 << 4,
+        Vector3I = 1 << 5,
+        Vector4 = 1 << 6,
+        Vector4I = 1 << 7,
+        Matrix4 = 1 << 8
     }
     [StructLayout(LayoutKind.Sequential)]
     public struct VertexAttribute
     {
-        int Stride { get; set; }
-        int Offset { get; set; }
-        VertexAttributeType Type { get; set; }
-        bool Normalize { get; set; }
+        public int Stride { get; set; }
+        public int Offset { get; set; }
+        public VertexAttributeType Type { get; set; }
+        public bool Normalize { get; set; }
     }
     public sealed class CommandList
     {
         internal CommandList(Renderer renderer)
         {
-            mRenderer = renderer;
-            mAddress = Create_Native(mRenderer.mAddress);
+            mAddress = Create_Native(renderer.mAddress, out mRendererAddress);
         }
         ~CommandList()
         {
-            Destroy_Native(mAddress, mRenderer.mAddress);
+            Destroy_Native(mAddress, mRendererAddress);
         }
-        public void AddMesh(Mesh mesh) => AddMesh_Native(mesh, mAddress, mRenderer.mAddress);
-        public void Close(IReadOnlyList<VertexAttribute> vertexAttributes) => Close_Native(vertexAttributes, mAddress, mRenderer.mAddress);
-        internal readonly IntPtr mAddress;
-        internal readonly Renderer mRenderer;
+        public void AddMesh(Mesh mesh) => AddMesh_Native(mesh, mAddress, mRendererAddress);
+        public void Close(IReadOnlyList<VertexAttribute> vertexAttributes) => Close_Native(vertexAttributes, mAddress, mRendererAddress);
+        internal readonly IntPtr mAddress, mRendererAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern IntPtr Create_Native(IntPtr rendererAddress);
+        private static extern IntPtr Create_Native(IntPtr rendererAddress, out IntPtr refCopy);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void Destroy_Native(IntPtr address, IntPtr rendererAddress);
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -103,14 +101,14 @@ namespace BasicVoxelEngine
         public CommandList CreateCommandList() => new CommandList(this);
         public void Render(CommandList commandList, Context context)
         {
-            if (commandList.mRenderer.mAddress != mAddress)
+            if (!Helpers.AreRefsEqual(commandList.mRendererAddress, mAddress))
             {
                 throw new ArgumentException("The given command list was not created by this renderer!");
             }
             Render_Native(commandList.mAddress, context.mAddress, mAddress);
         }
         public void SetShader(Shader shader) => SetShader_Native(shader.mAddress, mAddress);
-        public void SetTexture(int index, Texture texture) => SetTexture_Native(index, texture.mAddress, mAddress);
+        public void SetTexture(int index, Texture texture) => SetTexture_Native(index, texture.Address, mAddress);
         internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
