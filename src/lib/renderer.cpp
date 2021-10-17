@@ -77,6 +77,8 @@ namespace bve {
         this->m_created_uniform_buffers.clear();
     }
     void renderer::render(command_list* cmdlist, ref<graphics::context> context) {
+        cmdlist->pipeline->bind();
+        this->m_current_shader->bind();
         for (size_t i = 0; i < max_texture_units; i++) {
             ref<graphics::texture> texture = this->m_textures[i];
             uint32_t texture_slot = (uint32_t)i;
@@ -86,8 +88,6 @@ namespace bve {
                 this->m_placeholder_texture->bind(texture_slot);
             }
         }
-        cmdlist->pipeline->bind();
-        this->m_current_shader->bind();
         for (const auto& [binding, data] : this->m_uniform_buffers) {
             auto uniform_buffer = this->m_factory->create_uniform_buffer(data.size(), binding);
             uniform_buffer->set_data(data);

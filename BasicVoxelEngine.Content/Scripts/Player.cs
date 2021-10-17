@@ -52,7 +52,15 @@ namespace BasicVoxelEngine.Content.Scripts
                 Texture? image = heldItem.Item.Image;
                 if (image != null)
                 {
-                    uiController.DrawQuad(image, new Vector2I(0), image.Size);
+                    var size = new Vector2I(64);
+                    Vector2I windowSize = Application.Window.FramebufferSize;
+                    var origin = new Vector2I
+                    {
+                        X = (windowSize.X - size.X * 3) / 2,
+                        Y = windowSize.Y - size.Y
+                    };
+                    uiController.DrawQuad(image, origin, size);
+                    uiController.DrawQuad(image, origin + new Vector2I(size.X * 2, 0), size);
                 }
             }
         }
