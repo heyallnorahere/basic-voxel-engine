@@ -361,6 +361,7 @@ namespace bve {
             ref<code_host> host = code_host::current();
             register_component_type<components::transform_component>(host, "BasicVoxelEngine.Components.TransformComponent");
             register_component_type<components::camera_component>(host, "BasicVoxelEngine.Components.CameraComponent");
+            register_component_type<components::script_component>(host, "BasicVoxelEngine.Components.ScriptComponent");
         }
 
         Vector3 BasicVoxelEngine_Components_TransformComponent_GetTranslation(IntPtr address) {
@@ -411,6 +412,38 @@ namespace bve {
         }
         void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value) {
             ((components::camera_component*)address)->far_plane = value;
+        }
+
+        object BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address) {
+            auto& script_component = *(components::script_component*)address;
+            MonoDomain* domain = mono_domain_get();
+            auto script_type = ref<managed::type>::create(type, domain)->get_class();
+            std::vector<void*> args_vector, allocated_memory;
+            auto args_list = ref<managed::object>::create(args, domain);
+            auto args_list_class = managed::class_::get_class(args_list);
+            auto property = args_list_class->get_property("Count");
+            int32_t count = args_list->get(property)->unbox<int32_t>();
+            property = args_list_class->get_property("Item");
+            for (int32_t i = 0; i < count; i++) {
+                auto argument = args_list->get(property, &i);
+                void* arg = argument->get();
+                auto arg_class = managed::class_::get_class(argument);
+                if (arg_class->is_value_type()) {
+                    size_t size = arg_class->data_size();
+                    arg = malloc(size);
+                    if (!arg) {
+                        throw std::runtime_error("[script wrappers] could not allocate memory on the heap");
+                    }
+                    memcpy(arg, argument->unbox(), size);
+                    allocated_memory.push_back(arg);
+                }
+                args_vector.push_back(arg);
+            }
+            auto& script = script_component.bind(script_type, args_vector);
+            for (void* ptr : allocated_memory) {
+                free(ptr);
+            }
+            return (MonoObject*)script.script_object->get();
         }
 
         static ref<input_manager> get_input_manager(void* address) {

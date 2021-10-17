@@ -22,7 +22,7 @@ namespace BasicVoxelEngine.Components
         public Vector3 Scale
         {
             get => GetScale_Native(mAddress);
-            set => SetRotation_Native(mAddress, value);
+            set => SetScale_Native(mAddress, value);
         }
         private readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]

@@ -136,6 +136,17 @@ namespace bve {
             auto result = managed::class_::invoke(method, reftype, base_reftype);
             return result->unbox<bool>();
         }
+        bool class_::is_value_type() {
+            return mono_class_is_valuetype(this->m_class);
+        }
+        size_t class_::data_size() {
+            ref<code_host> host = code_host::current();
+            ref<class_> helpers = host->find_class("BasicVoxelEngine.Helpers");
+            MonoMethod* method = helpers->get_method("*:SizeOf");
+            auto reftype = type::get_type(this)->get_object();
+            auto result = managed::class_::invoke(method, reftype);
+            return (size_t)result->unbox<int32_t>();
+        }
         void* class_::get() {
             return this->m_class;
         }
@@ -283,6 +294,8 @@ namespace bve {
             pair("BasicVoxelEngine.Components.CameraComponent::SetNearPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetNearPlane),
             pair("BasicVoxelEngine.Components.CameraComponent::GetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_GetFarPlane),
             pair("BasicVoxelEngine.Components.CameraComponent::SetFarPlane_Native", BasicVoxelEngine_Components_CameraComponent_SetFarPlane),
+
+            pair("BasicVoxelEngine.Components.ScriptComponent::Bind_Native", BasicVoxelEngine_Components_ScriptComponent_Bind),
 
             pair("BasicVoxelEngine.InputManager::DestroyRef_Native", BasicVoxelEngine_InputManager_DestroyRef),
             pair("BasicVoxelEngine.InputManager::GetMouseEnabled_Native", BasicVoxelEngine_InputManager_GetMouseEnabled),

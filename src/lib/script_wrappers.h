@@ -97,6 +97,8 @@ namespace bve {
         float BasicVoxelEngine_Components_CameraComponent_GetFarPlane(IntPtr address);
         void BasicVoxelEngine_Components_CameraComponent_SetFarPlane(IntPtr address, float value);
 
+        object BasicVoxelEngine_Components_ScriptComponent_Bind(Type type, MonoObject* args, IntPtr address);
+
         void BasicVoxelEngine_InputManager_DestroyRef(IntPtr address);
         bool BasicVoxelEngine_InputManager_GetMouseEnabled(IntPtr address);
         void BasicVoxelEngine_InputManager_SetMouseEnabled(IntPtr address, bool value);

@@ -50,19 +50,20 @@ namespace bve {
                 }
             }
             std::string get_string();
-            template<typename T> const T& unbox() {
+            const void* unbox() {
                 MonoObject* _object = mono_gchandle_get_target(this->m_handle);
-                void* pointer = mono_object_unbox(_object);
-                return *(T*)pointer;
+                return mono_object_unbox(_object);
             }
-            template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) {
+            template<typename T> const T& unbox() {
+                return *(T*)this->unbox();
+            }
+            ref<object> invoke(MonoMethod* method, const std::vector<void*>& args) {
                 if (!method) {
                     throw std::runtime_error("[managed object] attempted to call nullptr!");
                 }
                 MonoObject* _object = mono_gchandle_get_target(this->m_handle);
-                std::vector<void*> args_vector = { std::forward<Args*>(args)... };
                 MonoObject* exc = nullptr;
-                void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
+                void** args_ptr = args.size() > 0 ? (void**)args.data() : nullptr;
                 MonoObject* returned = mono_runtime_invoke(method, _object, args_ptr, &exc);
                 if (exc) {
                     ref<object> exception = ref<object>::create(exc, this->get_domain());
@@ -74,6 +75,7 @@ namespace bve {
                 }
                 return returned_object;
             }
+            template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) { return this->invoke(method, { std::forward<Args*>(args)... }); }
             virtual void* get() override;
             virtual MonoImage* get_image() override;
         private:
@@ -86,8 +88,8 @@ namespace bve {
             virtual ~delegate() override;
             template<typename... Args> ref<object> invoke(Args*... args) {
                 MonoObject* _delegate = mono_gchandle_get_target(this->m_handle);
-                std::vector<void*> args_vector = { std::forward<Args*>(args)... };
                 MonoObject* exc = nullptr;
+                std::vector<void*> args_vector = { std::forward<Args*>(args)... };
                 void** args_ptr = args_vector.size() > 0 ? args_vector.data() : nullptr;
                 MonoObject* returned = mono_runtime_delegate_invoke(_delegate, args_ptr, &exc);
                 if (exc) {
@@ -115,6 +117,8 @@ namespace bve {
             MonoClassField* get_field(const std::string& name);
             MonoProperty* get_property(const std::string& name);
             bool derives_from(ref<class_> cls);
+            bool is_value_type();
+            size_t data_size();
             template<typename... Args> static ref<object> invoke(MonoMethod* method, Args*... args) {
                 MonoDomain* domain = mono_domain_get();
                 if (!method) {
@@ -134,14 +138,15 @@ namespace bve {
                 }
                 return returned_object;
             }
-            template<typename... Args> ref<object> instantiate(Args*... args) {
+            ref<object> instantiate(const std::vector<void*>& args) {
                 MonoDomain* domain = this->get_domain();
                 MonoObject* instance = mono_object_new(domain, this->m_class);
                 ref<object> referenced_object = ref<object>::create(instance, domain);
                 MonoMethod* constructor = this->get_method("*:.ctor");
-                referenced_object->invoke(constructor, std::forward<Args*>(args)...);
+                referenced_object->invoke(constructor, args);
                 return referenced_object;
             }
+            template<typename... Args> ref<object> instantiate(Args*... args) { return this->instantiate({ std::forward<Args*>(args)... }); }
             virtual void* get() override;
             virtual MonoImage* get_image() override;
         private:

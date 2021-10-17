@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace BasicVoxelEngine
 {
@@ -18,6 +19,7 @@ namespace BasicVoxelEngine
             var getRegister = baseMethod?.MakeGenericMethod(new Type[] { type });
             return getRegister?.Invoke(null, null);
         }
+        internal static int SizeOf(Type type) => Marshal.SizeOf(type);
         public static bool DerivesFrom(this Type type, Type baseType)
         {
             Type? currentType = type;

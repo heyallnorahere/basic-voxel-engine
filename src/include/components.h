@@ -80,6 +80,7 @@ namespace bve {
                     this->script_object->invoke(method);
                 }
             };
+            script_component() : script_component(code_host::current()) { }
             script_component(ref<code_host> host) {
                 this->host = host;
                 this->base_class = this->host->find_class("BasicVoxelEngine.Script");
@@ -91,7 +92,7 @@ namespace bve {
             entity parent;
             ref<code_host> host;
             ref<managed::class_> base_class;
-            template<typename... Args> script& bind(ref<managed::class_> script_type, Args*&&... args) {
+            script& bind(ref<managed::class_> script_type, const std::vector<void*>& args) {
                 auto& sc = this->scripts.emplace_back();
                 sc.script_type = script_type;
                 if (!sc.script_type || !sc.script_type->get()) {
@@ -100,9 +101,12 @@ namespace bve {
                 if (!sc.script_type->derives_from(this->base_class)) {
                     throw std::runtime_error("[script component] the given type must derive from BasicVoxelEngine.Script");
                 }
-                sc.script_object = sc.script_type->instantiate(std::forward<Args*>(args)...);
+                sc.script_object = sc.script_type->instantiate(args);
                 sc.on_attach(this->parent, this->host);
                 return sc;
+            }
+            template<typename... Args> script& bind(ref<managed::class_> script_type, Args*&&... args) {
+                return this->bind(script_type, { std::forward<Args*>(args)... });
             }
             template<typename... Args> script& bind(const std::string& script_name, Args*&&... args) {
                 auto script_type = this->host->find_class(script_name);
