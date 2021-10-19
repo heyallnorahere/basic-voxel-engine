@@ -5,9 +5,15 @@ namespace BasicVoxelEngine
 {
     public class Item : RegisteredObject<Item>
     {
+        public struct ClickActionArgs
+        {
+            public Entity User { get; set; }
+            public ItemStack? ItemStack { get; set; }
+            public float Reach { get; set; }
+        }
         public static class Actions
         {
-            public static void Punch(Entity user)
+            public static void Punch(ClickActionArgs args)
             {
                 // todo: animation
                 // todo: damage blocks or entities
@@ -28,6 +34,10 @@ namespace BasicVoxelEngine
         /// <summary>
         /// The function that is called when the player left-clicks
         /// </summary>
-        public virtual Action<Entity> LeftClick => Actions.Punch;
+        public virtual Action<ClickActionArgs> LeftClick => Actions.Punch;
+        /// <summary>
+        /// The function that is called when the player right-clicks
+        /// </summary>
+        public virtual Action<ClickActionArgs>? RightClick => null;
     }
 }

@@ -18,6 +18,7 @@ namespace BasicVoxelEngine.Content.Scripts
                 mInventory[i] = null;
             }
             mHotbarIndex = 0;
+            mReach = 5f; // for now
         }
         public override void OnAttach()
         {
@@ -139,16 +140,42 @@ namespace BasicVoxelEngine.Content.Scripts
             var stack = mInventory[GetInventoryIndex(mHotbarIndex, InventoryHeight)];
             if (stack != null)
             {
-                stack.Item.LeftClick(Parent);
+                stack.Item.LeftClick(new Item.ClickActionArgs
+                {
+                    User = Parent,
+                    ItemStack = stack,
+                    Reach = mReach
+                });
             }
             else
             {
-                Item.Actions.Punch(Parent);
+                Item.Actions.Punch(new Item.ClickActionArgs
+                {
+                    User = Parent,
+                    ItemStack = null,
+                    Reach = mReach
+                });
             }
         }
         private void RightClick()
         {
-            Logger.Print(Logger.Severity.Info, "right clicked");
+            int inventoryIndex = GetInventoryIndex(mHotbarIndex, InventoryHeight);
+            var stack = mInventory[inventoryIndex];
+            if (stack?.Item?.RightClick != null)
+            {
+                stack.Item.RightClick(new Item.ClickActionArgs
+                {
+                    User = Parent,
+                    ItemStack = stack,
+                    Reach = mReach
+                });
+                if (stack.Quantity <= 0)
+                {
+                    mInventory[inventoryIndex] = null;
+                }
+                return;
+            }
+            // todo: other stuff
         }
         private void UpdateCameraDirection()
         {
@@ -192,5 +219,6 @@ namespace BasicVoxelEngine.Content.Scripts
         private Vector2 mCurrentMouseOffset;
         private int mHotbarIndex;
         private readonly ItemStack?[] mInventory;
+        private float mReach;
     }
 }
