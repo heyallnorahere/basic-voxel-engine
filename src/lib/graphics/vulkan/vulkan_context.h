@@ -50,7 +50,7 @@ namespace bve {
                 void create_depth_resources();
                 void cleanup_swapchain(bool* recreate_pipeline);
                 void recreate_swapchain(glm::ivec2 new_size);
-                uint32_t rate_device(VkPhysicalDevice device);
+                uint64_t rate_device(VkPhysicalDevice device);
                 bool layers_supported();
                 bool check_device_extension_support(VkPhysicalDevice device);
                 std::vector<const char*> get_extensions();

@@ -137,12 +137,13 @@ namespace bve {
                 vkDestroyInstance(this->m_instance, nullptr);
             }
             void vulkan_context::clear(glm::vec4 clear_color) {
+                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_image];
                 VkCommandBufferBeginInfo begin_info;
                 util::zero(begin_info);
                 begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
                 begin_info.flags = 0;
                 begin_info.pInheritanceInfo = nullptr;
-                if (vkBeginCommandBuffer(this->m_command_buffers[this->m_current_image], &begin_info) != VK_SUCCESS) {
+                if (vkBeginCommandBuffer(command_buffer, &begin_info) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not begin recording a command buffer");
                 }
                 VkRenderPassBeginInfo render_pass_info;
@@ -158,7 +159,7 @@ namespace bve {
                 clear_values[1].depthStencil = { 1.f, 0 };
                 render_pass_info.clearValueCount = (uint32_t)clear_values.size();
                 render_pass_info.pClearValues = clear_values.data();
-                vkCmdBeginRenderPass(this->m_command_buffers[this->m_current_image], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+                vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
             }
             void vulkan_context::make_current() {
                 this->m_factory->m_current_context = this;
@@ -257,6 +258,7 @@ namespace bve {
                 vkFreeCommandBuffers(this->m_device, this->m_command_pool, 1, &command_buffer);
             }
             void vulkan_context::swap_buffers() {
+                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_image];
                 auto resize_swapchain = [this]() mutable {
                     int32_t width = 0, height = 0;
                     glfwGetFramebufferSize(this->m_window, &width, &height);
@@ -267,8 +269,8 @@ namespace bve {
                     }
                     this->recreate_swapchain(glm::ivec2(width, height));
                 };
-                vkCmdEndRenderPass(this->m_command_buffers[this->m_current_image]);
-                if (vkEndCommandBuffer(this->m_command_buffers[this->m_current_image]) != VK_SUCCESS) {
+                vkCmdEndRenderPass(command_buffer);
+                if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan context] could not finish recording a command buffer");
                 }
                 VkFenceCreateInfo fence_info;
@@ -295,7 +297,7 @@ namespace bve {
                 submit_info.pWaitSemaphores = &this->m_image_available_semaphores[this->m_current_frame];
                 submit_info.pWaitDstStageMask = wait_stages;
                 submit_info.commandBufferCount = 1;
-                submit_info.pCommandBuffers = &this->m_command_buffers[current_image];
+                submit_info.pCommandBuffers = &command_buffer;
                 submit_info.signalSemaphoreCount = 1;
                 submit_info.pSignalSemaphores = &this->m_render_finished_semaphores[this->m_current_frame];
                 if (vkQueueSubmit(this->m_graphics_queue, 1, &submit_info, fence) != VK_SUCCESS) {
@@ -323,6 +325,7 @@ namespace bve {
                 }
                 this->m_current_frame = (this->m_current_frame + 1) % max_frames_in_flight;
                 this->m_current_image = (current_image + 1) % (uint32_t)this->m_swapchain_images.size();
+                vkResetCommandBuffer(command_buffer, 0);
                 this->m_bound_pipelines.clear();
             }
             void vulkan_context::setup_glfw() {
@@ -441,9 +444,9 @@ namespace bve {
                 }
                 std::vector<VkPhysicalDevice> devices(device_count);
                 vkEnumeratePhysicalDevices(this->m_instance, &device_count, devices.data());
-                std::multimap<uint32_t, VkPhysicalDevice> candidates;
+                std::multimap<uint64_t, VkPhysicalDevice> candidates;
                 for (const auto& device : devices) {
-                    uint32_t score = this->rate_device(device);
+                    uint64_t score = this->rate_device(device);
                     candidates.insert({ score, device });
                 }
                 auto it = candidates.rbegin();
@@ -747,16 +750,18 @@ namespace bve {
                 }
                 // imgui will crash; cant do anything about it now, i dont think
             }
-            uint32_t vulkan_context::rate_device(VkPhysicalDevice device) {
+            uint64_t vulkan_context::rate_device(VkPhysicalDevice device) {
                 VkPhysicalDeviceProperties properties;
                 VkPhysicalDeviceFeatures features;
                 vkGetPhysicalDeviceProperties(device, &properties);
                 vkGetPhysicalDeviceFeatures(device, &features);
-                uint32_t score = 0;
+                uint64_t score = 0;
                 if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
                     score += 1000;
                 }
                 score += properties.limits.maxImageDimension2D;
+                score += properties.limits.maxMemoryAllocationCount;
+                score += 256 - properties.limits.minMemoryMapAlignment;
                 bool extensions_supported = this->check_device_extension_support(device);
                 bool swap_chain_adequate = false;
                 if (extensions_supported) {
@@ -771,9 +776,11 @@ namespace bve {
                 };
                 for (bool satisfied : requirements) {
                     if (!satisfied) {
+                        spdlog::info("[vulkan context] {0} does not satisfy gpu requirements", properties.deviceName);
                         return 0;
                     }
                 }
+                spdlog::info("[vulkan context] gpu score of {0}: {1}", properties.deviceName, score);
                 return score;
             }
             bool vulkan_context::layers_supported() {

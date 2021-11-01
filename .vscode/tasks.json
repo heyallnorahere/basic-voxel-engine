@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "bash -c \"cmake ${workspaceFolder} -B ${workspaceFolder}/build -DCMAKE_BUILD_TYPE=Debug $(python ${workspaceFolder}/scripts/cmake_options.py) -G \\\"Unix Makefiles\\\" ; cmake --build ${workspaceFolder}/build -j 8\"",
+            "command": "bash -c \"cmake ${workspaceFolder} -B ${workspaceFolder}/build -DCMAKE_BUILD_TYPE=Debug $(python3 ${workspaceFolder}/scripts/cmake_options.py) -G \\\"Unix Makefiles\\\" ; cmake --build ${workspaceFolder}/build -j 8\"",
             "problemMatcher": [
                 "$gcc"
             ]
