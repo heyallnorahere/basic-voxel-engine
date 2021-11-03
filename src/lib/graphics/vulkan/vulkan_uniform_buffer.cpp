@@ -7,14 +7,6 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            static std::list<vulkan_uniform_buffer*> active_uniform_buffers;
-            std::vector<ref<vulkan_uniform_buffer>> vulkan_uniform_buffer::get_active_uniform_buffers() {
-                std::vector<ref<vulkan_uniform_buffer>> refs;
-                for (auto buf : active_uniform_buffers) {
-                    refs.push_back(buf);
-                }
-                return refs;
-            }
             vulkan_uniform_buffer::vulkan_uniform_buffer(size_t size, uint32_t binding, ref<vulkan_object_factory> factory) {
                 this->m_size = size;
                 this->m_binding = binding;
@@ -31,10 +23,8 @@ namespace bve {
                 this->m_descriptor_info.buffer = this->m_buffer;
                 this->m_descriptor_info.offset = 0;
                 this->m_descriptor_info.range = (VkDeviceSize)this->m_size;
-                active_uniform_buffers.push_back(this);
             }
             vulkan_uniform_buffer::~vulkan_uniform_buffer() {
-                active_uniform_buffers.remove_if([this](vulkan_uniform_buffer* element) { return element == this; });
                 vkDestroyBuffer(this->m_device, this->m_buffer, nullptr);
                 vkFreeMemory(this->m_device, this->m_memory, nullptr);
             }
@@ -44,6 +34,30 @@ namespace bve {
                 void* dest = (void*)((size_t)gpu_data + offset);
                 memcpy(dest, data, size);
                 vkUnmapMemory(this->m_device, this->m_memory);
+            }
+            void vulkan_uniform_buffer::activate() {
+                auto context = this->m_factory->get_current_context().as<vulkan_context>();
+                uint32_t image_index = context->get_current_image();
+                auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
+                auto shader = pipeline->get_shader();
+                const auto& reflection_data = shader->get_reflection_data();
+                const auto& descriptor_sets = shader->get_descriptor_sets();
+                if (reflection_data.uniform_buffers.find(this->m_binding) == reflection_data.uniform_buffers.end()) {
+                    return;
+                }
+                const auto& buffer_info = reflection_data.uniform_buffers.find(this->m_binding)->second;
+                uint32_t descriptor_set = buffer_info.descriptor_set;
+                VkDescriptorSet vk_descriptor_set = descriptor_sets[descriptor_set].sets[image_index];
+                VkWriteDescriptorSet write;
+                util::zero(write);
+                write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write.dstSet = vk_descriptor_set;
+                write.dstBinding = this->m_binding;
+                write.dstArrayElement = 0;
+                write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                write.descriptorCount = 1;
+                write.pBufferInfo = &this->m_descriptor_info;
+                vkUpdateDescriptorSets(this->m_device, 1, &write, 0, nullptr);
             }
         }
     }

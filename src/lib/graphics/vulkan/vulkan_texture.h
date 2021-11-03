@@ -11,7 +11,6 @@ namespace bve {
             VkImageView create_image_view(VkImage image, VkFormat format, VkImageAspectFlags aspect_flags, VkDevice device);
             class vulkan_texture : public texture {
             public:
-                static std::map<uint32_t, ref<vulkan_texture>> get_bound_textures();
                 vulkan_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, ref<vulkan_object_factory> factory);
                 virtual ~vulkan_texture() override;
                 virtual void bind(uint32_t slot) override;

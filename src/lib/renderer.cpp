@@ -88,12 +88,17 @@ namespace bve {
                 this->m_placeholder_texture->bind(texture_slot);
             }
         }
+        std::vector<ref<graphics::uniform_buffer>> used_uniform_buffers;
         for (const auto& [binding, data] : this->m_uniform_buffers) {
             auto uniform_buffer = this->m_factory->create_uniform_buffer(data.size(), binding);
             uniform_buffer->set_data(data);
-            this->m_created_uniform_buffers.push_back(uniform_buffer); // so the ubo doesnt get cleaned up
+            uniform_buffer->activate();
+            used_uniform_buffers.push_back(uniform_buffer);
         }
         context->draw_indexed(cmdlist->index_count);
+        for (auto ubo : used_uniform_buffers) {
+            this->m_created_uniform_buffers.push_back(ubo);
+        }
         cmdlist->pipeline->unbind();
     }
     void renderer::set_shader(ref<graphics::shader> shader_) {

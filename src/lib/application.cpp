@@ -100,8 +100,6 @@ namespace bve {
         }
     }
     void application::render() {
-        this->m_renderer->set_shader(this->m_shaders["static"]);
-
         // Find the "main" camera if so marked. Otherwise just use the first camera we find.
         std::vector<entity> cameras = this->m_world->get_cameras();
         std::optional<entity> main_camera;
@@ -174,8 +172,9 @@ namespace bve {
         }
     }
     void application::render_terrain() {
+        this->m_renderer->set_shader(this->m_shaders["static"]);
         auto atlas_uniform_data = this->m_atlas->get_uniform_data();
-        this->m_renderer->set_texture(atlas_uniform_data.image, this->m_atlas->get_texture());
+        this->m_renderer->set_texture((size_t)atlas_uniform_data.image, this->m_atlas->get_texture());
         if (this->m_lights.size() > 30) {
             throw std::runtime_error("[application] scene cannot contain more than 30 lights!");
         }
@@ -220,6 +219,7 @@ namespace bve {
         }
         this->m_renderer->close_command_list(cmdlist, mesh_factory::get_vertex_attributes());
         this->m_renderer->render(cmdlist, this->m_window->get_context());
+        this->m_renderer->set_shader(nullptr);
         this->m_rendered_command_lists.push_back(cmdlist);
     }
 }

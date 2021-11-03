@@ -745,12 +745,18 @@ namespace bve {
         }
         void BasicVoxelEngine_Renderer_SetShader(IntPtr shaderAddress, IntPtr address) {
             auto renderer_ = *(ref<renderer>*)address;
-            auto shader = *(ref<graphics::shader>*)shaderAddress;
+            ref<graphics::shader> shader = nullptr;
+            if (shaderAddress) {
+                shader = *(ref<graphics::shader>*)shaderAddress;
+            }
             renderer_->set_shader(shader);
         }
         void BasicVoxelEngine_Renderer_SetTexture(int32_t index, IntPtr textureAddress, IntPtr address) {
             auto renderer_ = *(ref<renderer>*)address;
-            auto texture = *(ref<graphics::texture>*)textureAddress;
+            ref<graphics::texture> texture = nullptr;
+            if (textureAddress) {
+                texture = *(ref<graphics::texture>*)textureAddress;
+            }
             renderer_->set_texture((size_t)index, texture);
         }
         bool BasicVoxelEngine_Helpers_AreRefsEqual(IntPtr ref1, IntPtr ref2) {

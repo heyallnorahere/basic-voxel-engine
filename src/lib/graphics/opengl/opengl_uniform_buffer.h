@@ -10,6 +10,7 @@ namespace bve {
                 virtual void set_data(const void* data, size_t size, size_t offset) override;
                 virtual size_t get_size() override { return this->m_size; }
                 virtual uint32_t get_binding() override { return this->m_binding; }
+                virtual void activate() override { }
             private:
                 uint32_t m_id;
                 size_t m_size;

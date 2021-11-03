@@ -25,6 +25,7 @@ namespace bve {
                 VkCommandPool get_command_pool() { return this->m_command_pool; }
                 VkDescriptorPool get_descriptor_pool() { return this->m_descriptor_pool; }
                 size_t get_swapchain_image_count() { return this->m_swapchain_images.size(); }
+                uint32_t get_current_image() { return this->m_current_image; }
             private:
                 virtual void swap_buffers() override;
                 virtual void setup_glfw() override;

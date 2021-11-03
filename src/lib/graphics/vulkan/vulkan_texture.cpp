@@ -7,7 +7,6 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
-            static std::map<uint32_t, vulkan_texture*> bound_textures;
             void create_image(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkDevice device, VkPhysicalDevice physical_device, VkImage& image, VkDeviceMemory& memory) {
                 VkImageCreateInfo create_info;
                 util::zero(create_info);
@@ -123,13 +122,6 @@ namespace bve {
                 }
                 return image_view;
             }
-            std::map<uint32_t, ref<vulkan_texture>> vulkan_texture::get_bound_textures() {
-                std::map<uint32_t, ref<vulkan_texture>> refs;
-                for (auto [slot, texture] : bound_textures) {
-                    refs.insert({ slot, texture });
-                }
-                return refs;
-            }
             vulkan_texture::vulkan_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels, ref<vulkan_object_factory> factory) {
                 this->m_width = width;
                 this->m_height = height;
@@ -140,22 +132,40 @@ namespace bve {
                 this->create(data, context);
             }
             vulkan_texture::~vulkan_texture() {
-                std::vector<uint32_t> slots;
-                for (auto [slot, texture] : bound_textures) {
-                    if (this == texture) {
-                        slots.push_back(slot);
-                    }
-                }
-                for (uint32_t slot : slots) {
-                    bound_textures.erase(slot);
-                }
                 vkDestroySampler(this->m_device, this->m_sampler, nullptr);
                 vkDestroyImageView(this->m_device, this->m_image_view, nullptr);
                 vkDestroyImage(this->m_device, this->m_image, nullptr);
                 vkFreeMemory(this->m_device, this->m_memory, nullptr);
             }
             void vulkan_texture::bind(uint32_t slot) {
-                bound_textures[slot] = this;
+                uint32_t descriptor_set, sampler_array_binding = (uint32_t)-1;
+                auto context = this->m_factory->get_current_context().as<vulkan_context>();
+                uint32_t image_index = context->get_current_image();
+                auto pipeline = this->m_factory->get_current_pipeline().as<vulkan_pipeline>();
+                auto shader = pipeline->get_shader();
+                const auto& reflection_data = shader->get_reflection_data();
+                const auto& descriptor_sets = shader->get_descriptor_sets();
+                for (const auto& [binding, resource_data] : reflection_data.sampled_images) {
+                    if (resource_data.name == "textures") {
+                        sampler_array_binding = binding;
+                        descriptor_set = resource_data.descriptor_set;
+                        break;
+                    }
+                }
+                if (sampler_array_binding == (uint32_t)-1) {
+                    throw std::runtime_error("[vulkan shader] could not find a sampler array named \"textures\"");
+                }
+                VkDescriptorSet vk_descriptor_set = descriptor_sets[descriptor_set].sets[image_index];
+                VkWriteDescriptorSet write;
+                util::zero(write);
+                write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                write.dstSet = vk_descriptor_set;
+                write.dstBinding = sampler_array_binding;
+                write.dstArrayElement = slot;
+                write.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                write.descriptorCount = 1;
+                write.pImageInfo = &this->m_image_info;
+                vkUpdateDescriptorSets(this->m_device, 1, &write, 0, nullptr);
             }
             glm::ivec2 vulkan_texture::get_size() {
                 return glm::ivec2(this->m_width, this->m_height);

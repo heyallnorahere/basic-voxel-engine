@@ -165,6 +165,7 @@ namespace bve {
                 this->m_factory->m_current_context = this;
             }
             void vulkan_context::draw_indexed(size_t index_count) {
+                VkCommandBuffer command_buffer = this->m_command_buffers[this->m_current_image];
                 auto pipeline = this->m_factory->m_current_pipeline;
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
@@ -172,8 +173,6 @@ namespace bve {
                         vk_pipeline->create();
                     }
                     this->m_bound_pipelines.push_back(pipeline);
-                    auto shader = vk_pipeline->get_shader();
-                    shader->update_descriptor_sets(this->m_current_image);
                     const auto& bound_buffers = vk_pipeline->get_bound_buffers();
                     bool bound_buffer = false;
                     if (bound_buffers.find(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT) != bound_buffers.end()) {
@@ -184,7 +183,7 @@ namespace bve {
                                 vk_buffers.push_back(buffer->get_buffer());
                             }
                             std::vector<VkDeviceSize> offsets(vk_buffers.size(), 0);
-                            vkCmdBindVertexBuffers(this->m_command_buffers[this->m_current_image], 0, (uint32_t)vk_buffers.size(), vk_buffers.data(), offsets.data());
+                            vkCmdBindVertexBuffers(command_buffer, 0, (uint32_t)vk_buffers.size(), vk_buffers.data(), offsets.data());
                             bound_buffer = true;
                         }
                     }
@@ -196,25 +195,26 @@ namespace bve {
                         const auto& bound_index_buffers = bound_buffers.find(VK_BUFFER_USAGE_INDEX_BUFFER_BIT)->second;
                         if (!bound_index_buffers.empty()) {
                             auto front = *bound_index_buffers.begin();
-                            vkCmdBindIndexBuffer(this->m_command_buffers[this->m_current_image], front->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
+                            vkCmdBindIndexBuffer(command_buffer, front->get_buffer(), 0, VK_INDEX_TYPE_UINT32);
                             bound_buffer = true;
                         }
                     }
                     if (!bound_buffer) {
                         spdlog::warn("[vulkan context] attempting to call vkCmdDrawIndexed without an index buffer");
                     }
-                    vkCmdBindPipeline(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
+                    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, vk_pipeline->get_pipeline());
+                    auto shader = vk_pipeline->get_shader();
                     const auto& sets = shader->get_descriptor_sets();
                     std::vector<VkDescriptorSet> sets_to_bind;
                     for (const auto& set : sets) {
                         sets_to_bind.push_back(set.sets[this->m_current_image]);
                     }
                     VkPipelineLayout layout = vk_pipeline->get_layout();
-                    vkCmdBindDescriptorSets(this->m_command_buffers[this->m_current_image], VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
+                    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
                 }
-                vkCmdDrawIndexed(this->m_command_buffers[this->m_current_image], (uint32_t)index_count, 1, 0, 0, 0);
+                vkCmdDrawIndexed(command_buffer, (uint32_t)index_count, 1, 0, 0, 0);
             }
             VkCommandBuffer vulkan_context::begin_single_time_commands() {
                 VkCommandBufferAllocateInfo alloc_info;

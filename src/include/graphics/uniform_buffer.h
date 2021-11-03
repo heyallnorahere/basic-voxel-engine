@@ -8,6 +8,7 @@ namespace bve {
             virtual void set_data(const void* data, size_t size, size_t offset = 0) = 0;
             virtual size_t get_size() = 0;
             virtual uint32_t get_binding() = 0;
+            virtual void activate() = 0;
             void set_data(const ::bve::buffer& buf, size_t offset = 0) {
                 this->set_data(buf.get<void>(), buf.size(), offset);
             }

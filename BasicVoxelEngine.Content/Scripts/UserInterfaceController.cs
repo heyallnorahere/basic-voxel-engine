@@ -18,15 +18,7 @@ namespace BasicVoxelEngine.Content.Scripts
             Factory factory = Application.Factory;
             mShader = factory.CreateShader(new string[] { AssetManager.GetAssetPath("shaders:ui.glsl") });
         }
-        private Vector2 ConvertCoords(Vector2 coords)
-        {
-            Vector2 newCoords = coords;
-            if (Application.Factory.API == GraphicsAPI.OPENGL)
-            {
-                newCoords.Y = 1f - newCoords.Y;
-            }
-            return (newCoords - 0.5f) * 2f;
-        }
+        private Vector2 ConvertCoords(Vector2 coords) => (coords - 0.5f) * 2f;
         public override void DrawQuad(Texture texture, Vector2I origin, Vector2I size)
         {
             Texture key = texture;
@@ -63,6 +55,7 @@ namespace BasicVoxelEngine.Content.Scripts
             {
                 return;
             }
+            mCommandList?.Destroy();
             mCommandList = renderer.CreateCommandList();
             var textures = new List<Texture>();
             foreach (var texture in mDrawnQuads.Keys)
@@ -105,37 +98,47 @@ namespace BasicVoxelEngine.Content.Scripts
                 renderer.SetTexture(i, textures[i]);
             }
             renderer.Render(mCommandList, Application.Window.Context);
+            renderer.SetShader(null);
         }
         private static Mesh CreateQuadMesh(Quad quad, int textureIndex)
         {
             var mesh = new Mesh();
-            mesh.SetVertices(new List<Vertex>
+            var vertices = new Vertex[]
             {
                 new Vertex
                 {
                     Position = new Vector2(quad.TopLeft.X, quad.BottomRight.Y),
-                    UV = new Vector2(0f, 0f),
+                    UV = new Vector2(0f, 1f),
                     TextureIndex = textureIndex
                 },
                 new Vertex
                 {
                     Position = quad.BottomRight,
-                    UV = new Vector2(1f, 0f),
-                    TextureIndex = textureIndex
-                },
-                new Vertex
-                {
-                    Position = new Vector2(quad.BottomRight.X, quad.TopLeft.Y),
                     UV = new Vector2(1f, 1f),
                     TextureIndex = textureIndex
                 },
                 new Vertex
                 {
+                    Position = new Vector2(quad.BottomRight.X, quad.TopLeft.Y),
+                    UV = new Vector2(1f, 0f),
+                    TextureIndex = textureIndex
+                },
+                new Vertex
+                {
                     Position = quad.TopLeft,
-                    UV = new Vector2(0f, 1f),
+                    UV = new Vector2(0f, 0f),
                     TextureIndex = textureIndex
                 }
-            });
+            };
+            if (Application.Factory.API == GraphicsAPI.OPENGL)
+            {
+                for (int i = 0; i < vertices.Length; i++) {
+                    var vertex = vertices[i];
+                    vertex.Position *= -1f;
+                    vertex.UV.Y = 1f - vertex.UV.Y;
+                }
+            }
+            mesh.SetVertices(vertices);
             mesh.SetIndices(new List<uint>()
             {
                 0, 1, 3,

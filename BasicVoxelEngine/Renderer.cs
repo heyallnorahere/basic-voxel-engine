@@ -71,14 +71,38 @@ namespace BasicVoxelEngine
         internal CommandList(Renderer renderer)
         {
             mAddress = Create_Native(renderer.mAddress, out mRendererAddress);
+            mDestroyed = false;
+        }
+        public void Destroy()
+        {
+            if (!mDestroyed)
+            {
+                Destroy_Native(mAddress, mRendererAddress);
+                mDestroyed = true;
+            }
         }
         ~CommandList()
         {
-            Destroy_Native(mAddress, mRendererAddress);
+            Destroy();
         }
-        public void AddMesh(Mesh mesh) => AddMesh_Native(mesh, mAddress, mRendererAddress);
-        public void Close(IReadOnlyList<VertexAttribute> vertexAttributes) => Close_Native(vertexAttributes, mAddress, mRendererAddress);
+        public void AddMesh(Mesh mesh)
+        {
+            if (mDestroyed)
+            {
+                throw new Exception("This CommandList has already been destroyed!");
+            }
+            AddMesh_Native(mesh, mAddress, mRendererAddress);
+        }
+        public void Close(List<VertexAttribute> vertexAttributes)
+        {
+            if (mDestroyed)
+            {
+                throw new Exception("This CommandList has already been destroyed!");
+            }
+            Close_Native(vertexAttributes, mAddress, mRendererAddress);
+        }
         internal readonly IntPtr mAddress, mRendererAddress;
+        private bool mDestroyed;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr Create_Native(IntPtr rendererAddress, out IntPtr refCopy);
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -86,7 +110,7 @@ namespace BasicVoxelEngine
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void AddMesh_Native(Mesh mesh, IntPtr address, IntPtr rendererAddress);
         [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void Close_Native(IReadOnlyList<VertexAttribute> vertexAttributes, IntPtr address, IntPtr rendererAddress);
+        private static extern void Close_Native(List<VertexAttribute> vertexAttributes, IntPtr address, IntPtr rendererAddress);
     }
     public sealed class Renderer
     {
@@ -107,8 +131,8 @@ namespace BasicVoxelEngine
             }
             Render_Native(commandList.mAddress, context.mAddress, mAddress);
         }
-        public void SetShader(Shader shader) => SetShader_Native(shader.mAddress, mAddress);
-        public void SetTexture(int index, Texture texture) => SetTexture_Native(index, texture.Address, mAddress);
+        public void SetShader(Shader? shader) => SetShader_Native(shader?.mAddress ?? IntPtr.Zero, mAddress);
+        public void SetTexture(int index, Texture? texture) => SetTexture_Native(index, texture?.Address ?? IntPtr.Zero, mAddress);
         internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
