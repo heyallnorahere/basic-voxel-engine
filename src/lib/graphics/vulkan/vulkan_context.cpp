@@ -93,7 +93,7 @@ namespace bve {
                 std::string message = "[vulkan context] validation layer: " + std::string(callback_data->pMessage);
                 switch (severity) {
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-                    spdlog::debug(message);
+                    spdlog::debug("(debug) {0}", message);
                     break;
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
                     spdlog::warn(message);
@@ -160,6 +160,16 @@ namespace bve {
                 render_pass_info.clearValueCount = (uint32_t)clear_values.size();
                 render_pass_info.pClearValues = clear_values.data();
                 vkCmdBeginRenderPass(command_buffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+                VkViewport viewport;
+                util::zero(viewport);
+                viewport.width = (float)this->m_swapchain_extent.width;
+                viewport.height = (float)this->m_swapchain_extent.height;
+                viewport.maxDepth = 1.f;
+                vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+                VkRect2D scissor;
+                scissor.extent = this->m_swapchain_extent;
+                util::zero(scissor.offset);
+                vkCmdSetScissor(command_buffer, 0, 1, &scissor);
             }
             void vulkan_context::make_current() {
                 this->m_factory->m_current_context = this;
@@ -170,7 +180,7 @@ namespace bve {
                 if (pipeline) {
                     auto vk_pipeline = pipeline.as<vulkan_pipeline>();
                     if (!vk_pipeline->valid()) {
-                        vk_pipeline->create();
+                        throw std::runtime_error("[vulkan context] an invalid pipeline is bound");
                     }
                     this->m_bound_pipelines.push_back(pipeline);
                     const auto& bound_buffers = vk_pipeline->get_bound_buffers();
