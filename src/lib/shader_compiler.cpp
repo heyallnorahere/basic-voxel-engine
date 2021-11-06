@@ -233,26 +233,29 @@ namespace bve {
         }
         return data;
     }
+    static void add_resource(const spirv_cross::Resource& resource, std::map<uint32_t, graphics::reflection_resource_data>& data, shader_type stage, const spirv_cross::Compiler& compiler) {
+        uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
+        uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+        graphics::reflection_resource_data& resource_data = data[binding];
+        resource_data.descriptor_set = descriptor_set;
+        resource_data.name = resource.name;
+        resource_data.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
+        resource_data.stage = stage;
+    }
     void shader_compiler::reflect(const std::vector<uint32_t>& spirv, shader_type stage, graphics::reflection_output& output) {
         spirv_cross::Compiler compiler(spirv);
         auto resources = compiler.get_shader_resources();
         for (const auto& resource : resources.uniform_buffers) {
-            uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            graphics::reflection_resource_data& ubd = output.uniform_buffers[binding];
-            ubd.descriptor_set = descriptor_set;
-            ubd.name = resource.name;
-            ubd.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
-            ubd.stage = stage;
+            add_resource(resource, output.uniform_buffers, stage, compiler);
+        }
+        for (const auto& resource : resources.push_constant_buffers) {
+            add_resource(resource, output.push_constant_buffers, stage, compiler);
+        }
+        for (const auto& resource : resources.storage_buffers) {
+            add_resource(resource, output.storage_buffers, stage, compiler);
         }
         for (const auto& resource : resources.sampled_images) {
-            uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
-            graphics::reflection_resource_data& resource_data = output.sampled_images[binding];
-            resource_data.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
-            resource_data.descriptor_set = descriptor_set;
-            resource_data.name = resource.name;
-            resource_data.stage = stage;
+            add_resource(resource, output.sampled_images, stage, compiler);
         }
         for (const auto& [_, struct_] : defined_structs) {
             output.structs.push_back(struct_);

@@ -21,7 +21,7 @@ namespace bve {
             uint32_t descriptor_set;
         };
         struct reflection_output {
-            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images;
+            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images, push_constant_buffers, storage_buffers;
             std::vector<std::shared_ptr<struct_data>> structs;
             uint32_t get_descriptor_set_count() const;
         };
