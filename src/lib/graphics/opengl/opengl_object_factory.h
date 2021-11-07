@@ -12,6 +12,7 @@ namespace bve {
                 virtual ref<shader> create_shader(const std::vector<fs::path>& sources) override;
                 virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) override;
                 virtual ref<uniform_buffer> create_uniform_buffer(size_t size, uint32_t binding) override;
+                virtual ref<compute_pipeline> create_compute_pipeline(ref<shader> shader_) override { return nullptr; } // im not dealing with this shit lmao
             };
         }
     }

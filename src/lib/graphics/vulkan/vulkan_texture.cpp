@@ -155,7 +155,7 @@ namespace bve {
                 if (sampler_array_binding == (uint32_t)-1) {
                     throw std::runtime_error("[vulkan shader] could not find a sampler array named \"textures\"");
                 }
-                VkDescriptorSet vk_descriptor_set = descriptor_sets[descriptor_set].sets[image_index];
+                VkDescriptorSet vk_descriptor_set = descriptor_sets.find(descriptor_set)->second.sets[image_index];
                 VkWriteDescriptorSet write;
                 util::zero(write);
                 write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

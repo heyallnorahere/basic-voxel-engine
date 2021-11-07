@@ -59,13 +59,7 @@ namespace bve {
                     return extent;
                 }
             }
-            struct queue_family_indices {
-                std::optional<uint32_t> graphics_family, present_family;
-                bool is_complete() {
-                    return this->graphics_family.has_value() && this->present_family.has_value();
-                }
-            };
-            static queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
+            queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
                 queue_family_indices indices;
                 uint32_t queue_family_count = 0;
                 vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
@@ -78,6 +72,9 @@ namespace bve {
                     VkQueueFamilyProperties queue_family = queue_families[i];
                     if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                         indices.graphics_family = i;
+                    }
+                    if (queue_family.queueFlags & VK_QUEUE_COMPUTE_BIT) {
+                        indices.compute_family = i;
                     }
                     VkBool32 present_support = false;
                     vkGetPhysicalDeviceSurfaceSupportKHR(device, i, window_surface, &present_support);
@@ -216,7 +213,7 @@ namespace bve {
                     auto shader = vk_pipeline->get_shader();
                     const auto& sets = shader->get_descriptor_sets();
                     std::vector<VkDescriptorSet> sets_to_bind;
-                    for (const auto& set : sets) {
+                    for (const auto& [id, set] : sets) {
                         sets_to_bind.push_back(set.sets[this->m_current_image]);
                     }
                     VkPipelineLayout layout = vk_pipeline->get_layout();
@@ -471,7 +468,7 @@ namespace bve {
             }
             void vulkan_context::create_logical_device() {
                 auto indices = find_queue_families(this->m_physical_device, this->m_window_surface);
-                std::set<uint32_t> queue_families = { *indices.graphics_family, *indices.present_family };
+                std::set<uint32_t> queue_families = { *indices.graphics_family, *indices.present_family, *indices.compute_family };
                 std::vector<VkDeviceQueueCreateInfo> queue_create_info;
                 float queue_priority = 1.f;
                 for (uint32_t index : queue_families) {
@@ -499,6 +496,7 @@ namespace bve {
                 }
                 vkGetDeviceQueue(this->m_device, *indices.graphics_family, 0, &this->m_graphics_queue);
                 vkGetDeviceQueue(this->m_device, *indices.present_family, 0, &this->m_present_queue);
+                vkGetDeviceQueue(this->m_device, *indices.compute_family, 0, &this->m_compute_queue);
             }
             void vulkan_context::create_swap_chain(glm::ivec2 size) {
                 auto details = query_swap_chain_support(this->m_physical_device, this->m_window_surface);

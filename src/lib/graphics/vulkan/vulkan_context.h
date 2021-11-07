@@ -4,6 +4,13 @@
 namespace bve {
     namespace graphics {
         namespace vulkan {
+            struct queue_family_indices {
+                std::optional<uint32_t> graphics_family, present_family, compute_family;
+                bool is_complete() {
+                    return this->graphics_family && this->present_family && this->compute_family;
+                }
+            };
+            queue_family_indices find_queue_families(VkPhysicalDevice device, VkSurfaceKHR window_surface);
             class vulkan_context : public context {
             public:
                 vulkan_context(ref<vulkan_object_factory> factory);
@@ -18,6 +25,7 @@ namespace bve {
                 VkPhysicalDevice get_physical_device() { return this->m_physical_device; }
                 VkDevice get_device() { return this->m_device; }
                 VkQueue get_graphics_queue() { return this->m_graphics_queue; }
+                VkQueue get_compute_queue() { return this->m_compute_queue; }
                 VkSurfaceKHR get_window_surface() { return this->m_window_surface; }
                 VkSwapchainKHR get_swap_chain() { return this->m_swap_chain; }
                 VkExtent2D get_swapchain_extent() { return this->m_swapchain_extent; }
@@ -60,7 +68,7 @@ namespace bve {
                 VkDebugUtilsMessengerEXT m_debug_messenger;
                 VkPhysicalDevice m_physical_device;
                 VkDevice m_device;
-                VkQueue m_graphics_queue, m_present_queue;
+                VkQueue m_graphics_queue, m_present_queue, m_compute_queue;
                 VkSurfaceKHR m_window_surface;
                 VkSwapchainKHR m_swap_chain;
                 uint32_t m_image_count, m_min_image_count;

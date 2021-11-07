@@ -16,7 +16,8 @@ namespace bve {
         { "vertex", shader_type::VERTEX },
         { "fragment", shader_type::FRAGMENT },
         { "pixel", shader_type::FRAGMENT },
-        { "geometry", shader_type::GEOMETRY }
+        { "geometry", shader_type::GEOMETRY },
+        { "compute", shader_type::COMPUTE }
     };
     static std::string to_lower(const std::string& original) {
         std::string lower;

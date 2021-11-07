@@ -23,11 +23,26 @@ namespace bve {
         code_host::remove_current();
         shader_compiler::cleanup_compiler();
     }
+    struct test_compute_data {
+        int32_t input, output;
+    };
     void application::run() {
         {
             auto contentloader_class = this->m_code_host->find_class("BasicVoxelEngine.ContentLoading.ContentLoader");
             auto loadregisteredobjects = contentloader_class->get_method("*:LoadRegisteredObjects");
             managed::class_::invoke(loadregisteredobjects);
+        }
+        {
+            auto shader = this->m_object_factory->create_shader({ asset_manager::get().get_asset_path("shaders:testcompute.glsl") });
+            auto compute_pipeline = this->m_object_factory->create_compute_pipeline(shader);
+            //auto ubo = this->m_object_factory->create_uniform_buffer(sizeof(test_compute_data), 0);
+            test_compute_data data;
+            data.input = 3;
+            //ubo->set_data(data);
+            //compute_pipeline->bind_uniform_buffer(ubo);
+            compute_pipeline->dispatch();
+            //ubo->get_data(data);
+            spdlog::info("{0} * 7 = {1}", data.input, data.output);
         }
         auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
             mesh_factory factory(world_);

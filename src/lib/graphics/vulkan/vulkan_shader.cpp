@@ -20,6 +20,9 @@ namespace bve {
                 case shader_type::GEOMETRY:
                     return VK_SHADER_STAGE_GEOMETRY_BIT;
                     break;
+                case shader_type::COMPUTE:
+                    return VK_SHADER_STAGE_COMPUTE_BIT;
+                    break;
                 default:
                     throw std::runtime_error("[vulkan shader] invalid shader type");
                     return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;
@@ -103,6 +106,9 @@ namespace bve {
                     case shader_type::GEOMETRY:
                         shader_name = "geometry";
                         break;
+                    case shader_type::COMPUTE:
+                        shader_name = "compute";
+                        break;
                     default:
                         shader_name = "unidentified";
                         break;
@@ -159,24 +165,28 @@ namespace bve {
                     return;
                 }
                 std::map<uint32_t, std::map<uint32_t, layout_binding_t>> layout_bindings;
-                for (const auto& [binding, buffer_info] : data.uniform_buffers) {
-                    layout_binding_t layout_binding;
+                for (const auto& [binding, resource_info] : data.uniform_buffers) {
+                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
                     layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    layout_binding.stage = get_stage_flags(buffer_info.stage);
-                    layout_binding.descriptor_count = 1;
-                    layout_bindings[buffer_info.descriptor_set][binding] = layout_binding;
+                    layout_binding.stage = get_stage_flags(resource_info.stage);
+                    layout_binding.descriptor_count = resource_info.type->array_size;
                 }
                 for (const auto& [binding, resource_info] : data.sampled_images) {
-                    layout_binding_t layout_binding;
+                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
                     layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                     layout_binding.stage = get_stage_flags(resource_info.stage);
                     layout_binding.descriptor_count = resource_info.type->array_size;
-                    layout_bindings[resource_info.descriptor_set][binding] = layout_binding;
+                }
+                for (const auto& [binding, resource_info] : data.storage_buffers) {
+                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
+                    layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                    layout_binding.stage = get_stage_flags(resource_info.stage);
+                    layout_binding.descriptor_count = resource_info.type->array_size;
                 }
                 std::vector<VkDescriptorSetLayout> layouts;
-                for (uint32_t i = 0; i < descriptor_set_count; i++) {
+                for (const auto& [set, set_bindings] : layout_bindings) {
                     std::vector<VkDescriptorSetLayoutBinding> bindings;
-                    for (const auto& [binding, data] : layout_bindings[i]) {
+                    for (const auto& [binding, data] : set_bindings) {
                         VkDescriptorSetLayoutBinding layout_binding;
                         util::zero(layout_binding);
                         layout_binding.binding = binding;
@@ -193,9 +203,9 @@ namespace bve {
                     create_info.pBindings = bindings.data();
                     VkDescriptorSetLayout layout;
                     if (vkCreateDescriptorSetLayout(this->m_device, &create_info, nullptr, &layout) != VK_SUCCESS) {
-                        throw std::runtime_error("[vulkan shader] could not create descriptor set layout for binding " + std::to_string(i));
+                        throw std::runtime_error("[vulkan shader] could not create descriptor set layout for descriptor set " + std::to_string(set));
                     }
-                    this->m_descriptor_sets.push_back({ layout });
+                    this->m_descriptor_sets.insert({ set, { layout } });
                     for (size_t j = 0; j < image_count; j++) {
                         layouts.push_back(layout);
                     }
@@ -219,7 +229,7 @@ namespace bve {
             }
             void vulkan_shader::destroy_descriptor_sets() {
                 std::vector<VkDescriptorSet> sets;
-                for (const auto& desc : this->m_descriptor_sets) {
+                for (const auto& [id, desc] : this->m_descriptor_sets) {
                     vkDestroyDescriptorSetLayout(this->m_device, desc.layout, nullptr);
                     sets.insert(sets.end(), desc.sets.begin(), desc.sets.end());
                 }

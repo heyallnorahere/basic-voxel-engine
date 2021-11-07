@@ -184,8 +184,7 @@ namespace bve {
                 pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
                 std::vector<VkDescriptorSetLayout> layouts;
                 if (this->m_shader) {
-                    const auto& sets = this->m_shader->get_descriptor_sets();
-                    for (const auto& set : sets) {
+                    for (const auto& [id, set] : this->m_shader->get_descriptor_sets()) {
                         layouts.push_back(set.layout);
                     }
                     pipeline_layout_info.setLayoutCount = (uint32_t)layouts.size();

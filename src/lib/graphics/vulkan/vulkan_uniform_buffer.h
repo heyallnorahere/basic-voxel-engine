@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/uniform_buffer.h"
 #include "vulkan_object_factory.h"
+#include "vulkan_shader.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -12,6 +13,7 @@ namespace bve {
                 virtual size_t get_size() override { return this->m_size; }
                 virtual uint32_t get_binding() override { return this->m_binding; }
                 virtual void activate() override;
+                void write_descriptor_set(ref<vulkan_shader> shader, uint32_t image_index);
                 const VkDescriptorBufferInfo& get_descriptor_info() { return this->m_descriptor_info; }
             private:
                 ref<vulkan_object_factory> m_factory;

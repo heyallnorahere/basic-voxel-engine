@@ -8,7 +8,8 @@ namespace bve {
     enum class shader_type {
         VERTEX,
         FRAGMENT,
-        GEOMETRY
+        GEOMETRY,
+        COMPUTE
     };
     class shader_parser_internals;
     class shader_parser {

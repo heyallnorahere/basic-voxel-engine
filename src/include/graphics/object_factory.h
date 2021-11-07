@@ -5,6 +5,7 @@
 #include "shader.h"
 #include "texture.h"
 #include "uniform_buffer.h"
+#include "compute_pipeline.h"
 namespace bve {
     namespace graphics {
         enum class graphics_api {
@@ -36,6 +37,7 @@ namespace bve {
             }
             virtual ref<texture> create_texture(const std::vector<uint8_t>& data, int32_t width, int32_t height, int32_t channels) = 0;
             virtual ref<uniform_buffer> create_uniform_buffer(size_t size, uint32_t binding) = 0;
+            virtual ref<compute_pipeline> create_compute_pipeline(ref<shader> shader_) = 0;
             graphics_api get_graphics_api() { return this->m_graphics_api; }
         private:
             graphics_api m_graphics_api;

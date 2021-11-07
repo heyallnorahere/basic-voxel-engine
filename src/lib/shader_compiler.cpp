@@ -40,6 +40,10 @@ namespace bve {
             shader_type = EShLangGeometry;
             shader_name = "geometry";
             break;
+        case shader_type::COMPUTE:
+            shader_type = EShLangCompute;
+            shader_name = "compute";
+            break;
         default:
             throw std::runtime_error("[shader compiler] the specified shader type is not supported yet");
         }
