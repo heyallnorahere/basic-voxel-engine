@@ -152,5 +152,15 @@ namespace bve {
         void BasicVoxelEngine_Renderer_SetTexture(int32_t index, IntPtr textureAddress, IntPtr address);
 
         bool BasicVoxelEngine_Helpers_AreRefsEqual(IntPtr ref1, IntPtr ref2);
+
+        void BasicVoxelEngine_Buffer_Create(IntPtr* address);
+        void BasicVoxelEngine_Buffer_Destroy(IntPtr address);
+        void BasicVoxelEngine_Buffer_Alloc(IntPtr address, int32_t size);
+        void BasicVoxelEngine_Buffer_Free(IntPtr address);
+        void BasicVoxelEngine_Buffer_Zero(IntPtr address);
+        void BasicVoxelEngine_Buffer_Copy(IntPtr address, void* data, int32_t size, int32_t offset);
+        void BasicVoxelEngine_Buffer_CopyBuffer(IntPtr address, IntPtr buffer, int32_t offset);
+        int32_t BasicVoxelEngine_Buffer_GetSize(IntPtr address);
+        bool BasicVoxelEngine_Buffer_IsAllocated(IntPtr address);
     }
 }

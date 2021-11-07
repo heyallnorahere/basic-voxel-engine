@@ -350,6 +350,16 @@ namespace bve {
             pair("BasicVoxelEngine.Renderer::SetTexture_Native", BasicVoxelEngine_Renderer_SetTexture),
 
             pair("BasicVoxelEngine.Helpers::AreRefsEqual", BasicVoxelEngine_Helpers_AreRefsEqual),
+
+            pair("BasicVoxelEngine.Buffer::Create_Native", BasicVoxelEngine_Buffer_Create),
+            pair("BasicVoxelEngine.Buffer::Destroy_Native", BasicVoxelEngine_Buffer_Destroy),
+            pair("BasicVoxelEngine.Buffer::Alloc_Native", BasicVoxelEngine_Buffer_Alloc),
+            pair("BasicVoxelEngine.Buffer::Free_Native", BasicVoxelEngine_Buffer_Free),
+            pair("BasicVoxelEngine.Buffer::Zero_Native", BasicVoxelEngine_Buffer_Zero),
+            pair("BasicVoxelEngine.Buffer::Copy_Native", BasicVoxelEngine_Buffer_Copy),
+            pair("BasicVoxelEngine.Buffer::CopyBuffer_Native", BasicVoxelEngine_Buffer_CopyBuffer),
+            pair("BasicVoxelEngine.Buffer::GetSize_Native", BasicVoxelEngine_Buffer_GetSize),
+            pair("BasicVoxelEngine.Buffer::IsAllocated_Native", BasicVoxelEngine_Buffer_IsAllocated),
         };
     }
     static ref<code_host> current_code_host;

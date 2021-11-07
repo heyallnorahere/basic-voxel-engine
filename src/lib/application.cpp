@@ -32,18 +32,6 @@ namespace bve {
             auto loadregisteredobjects = contentloader_class->get_method("*:LoadRegisteredObjects");
             managed::class_::invoke(loadregisteredobjects);
         }
-        {
-            auto shader = this->m_object_factory->create_shader({ asset_manager::get().get_asset_path("shaders:testcompute.glsl") });
-            auto compute_pipeline = this->m_object_factory->create_compute_pipeline(shader);
-            auto ssbo = this->m_object_factory->create_storage_buffer(sizeof(test_compute_data), 0);
-            test_compute_data data;
-            data.input = 3;
-            ssbo->set_data(data);
-            compute_pipeline->bind_storage_buffer(ssbo);
-            compute_pipeline->dispatch();
-            ssbo->get_data(data);
-            spdlog::info("{0} * 7 = {1}", data.input, data.output);
-        }
         auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
             mesh_factory factory(world_);
             this->m_meshes.clear();

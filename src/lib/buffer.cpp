@@ -89,8 +89,8 @@ namespace bve {
         void* ptr = (void*)((size_t)this->m_pointer + offset);
         memcpy(ptr, data, size);
     }
-    void buffer::copy(const buffer& buf) {
-        this->copy(buf.m_pointer, buf.m_size);
+    void buffer::copy(const buffer& buf, size_t offset) {
+        this->copy(buf.m_pointer, buf.m_size, offset);
     }
     size_t buffer::size() const {
         return this->m_size;

@@ -759,8 +759,37 @@ namespace bve {
             }
             renderer_->set_texture((size_t)index, texture);
         }
+
         bool BasicVoxelEngine_Helpers_AreRefsEqual(IntPtr ref1, IntPtr ref2) {
             return ((ref<ref_counted>*)ref1)->raw() == ((ref<ref_counted>*)ref2)->raw();
+        }
+
+        void BasicVoxelEngine_Buffer_Create(IntPtr* address) {
+            *address = new buffer;
+        }
+        void BasicVoxelEngine_Buffer_Destroy(IntPtr address) {
+            delete (buffer*)address;
+        }
+        void BasicVoxelEngine_Buffer_Alloc(IntPtr address, int32_t size) {
+            ((buffer*)address)->alloc((size_t)size);
+        }
+        void BasicVoxelEngine_Buffer_Free(IntPtr address) {
+            ((buffer*)address)->free();
+        }
+        void BasicVoxelEngine_Buffer_Zero(IntPtr address) {
+            ((buffer*)address)->zero();
+        }
+        void BasicVoxelEngine_Buffer_Copy(IntPtr address, void* data, int32_t size, int32_t offset) {
+            ((buffer*)address)->copy(data, (size_t)size, (size_t)offset);
+        }
+        void BasicVoxelEngine_Buffer_CopyBuffer(IntPtr address, IntPtr buffer, int32_t offset) {
+            ((::bve::buffer*)address)->copy(*(::bve::buffer*)buffer, (size_t)offset);
+        }
+        int32_t BasicVoxelEngine_Buffer_GetSize(IntPtr address) {
+            return (int32_t)((buffer*)address)->size();
+        }
+        bool BasicVoxelEngine_Buffer_IsAllocated(IntPtr address) {
+            return ((buffer*)address)->get<void>();
         }
     }
 }

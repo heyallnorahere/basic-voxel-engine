@@ -16,7 +16,7 @@ namespace bve {
         template<typename T> void copy(const T& data, size_t offset = 0) {
             copy(&data, sizeof(T), offset);
         }
-        void copy(const buffer& buf);
+        void copy(const buffer& buf, size_t offset = 0);
         template<typename T> T* get() {
             return (T*)this->m_pointer;
         }
