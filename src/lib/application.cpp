@@ -35,13 +35,13 @@ namespace bve {
         {
             auto shader = this->m_object_factory->create_shader({ asset_manager::get().get_asset_path("shaders:testcompute.glsl") });
             auto compute_pipeline = this->m_object_factory->create_compute_pipeline(shader);
-            //auto ubo = this->m_object_factory->create_uniform_buffer(sizeof(test_compute_data), 0);
+            auto ssbo = this->m_object_factory->create_storage_buffer(sizeof(test_compute_data), 0);
             test_compute_data data;
             data.input = 3;
-            //ubo->set_data(data);
-            //compute_pipeline->bind_uniform_buffer(ubo);
+            ssbo->set_data(data);
+            compute_pipeline->bind_storage_buffer(ssbo);
             compute_pipeline->dispatch();
-            //ubo->get_data(data);
+            ssbo->get_data(data);
             spdlog::info("{0} * 7 = {1}", data.input, data.output);
         }
         auto on_block_changed = [this](glm::ivec3, ref<world> world_) {
@@ -195,7 +195,9 @@ namespace bve {
         }
         auto reflection_data = this->m_shaders["static"]->get_reflection_data();
         auto set_field = [reflection_data, this](const std::string& name, const void* data, size_t size, uint32_t uniform_buffer) mutable {
-            auto type = reflection_data.uniform_buffers[uniform_buffer].type;
+            uint32_t binding = uniform_buffer % 16;
+            uint32_t set = (uniform_buffer - binding) / 16;
+            auto type = reflection_data.descriptor_sets[set].uniform_buffers[binding].type;
             size_t offset = type->find_offset(name);
             auto& buffers = this->m_renderer->get_uniform_buffers();
             buffers[uniform_buffer].copy(data, size, offset);

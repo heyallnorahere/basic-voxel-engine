@@ -2,6 +2,7 @@
 #include "vulkan_compute_pipeline.h"
 #include "vulkan_context.h"
 #include "vulkan_uniform_buffer.h"
+#include "vulkan_storage_buffer.h"
 #include "util.h"
 namespace bve {
     namespace graphics {
@@ -69,6 +70,11 @@ namespace bve {
                 // but its not exactly an urgent problem
                 auto ubo = buffer.as<vulkan_uniform_buffer>();
                 ubo->write_descriptor_set(this->m_shader, 0);
+            }
+            void vulkan_compute_pipeline::bind_storage_buffer(ref<storage_buffer> buffer) {
+                // see above
+                auto ssbo = buffer.as<vulkan_storage_buffer>();
+                ssbo->write_descriptor_set(this->m_shader, 0);
             }
             void vulkan_compute_pipeline::dispatch(glm::uvec3 group_count) {
                 vkQueueWaitIdle(this->m_queue);

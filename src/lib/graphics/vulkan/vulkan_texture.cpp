@@ -145,11 +145,13 @@ namespace bve {
                 auto shader = pipeline->get_shader();
                 const auto& reflection_data = shader->get_reflection_data();
                 const auto& descriptor_sets = shader->get_descriptor_sets();
-                for (const auto& [binding, resource_data] : reflection_data.sampled_images) {
-                    if (resource_data.name == "textures") {
-                        sampler_array_binding = binding;
-                        descriptor_set = resource_data.descriptor_set;
-                        break;
+                for (const auto& [set, set_data] : reflection_data.descriptor_sets) {
+                    for (const auto& [binding, resource_data] : set_data.sampled_images) {
+                        if (resource_data.name == "textures") {
+                            sampler_array_binding = binding;
+                            descriptor_set = set;
+                            break;
+                        }
                     }
                 }
                 if (sampler_array_binding == (uint32_t)-1) {

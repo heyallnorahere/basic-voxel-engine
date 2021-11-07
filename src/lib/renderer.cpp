@@ -105,10 +105,12 @@ namespace bve {
         if (shader_ && shader_ != this->m_current_shader) {
             this->m_uniform_buffers.clear();
             auto reflection_data = shader_->get_reflection_data();
-            for (const auto& [binding, data] : reflection_data.uniform_buffers) {
-                buffer& buffer_data = this->m_uniform_buffers[binding];
-                buffer_data.alloc(data.type->size);
-                buffer_data.set_dynamic_resizing_enabled(false);
+            for (const auto& [set, resources] : reflection_data.descriptor_sets) {
+                for (const auto& [binding, data] : resources.uniform_buffers) {
+                    buffer& buffer_data = this->m_uniform_buffers[set * 16 + binding];
+                    buffer_data.alloc(data.type->size);
+                    buffer_data.set_dynamic_resizing_enabled(false);
+                }
             }
         }
         this->m_current_shader = shader_;

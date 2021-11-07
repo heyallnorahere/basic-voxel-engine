@@ -75,22 +75,6 @@ namespace bve {
                 return offset + field.type->find_offset(subname);
             }
         }
-        void parse_resource_map(const std::map<uint32_t, reflection_resource_data>& resources, uint32_t& set_count) {
-            for (const auto& [binding, resource_info] : resources) {
-                uint32_t new_size = resource_info.descriptor_set + 1;
-                if (set_count < new_size) {
-                    set_count = new_size;
-                }
-            }
-        }
-        uint32_t reflection_output::get_descriptor_set_count() const {
-            uint32_t descriptor_set_count = 0;
-            parse_resource_map(this->uniform_buffers, descriptor_set_count);
-            parse_resource_map(this->sampled_images, descriptor_set_count);
-            parse_resource_map(this->storage_buffers, descriptor_set_count);
-            parse_resource_map(this->push_constant_buffers, descriptor_set_count);
-            return descriptor_set_count;
-        }
         void shader::reflect(shader_type type, const std::vector<uint32_t>& spirv) {
             shader_compiler compiler;
             compiler.reflect(spirv, type, this->m_reflection_data);

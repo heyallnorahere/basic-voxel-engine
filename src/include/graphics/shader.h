@@ -18,12 +18,13 @@ namespace bve {
             std::string name;
             std::shared_ptr<struct_data> type;
             shader_type stage;
-            uint32_t descriptor_set;
+        };
+        struct descriptor_set_data {
+            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images, push_constant_buffers, storage_buffers;
         };
         struct reflection_output {
-            std::map<uint32_t, reflection_resource_data> uniform_buffers, sampled_images, push_constant_buffers, storage_buffers;
+            std::map<uint32_t, descriptor_set_data> descriptor_sets;
             std::vector<std::shared_ptr<struct_data>> structs;
-            uint32_t get_descriptor_set_count() const;
         };
         class shader : public ref_counted {
         public:

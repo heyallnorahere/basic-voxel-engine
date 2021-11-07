@@ -7,6 +7,7 @@
 #include "vulkan_texture.h"
 #include "vulkan_uniform_buffer.h"
 #include "vulkan_compute_pipeline.h"
+#include "vulkan_storage_buffer.h"
 namespace bve {
     namespace graphics {
         namespace vulkan {
@@ -29,10 +30,17 @@ namespace bve {
                 return ref<vulkan_texture>::create(data, width, height, channels, this);
             }
             ref<uniform_buffer> vulkan_object_factory::create_uniform_buffer(size_t size, uint32_t binding) {
-                return ref<vulkan_uniform_buffer>::create(size, binding, this);
+                uint32_t set_binding = binding % 16;
+                uint32_t set = (binding - set_binding) / 16;
+                return ref<vulkan_uniform_buffer>::create(size, set, set_binding, this);
             }
             ref<compute_pipeline> vulkan_object_factory::create_compute_pipeline(ref<shader> shader_) {
                 return ref<vulkan_compute_pipeline>::create(shader_.as<vulkan_shader>(), this);
+            }
+            ref<storage_buffer> vulkan_object_factory::create_storage_buffer(size_t size, uint32_t binding) {
+                uint32_t set_binding = binding % 16;
+                uint32_t set = (binding - set_binding) / 16;
+                return ref<vulkan_storage_buffer>::create(size, set, set_binding, this);
             }
             ref<context> vulkan_object_factory::get_current_context() {
                 return this->m_current_context;

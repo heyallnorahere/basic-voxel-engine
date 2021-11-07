@@ -9,6 +9,7 @@ namespace bve {
                 vulkan_compute_pipeline(ref<vulkan_shader> shader_, ref<vulkan_object_factory> factory);
                 virtual ~vulkan_compute_pipeline() override;
                 virtual void bind_uniform_buffer(ref<uniform_buffer> buffer) override;
+                virtual void bind_storage_buffer(ref<storage_buffer> buffer) override;
                 virtual void dispatch(glm::uvec3 group_count) override;
             private:
                 ref<vulkan_object_factory> m_factory;

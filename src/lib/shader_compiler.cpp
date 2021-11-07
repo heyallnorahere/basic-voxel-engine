@@ -239,9 +239,7 @@ namespace bve {
     }
     static void add_resource(const spirv_cross::Resource& resource, std::map<uint32_t, graphics::reflection_resource_data>& data, shader_type stage, const spirv_cross::Compiler& compiler) {
         uint32_t binding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-        uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
         graphics::reflection_resource_data& resource_data = data[binding];
-        resource_data.descriptor_set = descriptor_set;
         resource_data.name = resource.name;
         resource_data.type = get_type(compiler, resource.type_id, spirv_cross::TypeID(), 0);
         resource_data.stage = stage;
@@ -250,16 +248,20 @@ namespace bve {
         spirv_cross::Compiler compiler(spirv);
         auto resources = compiler.get_shader_resources();
         for (const auto& resource : resources.uniform_buffers) {
-            add_resource(resource, output.uniform_buffers, stage, compiler);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            add_resource(resource, output.descriptor_sets[descriptor_set].uniform_buffers, stage, compiler);
         }
         for (const auto& resource : resources.push_constant_buffers) {
-            add_resource(resource, output.push_constant_buffers, stage, compiler);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            add_resource(resource, output.descriptor_sets[descriptor_set].push_constant_buffers, stage, compiler);
         }
         for (const auto& resource : resources.storage_buffers) {
-            add_resource(resource, output.storage_buffers, stage, compiler);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            add_resource(resource, output.descriptor_sets[descriptor_set].storage_buffers, stage, compiler);
         }
         for (const auto& resource : resources.sampled_images) {
-            add_resource(resource, output.sampled_images, stage, compiler);
+            uint32_t descriptor_set = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+            add_resource(resource, output.descriptor_sets[descriptor_set].sampled_images, stage, compiler);
         }
         for (const auto& [_, struct_] : defined_structs) {
             output.structs.push_back(struct_);

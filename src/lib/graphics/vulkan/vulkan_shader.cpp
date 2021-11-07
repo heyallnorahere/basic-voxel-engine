@@ -160,28 +160,29 @@ namespace bve {
                 size_t image_count = context->get_swapchain_image_count();
                 this->m_descriptor_pool = context->get_descriptor_pool();
                 const auto& data = this->get_reflection_data();
-                uint32_t descriptor_set_count = data.get_descriptor_set_count();
-                if (descriptor_set_count == 0) {
+                if (data.descriptor_sets.empty()) {
                     return;
                 }
                 std::map<uint32_t, std::map<uint32_t, layout_binding_t>> layout_bindings;
-                for (const auto& [binding, resource_info] : data.uniform_buffers) {
-                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
-                    layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                    layout_binding.stage = get_stage_flags(resource_info.stage);
-                    layout_binding.descriptor_count = resource_info.type->array_size;
-                }
-                for (const auto& [binding, resource_info] : data.sampled_images) {
-                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
-                    layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                    layout_binding.stage = get_stage_flags(resource_info.stage);
-                    layout_binding.descriptor_count = resource_info.type->array_size;
-                }
-                for (const auto& [binding, resource_info] : data.storage_buffers) {
-                    layout_binding_t& layout_binding = layout_bindings[resource_info.descriptor_set][binding];
-                    layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-                    layout_binding.stage = get_stage_flags(resource_info.stage);
-                    layout_binding.descriptor_count = resource_info.type->array_size;
+                for (const auto& [set, set_data] : data.descriptor_sets) {
+                    for (const auto& [binding, resource_info] : set_data.uniform_buffers) {
+                        layout_binding_t& layout_binding = layout_bindings[set][binding];
+                        layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+                        layout_binding.stage = get_stage_flags(resource_info.stage);
+                        layout_binding.descriptor_count = resource_info.type->array_size;
+                    }
+                    for (const auto& [binding, resource_info] : set_data.sampled_images) {
+                        layout_binding_t& layout_binding = layout_bindings[set][binding];
+                        layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                        layout_binding.stage = get_stage_flags(resource_info.stage);
+                        layout_binding.descriptor_count = resource_info.type->array_size;
+                    }
+                    for (const auto& [binding, resource_info] : set_data.storage_buffers) {
+                        layout_binding_t& layout_binding = layout_bindings[set][binding];
+                        layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+                        layout_binding.stage = get_stage_flags(resource_info.stage);
+                        layout_binding.descriptor_count = resource_info.type->array_size;
+                    }
                 }
                 std::vector<VkDescriptorSetLayout> layouts;
                 for (const auto& [set, set_bindings] : layout_bindings) {
@@ -220,10 +221,10 @@ namespace bve {
                 if (vkAllocateDescriptorSets(this->m_device, &alloc_info, sets.data()) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan shader] could not allocate descriptor sets");
                 }
-                for (size_t i = 0; i < descriptor_set_count; i++) {
+                for (const auto& [set, _] : data.descriptor_sets) {
                     for (size_t j = 0; j < image_count; j++) {
-                        size_t set_index = (i * image_count) + j;
-                        this->m_descriptor_sets[i].sets.push_back(sets[set_index]);
+                        size_t set_index = (set * image_count) + j;
+                        this->m_descriptor_sets[set].sets.push_back(sets[set_index]);
                     }
                 }
             }
