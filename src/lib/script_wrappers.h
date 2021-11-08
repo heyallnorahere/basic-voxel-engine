@@ -159,8 +159,24 @@ namespace bve {
         void BasicVoxelEngine_Buffer_Free(IntPtr address);
         void BasicVoxelEngine_Buffer_Zero(IntPtr address);
         void BasicVoxelEngine_Buffer_Copy(IntPtr address, void* data, int32_t size, int32_t offset);
-        void BasicVoxelEngine_Buffer_CopyBuffer(IntPtr address, IntPtr buffer, int32_t offset);
+        void BasicVoxelEngine_Buffer_Copy_Buffer(IntPtr address, IntPtr buffer, int32_t offset);
         int32_t BasicVoxelEngine_Buffer_GetSize(IntPtr address);
         bool BasicVoxelEngine_Buffer_IsAllocated(IntPtr address);
+
+        void BasicVoxelEngine_Graphics_UniformBuffer_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_UniformBuffer_SetData(IntPtr address, void* data, int32_t size, int32_t offset);
+        void BasicVoxelEngine_Graphics_UniformBuffer_SetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset);
+        void BasicVoxelEngine_Graphics_UniformBuffer_Activate(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_UniformBuffer_GetSize(IntPtr address);
+        uint BasicVoxelEngine_Graphics_UniformBuffer_GetBinding(IntPtr address);
+
+        void BasicVoxelEngine_Graphics_StorageBuffer_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_StorageBuffer_SetData(IntPtr address, void* data, int32_t size, int32_t offset);
+        void BasicVoxelEngine_Graphics_StorageBuffer_SetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset);
+        void BasicVoxelEngine_Graphics_StorageBuffer_GetData(IntPtr address, void* data, int32_t size, int32_t offset);
+        void BasicVoxelEngine_Graphics_StorageBuffer_GetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset);
+        void BasicVoxelEngine_Graphics_StorageBuffer_Activate(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_StorageBuffer_GetSize(IntPtr address);
+        uint BasicVoxelEngine_Graphics_StorageBuffer_GetBinding(IntPtr address);
     }
 }

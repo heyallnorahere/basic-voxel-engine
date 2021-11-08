@@ -782,7 +782,7 @@ namespace bve {
         void BasicVoxelEngine_Buffer_Copy(IntPtr address, void* data, int32_t size, int32_t offset) {
             ((buffer*)address)->copy(data, (size_t)size, (size_t)offset);
         }
-        void BasicVoxelEngine_Buffer_CopyBuffer(IntPtr address, IntPtr buffer, int32_t offset) {
+        void BasicVoxelEngine_Buffer_Copy_Buffer(IntPtr address, IntPtr buffer, int32_t offset) {
             ((::bve::buffer*)address)->copy(*(::bve::buffer*)buffer, (size_t)offset);
         }
         int32_t BasicVoxelEngine_Buffer_GetSize(IntPtr address) {
@@ -790,6 +790,62 @@ namespace bve {
         }
         bool BasicVoxelEngine_Buffer_IsAllocated(IntPtr address) {
             return ((buffer*)address)->get<void>();
+        }
+
+        void BasicVoxelEngine_Graphics_UniformBuffer_DestroyRef(IntPtr address) {
+            delete (ref<graphics::uniform_buffer>*)address;
+        }
+        void BasicVoxelEngine_Graphics_UniformBuffer_SetData(IntPtr address, void* data, int32_t size, int32_t offset) {
+            auto ubo = *(ref<graphics::uniform_buffer>*)address;
+            ubo->set_data(data, (size_t)size, (size_t)offset);
+        }
+        void BasicVoxelEngine_Graphics_UniformBuffer_SetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset) {
+            auto ubo = *(ref<graphics::uniform_buffer>*)address;
+            ubo->set_data(*(::bve::buffer*)buffer, offset);
+        }
+        void BasicVoxelEngine_Graphics_UniformBuffer_Activate(IntPtr address) {
+            auto ubo = *(ref<graphics::uniform_buffer>*)address;
+            ubo->activate();
+        }
+        int32_t BasicVoxelEngine_Graphics_UniformBuffer_GetSize(IntPtr address) {
+            auto ubo = *(ref<graphics::uniform_buffer>*)address;
+            return (int32_t)ubo->get_size();
+        }
+        uint BasicVoxelEngine_Graphics_UniformBuffer_GetBinding(IntPtr address) {
+            auto ubo = *(ref<graphics::uniform_buffer>*)address;
+            return ubo->get_binding();
+        }
+
+        void BasicVoxelEngine_Graphics_StorageBuffer_DestroyRef(IntPtr address) {
+            delete (ref<graphics::storage_buffer>*)address;
+        }
+        void BasicVoxelEngine_Graphics_StorageBuffer_SetData(IntPtr address, void* data, int32_t size, int32_t offset) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            ssbo->set_data(data, (size_t)size, (size_t)offset);
+        }
+        void BasicVoxelEngine_Graphics_StorageBuffer_SetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            ssbo->set_data(*(::bve::buffer*)buffer, (size_t)offset);
+        }
+        void BasicVoxelEngine_Graphics_StorageBuffer_GetData(IntPtr address, void* data, int32_t size, int32_t offset) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            ssbo->get_data(data, (size_t)size, (size_t)offset);
+        }
+        void BasicVoxelEngine_Graphics_StorageBuffer_GetData_Buffer(IntPtr address, IntPtr buffer, int32_t offset) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            ssbo->get_data(*(::bve::buffer*)buffer, (size_t)offset);
+        }
+        void BasicVoxelEngine_Graphics_StorageBuffer_Activate(IntPtr address) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            ssbo->activate();
+        }
+        int32_t BasicVoxelEngine_Graphics_StorageBuffer_GetSize(IntPtr address) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            return (int32_t)ssbo->get_size();
+        }
+        uint BasicVoxelEngine_Graphics_StorageBuffer_GetBinding(IntPtr address) {
+            auto ssbo = *(ref<graphics::storage_buffer>*)address;
+            return ssbo->get_binding();
         }
     }
 }

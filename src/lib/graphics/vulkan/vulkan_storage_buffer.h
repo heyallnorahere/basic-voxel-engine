@@ -11,6 +11,8 @@ namespace bve {
                 virtual ~vulkan_storage_buffer() override;
                 virtual void set_data(const void* data, size_t size, size_t offset) override;
                 virtual void get_data(void* data, size_t size, size_t offset) override;
+                virtual size_t get_size() override { return this->m_size; }
+                virtual uint32_t get_binding() override { return this->m_set * 16 + this->m_binding; }
                 virtual void activate() override;
                 void write_descriptor_set(ref<vulkan_shader> shader, uint32_t image_index);
             private:

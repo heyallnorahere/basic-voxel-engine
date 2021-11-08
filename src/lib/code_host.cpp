@@ -357,9 +357,25 @@ namespace bve {
             pair("BasicVoxelEngine.Buffer::Free_Native", BasicVoxelEngine_Buffer_Free),
             pair("BasicVoxelEngine.Buffer::Zero_Native", BasicVoxelEngine_Buffer_Zero),
             pair("BasicVoxelEngine.Buffer::Copy_Native", BasicVoxelEngine_Buffer_Copy),
-            pair("BasicVoxelEngine.Buffer::CopyBuffer_Native", BasicVoxelEngine_Buffer_CopyBuffer),
+            pair("BasicVoxelEngine.Buffer::Copy_Buffer_Native", BasicVoxelEngine_Buffer_Copy_Buffer),
             pair("BasicVoxelEngine.Buffer::GetSize_Native", BasicVoxelEngine_Buffer_GetSize),
             pair("BasicVoxelEngine.Buffer::IsAllocated_Native", BasicVoxelEngine_Buffer_IsAllocated),
+
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::DestroyRef_Native", BasicVoxelEngine_Graphics_UniformBuffer_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::SetData_Native", BasicVoxelEngine_Graphics_UniformBuffer_SetData),
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::SetData_Buffer_Native", BasicVoxelEngine_Graphics_UniformBuffer_SetData_Buffer),
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::Activate_Native", BasicVoxelEngine_Graphics_UniformBuffer_Activate),
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::GetSize_Native", BasicVoxelEngine_Graphics_UniformBuffer_GetSize),
+            pair("BasicVoxelEngine.Graphics.UniformBuffer::GetBinding_Native", BasicVoxelEngine_Graphics_UniformBuffer_GetBinding),
+
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::DestroyRef_Native", BasicVoxelEngine_Graphics_StorageBuffer_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::SetData_Native", BasicVoxelEngine_Graphics_StorageBuffer_SetData),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::SetData_Buffer_Native", BasicVoxelEngine_Graphics_StorageBuffer_SetData_Buffer),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::GetData_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetData),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::GetData_Buffer_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetData_Buffer),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::Activate_Native", BasicVoxelEngine_Graphics_StorageBuffer_Activate),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::GetSize_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetSize),
+            pair("BasicVoxelEngine.Graphics.StorageBuffer::GetBinding_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetBinding),
         };
     }
     static ref<code_host> current_code_host;
