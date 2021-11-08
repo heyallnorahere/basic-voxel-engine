@@ -28,7 +28,7 @@ namespace BasicVoxelEngine.Graphics
         public void Activate() => Activate_Native(mAddress);
         public int Size => GetSize_Native(mAddress);
         public uint Binding => GetBinding_Native(mAddress);
-        private readonly IntPtr mAddress;
+        internal readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern void DestroyRef_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]

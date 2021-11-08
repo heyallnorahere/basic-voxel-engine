@@ -35,6 +35,9 @@ namespace bve {
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateTexture(IntPtr address, MonoObject* imageData);
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateContext(IntPtr address);
         IntPtr BasicVoxelEngine_Graphics_Factory_CreateShader(IntPtr address, MonoObject* sourceList);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateUniformBuffer(IntPtr address, int32_t size, uint binding);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateStorageBuffer(IntPtr address, int32_t size, uint binding);
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateComputePipeline(IntPtr address, IntPtr shader);
         graphics::graphics_api BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI(IntPtr address);
 
         IntPtr BasicVoxelEngine_Model_LoadModel(string path, IntPtr factory);
@@ -178,5 +181,10 @@ namespace bve {
         void BasicVoxelEngine_Graphics_StorageBuffer_Activate(IntPtr address);
         int32_t BasicVoxelEngine_Graphics_StorageBuffer_GetSize(IntPtr address);
         uint BasicVoxelEngine_Graphics_StorageBuffer_GetBinding(IntPtr address);
+
+        void BasicVoxelEngine_Graphics_ComputePipeline_DestroyRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_ComputePipeline_BindUniformBuffer(IntPtr address, IntPtr uniformBuffer);
+        void BasicVoxelEngine_Graphics_ComputePipeline_BindStorageBuffer(IntPtr address, IntPtr storageBuffer);
+        void BasicVoxelEngine_Graphics_ComputePipeline_Dispatch(IntPtr address, uint groupCountX, uint groupCountY, uint groupCountZ);
     }
 }

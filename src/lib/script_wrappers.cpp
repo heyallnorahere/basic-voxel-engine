@@ -128,6 +128,21 @@ namespace bve {
             auto shader = factory->create_shader(sources);
             return new ref<graphics::shader>(shader);
         }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateUniformBuffer(IntPtr address, int32_t size, uint binding) {
+            auto factory = get_factory_ref(address);
+            auto ubo = factory->create_uniform_buffer((size_t)size, binding);
+            return new ref<graphics::uniform_buffer>(ubo);
+        }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateStorageBuffer(IntPtr address, int32_t size, uint binding) {
+            auto factory = get_factory_ref(address);
+            auto ssbo = factory->create_storage_buffer((size_t)size, binding);
+            return new ref<graphics::storage_buffer>(ssbo);
+        }
+        IntPtr BasicVoxelEngine_Graphics_Factory_CreateComputePipeline(IntPtr address, IntPtr shader) {
+            auto factory = get_factory_ref(address);
+            auto pipeline = factory->create_compute_pipeline(*(ref<graphics::shader>*)shader);
+            return new ref<graphics::compute_pipeline>(pipeline);
+        }
         graphics::graphics_api BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI(IntPtr address) {
             auto factory = get_factory_ref(address);
             return factory->get_graphics_api();
@@ -846,6 +861,22 @@ namespace bve {
         uint BasicVoxelEngine_Graphics_StorageBuffer_GetBinding(IntPtr address) {
             auto ssbo = *(ref<graphics::storage_buffer>*)address;
             return ssbo->get_binding();
+        }
+
+        void BasicVoxelEngine_Graphics_ComputePipeline_DestroyRef(IntPtr address) {
+            delete (ref<graphics::compute_pipeline>*)address;
+        }
+        void BasicVoxelEngine_Graphics_ComputePipeline_BindUniformBuffer(IntPtr address, IntPtr uniformBuffer) {
+            auto pipeline = *(ref<graphics::compute_pipeline>*)address;
+            pipeline->bind_uniform_buffer(*(ref<graphics::uniform_buffer>*)uniformBuffer);
+        }
+        void BasicVoxelEngine_Graphics_ComputePipeline_BindStorageBuffer(IntPtr address, IntPtr storageBuffer) {
+            auto pipeline = *(ref<graphics::compute_pipeline>*)address;
+            pipeline->bind_storage_buffer(*(ref<graphics::storage_buffer>*)storageBuffer);
+        }
+        void BasicVoxelEngine_Graphics_ComputePipeline_Dispatch(IntPtr address, uint groupCountX, uint groupCountY, uint groupCountZ) {
+            auto pipeline = *(ref<graphics::compute_pipeline>*)address;
+            pipeline->dispatch(glm::uvec3(groupCountX, groupCountY, groupCountZ));
         }
     }
 }

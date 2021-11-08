@@ -233,6 +233,9 @@ namespace bve {
             pair("BasicVoxelEngine.Graphics.Factory::CreateTexture_Native", BasicVoxelEngine_Graphics_Factory_CreateTexture),
             pair("BasicVoxelEngine.Graphics.Factory::CreateContext_Native", BasicVoxelEngine_Graphics_Factory_CreateContext),
             pair("BasicVoxelEngine.Graphics.Factory::CreateShader_Native", BasicVoxelEngine_Graphics_Factory_CreateShader),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateUniformBuffer_Native", BasicVoxelEngine_Graphics_Factory_CreateUniformBuffer),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateStorageBuffer_Native", BasicVoxelEngine_Graphics_Factory_CreateStorageBuffer),
+            pair("BasicVoxelEngine.Graphics.Factory::CreateComputePipeline_Native", BasicVoxelEngine_Graphics_Factory_CreateComputePipeline),
             pair("BasicVoxelEngine.Graphics.Factory::GetGraphicsAPI_Native", BasicVoxelEngine_Graphics_Factory_GetGraphicsAPI),
 
             pair("BasicVoxelEngine.Model::LoadModel_Native", BasicVoxelEngine_Model_LoadModel),
@@ -376,6 +379,11 @@ namespace bve {
             pair("BasicVoxelEngine.Graphics.StorageBuffer::Activate_Native", BasicVoxelEngine_Graphics_StorageBuffer_Activate),
             pair("BasicVoxelEngine.Graphics.StorageBuffer::GetSize_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetSize),
             pair("BasicVoxelEngine.Graphics.StorageBuffer::GetBinding_Native", BasicVoxelEngine_Graphics_StorageBuffer_GetBinding),
+
+            pair("BasicVoxelEngine.Graphics.ComputeShader::DestroyRef_Native", BasicVoxelEngine_Graphics_ComputePipeline_DestroyRef),
+            pair("BasicVoxelEngine.Graphics.ComputeShader::BindUniformBuffer_Native", BasicVoxelEngine_Graphics_ComputePipeline_BindUniformBuffer),
+            pair("BasicVoxelEngine.Graphics.ComputeShader::BindStorageBuffer_Native", BasicVoxelEngine_Graphics_ComputePipeline_BindStorageBuffer),
+            pair("BasicVoxelEngine.Graphics.ComputeShader::Dispatch_Native", BasicVoxelEngine_Graphics_ComputePipeline_Dispatch),
         };
     }
     static ref<code_host> current_code_host;

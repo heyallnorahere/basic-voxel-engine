@@ -38,6 +38,9 @@ namespace BasicVoxelEngine.Graphics
         public Texture CreateTexture(string path) => CreateTexture(ImageData.Load(path));
         public Context CreateContext() => new Context(CreateContext_Native(mNativeAddress));
         public Shader CreateShader(IEnumerable<string> paths) => new Shader(CreateShader_Native(mNativeAddress, new ShaderSourceList(paths)));
+        public UniformBuffer CreateUniformBuffer(int size, uint binding) => new UniformBuffer(CreateUniformBuffer_Native(mNativeAddress, size, binding));
+        public StorageBuffer CreateStorageBuffer(int size, uint binding) => new StorageBuffer(CreateStorageBuffer_Native(mNativeAddress, size, binding));
+        public ComputePipeline CreateComputePipeline(Shader shader) => new ComputePipeline(CreateComputePipeline_Native(mNativeAddress, shader.mAddress));
         public GraphicsAPI API => GetGraphicsAPI_Native(mNativeAddress);
         internal readonly IntPtr mNativeAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -48,6 +51,12 @@ namespace BasicVoxelEngine.Graphics
         private static extern IntPtr CreateContext_Native(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr CreateShader_Native(IntPtr address, ShaderSourceList sourceList);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr CreateUniformBuffer_Native(IntPtr address, int size, uint binding);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr CreateStorageBuffer_Native(IntPtr address, int size, uint binding);
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        private static extern IntPtr CreateComputePipeline_Native(IntPtr address, IntPtr shader);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern GraphicsAPI GetGraphicsAPI_Native(IntPtr address);
     }
