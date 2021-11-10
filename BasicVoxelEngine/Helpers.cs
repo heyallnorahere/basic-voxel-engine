@@ -43,6 +43,21 @@ namespace BasicVoxelEngine
             }
             return false;
         }
+        public static bool Implements(this Type type, Type interfaceType)
+        {
+            if (!interfaceType.IsInterface)
+            {
+                throw new ArgumentException("The given interface type is not an interface!");
+            }
+            foreach (Type implementedInterface in type.GetInterfaces())
+            {
+                if (interfaceType.DerivesFrom(implementedInterface))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool AreRefsEqual(IntPtr ref1, IntPtr ref2);
         public static float ToRadians(this float value)

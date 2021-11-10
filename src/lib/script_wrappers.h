@@ -134,6 +134,7 @@ namespace bve {
         void BasicVoxelEngine_Graphics_Shader_Unbind(IntPtr address);
         void BasicVoxelEngine_Graphics_Shader_Set(IntPtr address, string name, object value, Type type);
         void BasicVoxelEngine_Graphics_Shader_Get(IntPtr address, string name, object value, Type type);
+        IntPtr BasicVoxelEngine_Graphics_Shader_GetReflectionData(IntPtr address);
         void BasicVoxelEngine_Graphics_Shader_InitializeUniforms();
 
         void BasicVoxelEngine_Graphics_Context_DestroyRef(IntPtr address);
@@ -186,5 +187,29 @@ namespace bve {
         void BasicVoxelEngine_Graphics_ComputePipeline_BindUniformBuffer(IntPtr address, IntPtr uniformBuffer);
         void BasicVoxelEngine_Graphics_ComputePipeline_BindStorageBuffer(IntPtr address, IntPtr storageBuffer);
         void BasicVoxelEngine_Graphics_ComputePipeline_Dispatch(IntPtr address, uint groupCountX, uint groupCountY, uint groupCountZ);
+
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionField_GetOffset(IntPtr address);
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionField_GetType(IntPtr address);
+        string BasicVoxelEngine_Graphics_ShaderReflectionType_GetName(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetSize(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetArrayStride(IntPtr address);
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetArraySize(IntPtr address);
+        void BasicVoxelEngine_Graphics_ShaderReflectionType_GetFieldNames(IntPtr address, MonoObject* names);
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_GetField(IntPtr address, string name);
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_FindOffset(IntPtr reference, string fieldName);
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_CreateRef(IntPtr address);
+        void BasicVoxelEngine_Graphics_ShaderReflectionType_DestroyRef(IntPtr reference);
+        string BasicVoxelEngine_Graphics_ShaderResourceData_GetName(IntPtr address);
+        IntPtr BasicVoxelEngine_Graphics_ShaderResourceData_GetType(IntPtr address);
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetUniformBufferIndices(IntPtr address, MonoObject* indices);
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetUniformBufferData(IntPtr address, uint index);
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetSampledImageIndices(IntPtr address, MonoObject* indices);
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetSampledImage(IntPtr address, uint index);
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetStorageBufferIndices(IntPtr address, MonoObject* indices);
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetStorageBufferData(IntPtr address, uint index);
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetPushConstantBufferIndices(IntPtr address, MonoObject* indices);
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetPushConstantBufferData(IntPtr address, uint index);
+        void BasicVoxelEngine_Graphics_ShaderReflectionData_GetDescriptorSetIndices(IntPtr address, MonoObject* indices);
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionData_GetDescriptorSetData(IntPtr address, uint index);
     }
 }

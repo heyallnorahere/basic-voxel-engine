@@ -1,6 +1,8 @@
 ﻿using BasicVoxelEngine.Components;
 using BasicVoxelEngine.Graphics;
 using System;
+using System.Collections.Generic;
+using System.IO;
 
 namespace BasicVoxelEngine
 {
@@ -20,6 +22,10 @@ namespace BasicVoxelEngine
         protected override void Load(Factory factory, NamespacedName namespacedName)
         {
             mFactory = factory;
+            if (mGetFaceDirection == null)
+            {
+                mGetFaceDirection = mFactory.CreateShader(new string[] { AssetManager.GetAssetPath("shaders:compute:get_face_direction.glsl") });
+            }
             var blockRegister = Registry.GetRegister<Block>();
             foreach (Block block in blockRegister)
             {
@@ -50,39 +56,16 @@ namespace BasicVoxelEngine
             }
         }
         public override Action<ClickActionArgs>? RightClick => PlaceBlock;
-        private static Vector3I GetFaceDirection(Vector3 direction)
+        private Vector3I GetFaceDirection(Vector3 direction)
         {
-            // good enough for now
-            double pitch = Math.Asin(direction.Y);
-            double cosineOfPitch = Math.Cos(pitch);
-            double yaw = Math.Atan2(direction.Z / cosineOfPitch, direction.X / cosineOfPitch);
-            if (Math.Abs(pitch).ToDegrees() > 45D)
+            if (mGetFaceDirection == null)
             {
-                return new Vector3I
-                {
-                    X = 0,
-                    Y = direction.Y > 0f ? 1 : -1,
-                    Z = 0
-                };
+                return new Vector3I(0);
             }
-            else if (Math.Abs(yaw).ToDegrees() % 90D > 45D)
-            {
-                return new Vector3I
-                {
-                    X = direction.X > 0f ? 1 : -1,
-                    Y = 0,
-                    Z = 0
-                };
-            }
-            else
-            {
-                return new Vector3I
-                {
-                    X = 0,
-                    Y = 0,
-                    Z = direction.Z > 0f ? 1 : -1
-                };
-            }
+            var computePipeline = mFactory.CreateComputePipeline(mGetFaceDirection);
+            // todo: send data to created compute pipeline
+            computePipeline.Dispatch();
+            return new Vector3I(0);
         }
         private void PlaceBlock(ClickActionArgs args)
         {
@@ -115,5 +98,6 @@ namespace BasicVoxelEngine
         private Block? mBlock;
         protected Factory? mFactory;
         private Texture? mImage;
+        private static Shader? mGetFaceDirection = null;
     }
 }

@@ -89,7 +89,9 @@ namespace bve {
                 for (const auto& [id, set] : this->m_shader->get_descriptor_sets()) {
                     sets.push_back(set.sets[0]);
                 }
-                vkCmdBindDescriptorSets(this->m_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->m_layout, 0, sets.size(), sets.data(), 0, nullptr);
+                if (!sets.empty()) {
+                    vkCmdBindDescriptorSets(this->m_command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, this->m_layout, 0, sets.size(), sets.data(), 0, nullptr);
+                }
                 vkCmdDispatch(this->m_command_buffer, group_count.x, group_count.y, group_count.z);
                 if (vkEndCommandBuffer(this->m_command_buffer) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan compute pipeline] could not end command buffer");

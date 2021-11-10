@@ -75,7 +75,7 @@ namespace bve {
                 }
                 return returned_object;
             }
-            template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) { return this->invoke(method, { std::forward<Args*>(args)... }); }
+            template<typename... Args> ref<object> invoke(MonoMethod* method, Args*... args) { return this->invoke(method, { (void*)(Args*)std::forward<Args*>(args)... }); }
             virtual void* get() override;
             virtual MonoImage* get_image() override;
         private:

@@ -634,6 +634,11 @@ namespace bve {
             int32_t value = shader->get_int(name);
             callback(&value);
         }
+        IntPtr BasicVoxelEngine_Graphics_Shader_GetReflectionData(IntPtr address) {
+            auto shader = get_shader_ref(address);
+            // i dont like doing this but
+            return (graphics::reflection_output*)&shader->get_reflection_data();
+        }
         void BasicVoxelEngine_Graphics_Shader_InitializeUniforms() {
             register_uniform_type("System.Int32", set_int, get_int);
             // todo: add more
@@ -877,6 +882,134 @@ namespace bve {
         void BasicVoxelEngine_Graphics_ComputePipeline_Dispatch(IntPtr address, uint groupCountX, uint groupCountY, uint groupCountZ) {
             auto pipeline = *(ref<graphics::compute_pipeline>*)address;
             pipeline->dispatch(glm::uvec3(groupCountX, groupCountY, groupCountZ));
+        }
+
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionField_GetOffset(IntPtr address) {
+            return (int32_t)((graphics::field_data*)address)->offset;
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionField_GetType(IntPtr address) {
+            return ((graphics::field_data*)address)->type;
+        }
+        string BasicVoxelEngine_Graphics_ShaderReflectionType_GetName(IntPtr address) {
+            MonoDomain* domain = mono_domain_get();
+            auto type = (graphics::struct_data*)address;
+            return (MonoString*)ref<managed::object>::create(type->name, domain)->get();
+        }
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetSize(IntPtr address) {
+            return (int32_t)((graphics::struct_data*)address)->size;
+        }
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetArrayStride(IntPtr address) {
+            return (int32_t)((graphics::struct_data*)address)->array_stride;
+        }
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetArraySize(IntPtr address) {
+            return (int32_t)((graphics::struct_data*)address)->array_size;
+        }
+        void BasicVoxelEngine_Graphics_ShaderReflectionType_GetFieldNames(IntPtr address, MonoObject* names) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(names, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto type = (graphics::struct_data*)address;
+            for (const auto& [name, data] : type->fields) {
+                auto name_object = ref<managed::object>::create(name, domain);
+                list->invoke(add, name_object->get());
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_GetField(IntPtr address, string name) {
+            MonoDomain* domain = mono_domain_get();
+            std::string name_string = ref<managed::object>::create((MonoObject*)name, domain)->get_string();
+            auto type = (graphics::struct_data*)address;
+            return &type->fields[name_string];
+        }
+        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_FindOffset(IntPtr reference, string fieldName) {
+            auto type = *(std::shared_ptr<graphics::struct_data>*)reference;
+            MonoDomain* domain = mono_domain_get();
+            std::string name = ref<managed::object>::create((MonoObject*)fieldName, domain)->get_string();
+            return (int32_t)type->find_offset(name);
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_CreateRef(IntPtr address) {
+            return new std::shared_ptr<graphics::struct_data>((graphics::struct_data*)address);
+        }
+        void BasicVoxelEngine_Graphics_ShaderReflectionType_DestroyRef(IntPtr reference) {
+            delete (std::shared_ptr<graphics::struct_data>*)reference;
+        }
+        string BasicVoxelEngine_Graphics_ShaderResourceData_GetName(IntPtr address) {
+            auto resource_data = (graphics::reflection_resource_data*)address;
+            MonoDomain* domain = mono_domain_get();
+            return (MonoString*)ref<managed::object>::create(resource_data->name, domain)->get();
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderResourceData_GetType(IntPtr address) {
+            return ((graphics::reflection_resource_data*)address)->type.get();
+        }
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetUniformBufferIndices(IntPtr address, MonoObject* indices) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(indices, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto set = (graphics::descriptor_set_data*)address;
+            for (const auto& [binding, _] : set->uniform_buffers) {
+                list->invoke(add, &binding);
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetUniformBufferData(IntPtr address, uint index) {
+            auto set = (graphics::descriptor_set_data*)address;
+            return &set->uniform_buffers[index];
+        }
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetSampledImageIndices(IntPtr address, MonoObject* indices) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(indices, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto set = (graphics::descriptor_set_data*)address;
+            for (const auto& [binding, _] : set->sampled_images) {
+                list->invoke(add, &binding);
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetSampledImage(IntPtr address, uint index) {
+            auto set = (graphics::descriptor_set_data*)address;
+            return &set->sampled_images[index];
+        }
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetStorageBufferIndices(IntPtr address, MonoObject* indices) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(indices, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto set = (graphics::descriptor_set_data*)address;
+            for (const auto& [binding, _] : set->storage_buffers) {
+                list->invoke(add, &binding);
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetStorageBufferData(IntPtr address, uint index) {
+            auto set = (graphics::descriptor_set_data*)address;
+            return &set->storage_buffers[index];
+        }
+        void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetPushConstantBufferIndices(IntPtr address, MonoObject* indices) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(indices, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto set = (graphics::descriptor_set_data*)address;
+            for (const auto& [binding, _] : set->push_constant_buffers) {
+                list->invoke(add, &binding);
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetPushConstantBufferData(IntPtr address, uint index) {
+            auto set = (graphics::descriptor_set_data*)address;
+            return &set->push_constant_buffers[index];
+        }
+        void BasicVoxelEngine_Graphics_ShaderReflectionData_GetDescriptorSetIndices(IntPtr address, MonoObject* indices) {
+            MonoDomain* domain = mono_domain_get();
+            auto list = ref<managed::object>::create(indices, domain);
+            auto list_class = managed::class_::get_class(list);
+            MonoMethod* add = list_class->get_method("*:Add");
+            auto data = (graphics::reflection_output*)address;
+            for (const auto& [set, _] : data->descriptor_sets) {
+                list->invoke(add, &set);
+            }
+        }
+        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionData_GetDescriptorSetData(IntPtr address, uint index) {
+            auto data = (graphics::reflection_output*)address;
+            return &data->descriptor_sets[index];
         }
     }
 }
