@@ -50,11 +50,11 @@ namespace BasicVoxelEngine
         [StructLayout(LayoutKind.Sequential)]
         public struct Vertex
         {
-            Vector3 Position { get; set; }
-            Vector3 Normal { get; set; }
-            Vector2 UV { get; set; }
-            Vector3 Tangent { get; set; }
-            Vector3 Bitangent { get; set; }
+            public Vector3 Position { get; set; }
+            public Vector3 Normal { get; set; }
+            public Vector2 UV { get; set; }
+            public Vector3 Tangent { get; set; }
+            public Vector3 Bitangent { get; set; }
         }
         public static Model LoadModel(string path, Factory factory)
         {

@@ -1,3 +1,4 @@
+using BasicVoxelEngine.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -57,6 +58,34 @@ namespace BasicVoxelEngine
                 }
             }
             return false;
+        }
+        public static UniformBuffer CreateUniformBuffer(this Factory factory, out Buffer allocatedData, ShaderReflectionData reflectionData, uint binding, uint set = 0)
+        {
+            uint bufferBinding = binding % 16;
+            uint descriptorSet = set + (binding - bufferBinding) / 16;
+            var descriptorSetData = reflectionData.DescriptorSets[descriptorSet];
+            var bufferData = descriptorSetData.UniformBuffers[bufferBinding];
+            var bufferType = bufferData.Type;
+            allocatedData = new Buffer();
+            allocatedData.Alloc(bufferType.Size);
+            allocatedData.Zero();
+            var ubo = factory.CreateUniformBuffer(bufferType.Size, descriptorSet * 16 + bufferBinding);
+            ubo.SetData(allocatedData);
+            return ubo;
+        }
+        public static StorageBuffer CreateStorageBuffer(this Factory factory, out Buffer allocatedData, ShaderReflectionData reflectionData, uint binding, uint set = 0)
+        {
+            uint bufferBinding = binding % 16;
+            uint descriptorSet = set + (binding - bufferBinding) / 16;
+            var descriptorSetData = reflectionData.DescriptorSets[descriptorSet];
+            var bufferData = descriptorSetData.StorageBuffers[bufferBinding];
+            var bufferType = bufferData.Type;
+            allocatedData = new Buffer();
+            allocatedData.Alloc(bufferType.Size);
+            allocatedData.Zero();
+            var ssbo = factory.CreateStorageBuffer(bufferType.Size, descriptorSet * 16 + bufferBinding);
+            ssbo.SetData(allocatedData);
+            return ssbo;
         }
         [MethodImpl(MethodImplOptions.InternalCall)]
         public static extern bool AreRefsEqual(IntPtr ref1, IntPtr ref2);

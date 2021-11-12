@@ -56,41 +56,130 @@ namespace BasicVoxelEngine
             }
         }
         public override Action<ClickActionArgs>? RightClick => PlaceBlock;
-        private Vector3I GetFaceDirection(Vector3 direction)
+        private struct PlayerData
         {
-            if (mGetFaceDirection == null)
-            {
-                return new Vector3I(0);
-            }
-            var computePipeline = mFactory.CreateComputePipeline(mGetFaceDirection);
-            // todo: send data to created compute pipeline
-            computePipeline.Dispatch();
-            return new Vector3I(0);
+            public Vector3 position, direction;
+        }
+        private struct Vertex
+        {
+            public Vector3 position, normal;
+        }
+        private struct ModelData
+        {
+            public int vertexCount, indexCount;
+            public Vertex[] vertices;
+            public uint[] indices;
+        }
+        private struct BlockData
+        {
+            public Vector3I position;
+            public bool hasModel;
+            public ModelData? model;
         }
         private void PlaceBlock(ClickActionArgs args)
         {
+            if (mFactory == null || mGetFaceDirection == null)
+            {
+                throw new Exception($"{FriendlyName} was not loaded correctly!");
+            }
             Entity user = args.User;
             var cameraComponent = user.GetComponent<CameraComponent>();
             var transformComponent = user.GetComponent<TransformComponent>();
             var position = transformComponent.Translation;
             var direction = cameraComponent.Direction;
             var world = Application.World;
+            var candidates = new HashSet<Vector3I>();
+            const float rayRadius = 0.5f;
+            var rayOffsets = new Vector3[] {
+                new Vector3(rayRadius, 0f, 0f),
+                new Vector3(0f, rayRadius, 0f),
+                new Vector3(0f, 0f, rayRadius),
+            };
             for (var offset = new Vector3(0f); offset.Length < args.Reach; offset += direction)
             {
-                // todo: improve "collision detection"
-                var newPosition = position + offset;
-                var blockPosition = new Vector3I
+                foreach (Vector3 rayOffset in rayOffsets)
                 {
-                    X = (int)Math.Ceiling(newPosition.X),
-                    Y = (int)Math.Ceiling(newPosition.Y),
-                    Z = (int)Math.Ceiling(newPosition.Z)
-                };
-                int blockType;
-                world.GetBlock(blockPosition, out blockType);
-                if (blockType != 0)
-                {
-                    world.SetBlock(blockPosition + GetFaceDirection(-direction), Block);
+                    var worldPosition = position + offset + rayOffset;
+                    var blockPosition = new Vector3I
+                    {
+                        X = (int)worldPosition.X,
+                        Y = (int)worldPosition.Y,
+                        Z = (int)worldPosition.Z
+                    };
+                    int blockType;
+                    world.GetBlock(blockPosition, out blockType);
+                    if (blockType != 0)
+                    {
+                        // HashSet<> wont add entries that it already contains
+                        candidates.Add(blockPosition);
+                    }
                 }
+            }
+            if (candidates.Count <= 0)
+            {
+                return;
+            }
+            var computePipeline = mFactory.CreateComputePipeline(mGetFaceDirection);
+            var reflectionData = mGetFaceDirection.ReflectionData;
+            Buffer playerBufferData, blockBufferData, outputBufferData;
+            uint set, binding;
+            reflectionData.FindResource("playerData", out set, out binding);
+            var playerBuffer = mFactory.CreateUniformBuffer(out playerBufferData, reflectionData, binding, set);
+            var playerBufferType = reflectionData.DescriptorSets[set].UniformBuffers[binding].Type;
+            reflectionData.FindResource("blockData", out set, out binding);
+            var blockBuffer = mFactory.CreateUniformBuffer(out blockBufferData, reflectionData, binding, set);
+            var blockBufferType = reflectionData.DescriptorSets[set].UniformBuffers[binding].Type;
+            reflectionData.FindResource("outputData", out set, out binding);
+            var outputBuffer = mFactory.CreateStorageBuffer(out outputBufferData, reflectionData, binding, set);
+            var outputBufferType = reflectionData.DescriptorSets[set].StorageBuffers[binding].Type;
+            computePipeline.BindUniformBuffer(playerBuffer);
+            computePipeline.BindUniformBuffer(blockBuffer);
+            computePipeline.BindStorageBuffer(outputBuffer);
+            var playerData = new PlayerData
+            {
+                position = position,
+                direction = direction
+            };
+            playerBufferData.CopyToGPUBuffer(playerData, playerBufferType);
+            playerBuffer.SetData(playerBufferData);
+            foreach (Vector3I blockPosition in candidates)
+            {
+                Block block = world.GetBlock(blockPosition);
+                var blockData = new BlockData
+                {
+                    position = blockPosition,
+                    hasModel = false,
+                    model = null
+                };
+                if (block.Model != null)
+                {
+                    blockData.hasModel = true;
+                    var modelVertices = block.Model.Vertices;
+                    var modelIndices = block.Model.Indices;
+                    var vertices = new List<Vertex>();
+                    foreach (var vertex in modelVertices)
+                    {
+                        vertices.Add(new Vertex
+                        {
+                            position = vertex.Position,
+                            normal = vertex.Normal,
+                        });
+                    }
+                    blockData.model = new ModelData
+                    {
+                        vertexCount = modelVertices.Count,
+                        indexCount = modelIndices.Count,
+                        vertices = vertices.ToArray(),
+                        indices = new List<uint>(modelIndices).ToArray()
+                    };
+                }
+                blockBufferData.CopyToGPUBuffer(blockData, blockBufferType);
+                blockBuffer.SetData(blockBufferData);
+                int indexCount = blockData.model?.indexCount ?? 36;
+                computePipeline.Dispatch((uint)indexCount / 3);
+                // todo: take output
+                outputBufferData.Zero();
+                outputBuffer.SetData(outputBufferData);
             }
         }
         public Block Block => mBlock ?? throw new NullReferenceException();

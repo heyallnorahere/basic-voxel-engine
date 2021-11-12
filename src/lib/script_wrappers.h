@@ -196,9 +196,6 @@ namespace bve {
         int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_GetArraySize(IntPtr address);
         void BasicVoxelEngine_Graphics_ShaderReflectionType_GetFieldNames(IntPtr address, MonoObject* names);
         IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_GetField(IntPtr address, string name);
-        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_FindOffset(IntPtr reference, string fieldName);
-        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_CreateRef(IntPtr address);
-        void BasicVoxelEngine_Graphics_ShaderReflectionType_DestroyRef(IntPtr reference);
         string BasicVoxelEngine_Graphics_ShaderResourceData_GetName(IntPtr address);
         IntPtr BasicVoxelEngine_Graphics_ShaderResourceData_GetType(IntPtr address);
         void BasicVoxelEngine_Graphics_ShaderDescriptorSetData_GetUniformBufferIndices(IntPtr address, MonoObject* indices);

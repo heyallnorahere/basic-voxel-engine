@@ -921,18 +921,6 @@ namespace bve {
             auto type = (graphics::struct_data*)address;
             return &type->fields[name_string];
         }
-        int32_t BasicVoxelEngine_Graphics_ShaderReflectionType_FindOffset(IntPtr reference, string fieldName) {
-            auto type = *(std::shared_ptr<graphics::struct_data>*)reference;
-            MonoDomain* domain = mono_domain_get();
-            std::string name = ref<managed::object>::create((MonoObject*)fieldName, domain)->get_string();
-            return (int32_t)type->find_offset(name);
-        }
-        IntPtr BasicVoxelEngine_Graphics_ShaderReflectionType_CreateRef(IntPtr address) {
-            return new std::shared_ptr<graphics::struct_data>((graphics::struct_data*)address);
-        }
-        void BasicVoxelEngine_Graphics_ShaderReflectionType_DestroyRef(IntPtr reference) {
-            delete (std::shared_ptr<graphics::struct_data>*)reference;
-        }
         string BasicVoxelEngine_Graphics_ShaderResourceData_GetName(IntPtr address) {
             auto resource_data = (graphics::reflection_resource_data*)address;
             MonoDomain* domain = mono_domain_get();

@@ -40,7 +40,6 @@ namespace BasicVoxelEngine.Graphics
         }
         private ShaderReflectionType(IntPtr typeData, ShaderReflectionData reflectionData)
         {
-            mAddress = CreateRef(typeData);
             Name = GetName(typeData);
             Size = GetSize(typeData);
             ArrayStride = GetArrayStride(typeData);
@@ -56,17 +55,64 @@ namespace BasicVoxelEngine.Graphics
             }
             Fields = fields;
         }
-        ~ShaderReflectionType()
+        public int FindOffset(string fieldName)
         {
-            DestroyRef(mAddress);
+            string name = fieldName;
+            string? subname = null;
+            var segments = fieldName.Split('.');
+            if (segments.Length >= 2)
+            {
+                name = segments[0];
+                subname = segments[1];
+                for (int i = 2; i < segments.Length; i++)
+                {
+                    subname += "." + segments[i];
+                }
+            }
+            int index = -1;
+            int openBracket = name.IndexOf('[');
+            if (openBracket != -1)
+            {
+                int closeBracket = name.IndexOf(']');
+                if (closeBracket <= openBracket + 1 || closeBracket < name.Length - 1)
+                {
+                    throw new ArgumentException("Invalid index operator call!");
+                }
+                int indexStart = openBracket + 1;
+                var indexString = name.Substring(indexStart, closeBracket - indexStart);
+                name = name.Substring(0, openBracket);
+                index = int.Parse(indexString);
+            }
+            if (!Fields.ContainsKey(name))
+            {
+                throw new ArgumentException($"{name} is not a field in this structure!");
+            }
+            var field = Fields[name];
+            if (index != -1 && field.Type.ArrayStride == 0)
+            {
+                throw new ArgumentException("Attempted to index into a non-array field!");
+            }
+            if (index >= field.Type.ArraySize)
+            {
+                throw new IndexOutOfRangeException();
+            }
+            if (index < 0)
+                index = 0;
+            int offset = field.Offset + (index * field.Type.ArrayStride);
+            if (subname != null)
+            {
+                return offset + field.Type.FindOffset(subname);
+            }
+            else
+            {
+                return offset;
+            }
         }
-        public int FindOffset(string fieldName) => FindOffset_(mAddress, fieldName);
         public string Name { get; }
         public int Size { get; }
         public int ArrayStride { get; }
         public int ArraySize { get; }
         public IReadOnlyDictionary<string, ShaderReflectionField> Fields { get; }
-        private readonly IntPtr mAddress;
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern string GetName(IntPtr address);
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -79,12 +125,6 @@ namespace BasicVoxelEngine.Graphics
         private static extern void GetFieldNames(IntPtr address, List<string> names);
         [MethodImpl(MethodImplOptions.InternalCall)]
         private static extern IntPtr GetField(IntPtr address, string name);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern int FindOffset_(IntPtr reference, string fieldName);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern IntPtr CreateRef(IntPtr address);
-        [MethodImpl(MethodImplOptions.InternalCall)]
-        private static extern void DestroyRef(IntPtr reference);
     }
     public sealed class ShaderResourceData
     {
@@ -162,6 +202,41 @@ namespace BasicVoxelEngine.Graphics
                 descriptorSets.Add(index, data);
             }
             DescriptorSets = descriptorSets;
+        }
+        private bool TryFindResource(IReadOnlyDictionary<uint, ShaderResourceData> resourceGroup, string name, ref uint binding)
+        {
+            foreach (uint currentBinding in resourceGroup.Keys)
+            {
+                var resourceName = resourceGroup[currentBinding].Name;
+                if (resourceName == name)
+                {
+                    binding = currentBinding;
+                    return true;
+                }
+            }
+            return false;
+        }
+        public bool TryFindResource(string name, ref uint set, ref uint binding)
+        {
+            foreach (uint currentSet in DescriptorSets.Keys)
+            {
+                set = currentSet;
+                var setData = DescriptorSets[currentSet];
+                if (TryFindResource(setData.UniformBuffers, name, ref binding)) return true;
+                if (TryFindResource(setData.StorageBuffers, name, ref binding)) return true;
+                if (TryFindResource(setData.SampledImages, name, ref binding)) return true;
+                if (TryFindResource(setData.PushConstantBuffers, name, ref binding)) return true;
+            }
+            return false;
+        }
+        public void FindResource(string name, out uint set, out uint binding)
+        {
+            set = 0;
+            binding = 0;
+            if (!TryFindResource(name, ref set, ref binding))
+            {
+                throw new ArgumentException("Could not find the requested resource!");
+            }
         }
         public IReadOnlyDictionary<uint, ShaderDescriptorSetData> DescriptorSets { get; }
         public IReadOnlyList<ShaderReflectionType> Types
