@@ -21,9 +21,7 @@ OPTIONS = {
     "ENABLE_CTEST": "OFF",
     "SKIP_GLSLANG_INSTALL": "ON",
     "ENABLE_HLSL": "ON",
-    "SKIP_SPIRV_TOOLS_INSTALL": "ON",
-    "SPIRV_TOOLS_BUILD_STATIC": "ON",
-    "SPIRV_SKIP_EXECUTABLES": "ON",
+    "SPIRV_CROSS_ENABLE_C_API": "OFF",
 }
 def main():
     output = ""

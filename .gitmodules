@@ -32,9 +32,3 @@
 [submodule "vendor/FastNoiseLite"]
 	path = vendor/FastNoiseLite
 	url = https://github.com/Auburn/FastNoiseLite.git
-[submodule "vendor/SPIRV-Headers"]
-	path = vendor/SPIRV-Headers
-	url = https://github.com/KhronosGroup/SPIRV-Headers.git
-[submodule "vendor/SPIRV-Tools"]
-	path = vendor/SPIRV-Tools
-	url = https://github.com/KhronosGroup/SPIRV-Tools.git

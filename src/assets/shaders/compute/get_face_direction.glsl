@@ -44,6 +44,7 @@ vec2 getEulerAngles(vec3 direction) {
     angle.x = asin(direction.y);
     float factor = cos(angle.x);
     angle.y = atan(direction.z / factor, direction.x / factor);
+    return angle;
 }
 vec3 getDirection(vec2 eulerAngles) {
     vec3 direction;

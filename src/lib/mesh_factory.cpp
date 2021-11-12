@@ -74,9 +74,9 @@ namespace bve {
     }
     static glm::vec2 get_euler_angles(glm::vec3 direction) {
         glm::vec2 angle;
-        angle.x = asin(direction.y);
+        angle.x = -asin(direction.y);
         float factor = cos(angle.x);
-        angle.y = atan2(direction.z / factor, direction.x / factor);
+        angle.y = atan2(direction.x / factor, direction.z / factor);
         return angle;
     }
     static std::vector<vertex> convert_face(const face& f, glm::vec3 new_normal) {
