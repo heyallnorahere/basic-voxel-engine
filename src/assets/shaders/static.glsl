@@ -5,7 +5,7 @@ layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec2 in_uv;
 layout(location = 3) in vec3 in_voxel_position;
 layout(location = 4) in int in_block_id;
-layout(std140, binding = 0) uniform vertex_uniform_buffer_t {
+layout(set = 0, binding = 0) uniform vertex_uniform_buffer_t {
     mat4 projection;
     mat4 view;
 } vertex_uniform_buffer;
@@ -26,7 +26,7 @@ layout(location = 0) in vec2 uv;
 layout(location = 1) flat in int block_id;
 layout(location = 2) in vec3 fragment_position;
 layout(location = 3) in vec3 normal;
-layout(std140) struct light_t {
+struct light_t {
     int type;
     vec4 position, color;
     float ambient_strength, specular_strength;
@@ -36,21 +36,21 @@ layout(std140) struct light_t {
     // point light fields
     float constant, linear_, quadratic;
 };
-layout(std140) struct texture_dimensions_t {
+struct texture_dimensions_t {
     ivec2 grid_position, texture_dimensions;
 };
-layout(std140) struct texture_atlas_t {
+struct texture_atlas_t {
     int image;
     ivec2 texture_size, grid_size;
     texture_dimensions_t texture_dimensions[64]; // im gonna increase the size of this array once i add more blocks
 };
-layout(std140, binding = 1) uniform fragment_uniform_buffer_t {
+layout(set = 1, binding = 0) uniform fragment_uniform_buffer_t {
     light_t lights[30];
     int light_count;
     texture_atlas_t texture_atlas;
     vec4 camera_position;
 } fragment_uniform_buffer;
-layout(binding = 2) uniform sampler2D textures[30];
+layout(set = 1, binding = 1) uniform sampler2D textures[30];
 layout(location = 0) out vec4 fragment_color;
 vec4 get_texture() {
     texture_dimensions_t dimensions = fragment_uniform_buffer.texture_atlas.texture_dimensions[block_id];

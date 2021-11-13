@@ -182,18 +182,16 @@ namespace bve {
             throw std::runtime_error("[application] scene cannot contain more than 30 lights!");
         }
         auto reflection_data = this->m_shaders["static"]->get_reflection_data();
-        auto set_field = [reflection_data, this](const std::string& name, const void* data, size_t size, uint32_t uniform_buffer) mutable {
-            uint32_t binding = uniform_buffer % 16;
-            uint32_t set = (uniform_buffer - binding) / 16;
+        auto set_field = [reflection_data, this](const std::string& name, const void* data, size_t size, uint32_t set, uint32_t binding) mutable {
             auto type = reflection_data.descriptor_sets[set].uniform_buffers[binding].type;
             size_t offset = type->find_offset(name);
             auto& buffers = this->m_renderer->get_uniform_buffers();
-            buffers[uniform_buffer].copy(data, size, offset);
+            buffers[set * 16 + binding].copy(data, size, offset);
         };
-        set_field("projection", &this->m_projection, sizeof(glm::mat4), 0);
-        set_field("view", &this->m_view, sizeof(glm::mat4), 0);
+        set_field("projection", &this->m_projection, sizeof(glm::mat4), 0, 0);
+        set_field("view", &this->m_view, sizeof(glm::mat4), 0, 0);
         int32_t light_count = (int32_t)this->m_lights.size();
-        set_field("light_count", &light_count, sizeof(int32_t), 1);
+        set_field("light_count", &light_count, sizeof(int32_t), 1, 0);
         std::vector<lighting::light::uniform_data> light_uniform_data;
         for (auto light : this->m_lights) {
             auto light_data = light.second->get_uniform_data();
@@ -203,21 +201,21 @@ namespace bve {
         for (int32_t i = 0; i < light_count; i++) {
             std::string light_name = "lights[" + std::to_string(i) + "]";
             const auto& light_data = light_uniform_data[i];
-            set_field(light_name + ".type", &light_data.type, sizeof(int32_t), 1);
-            set_field(light_name + ".position", &light_data.position, sizeof(glm::vec3), 1);
-            set_field(light_name + ".color", &light_data.color, sizeof(glm::vec3), 1);
-            set_field(light_name + ".ambient_strength", &light_data.ambient_strength, sizeof(float), 1);
-            set_field(light_name + ".specular_strength", &light_data.specular_strength, sizeof(float), 1);
-            set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1);
-            set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1);
-            set_field(light_name + ".constant", &light_data.constant, sizeof(float), 1);
-            set_field(light_name + ".linear_", &light_data.linear_, sizeof(float), 1);
-            set_field(light_name + ".quadratic", &light_data.quadratic, sizeof(float), 1);
+            set_field(light_name + ".type", &light_data.type, sizeof(int32_t), 1, 0);
+            set_field(light_name + ".position", &light_data.position, sizeof(glm::vec3), 1, 0);
+            set_field(light_name + ".color", &light_data.color, sizeof(glm::vec3), 1, 0);
+            set_field(light_name + ".ambient_strength", &light_data.ambient_strength, sizeof(float), 1, 0);
+            set_field(light_name + ".specular_strength", &light_data.specular_strength, sizeof(float), 1, 0);
+            set_field(light_name + ".direction", &light_data.direction, sizeof(glm::vec3), 1, 0);
+            set_field(light_name + ".cutoff", &light_data.cutoff, sizeof(float), 1, 0);
+            set_field(light_name + ".constant", &light_data.constant, sizeof(float), 1, 0);
+            set_field(light_name + ".linear_", &light_data.linear_, sizeof(float), 1, 0);
+            set_field(light_name + ".quadratic", &light_data.quadratic, sizeof(float), 1, 0);
         }
         set_atlas_data(atlas_uniform_data, [set_field, this](const std::string& name, const void* data, size_t size) mutable {
-            set_field(name, data, size, 1);
+            set_field(name, data, size, 1, 0);
         });
-        set_field("camera_position", &this->m_camera_position, sizeof(glm::vec3), 1);
+        set_field("camera_position", &this->m_camera_position, sizeof(glm::vec3), 1, 0);
         auto cmdlist = this->m_renderer->create_command_list();
         for (auto& mesh_ : this->m_meshes) {
             this->m_renderer->add_mesh(cmdlist, mesh_);
