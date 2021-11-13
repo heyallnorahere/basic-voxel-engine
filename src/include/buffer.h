@@ -24,7 +24,6 @@ namespace bve {
             return (const T*)this->m_pointer;
         }
         size_t size() const;
-        operator bool() const;
         void* operator+(size_t offset);
         const void* operator+(size_t offset) const;
         template<typename T> operator T*() {

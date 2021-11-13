@@ -37,6 +37,7 @@ namespace bve {
                 virtual glm::mat4 get_mat4(const std::string& name) override;
                 const std::vector<VkPipelineShaderStageCreateInfo>& get_create_info() { return this->m_pipeline_create_info; }
                 const std::map<uint32_t, descriptor_set>& get_descriptor_sets() { return this->m_descriptor_sets; }
+                const std::vector<VkPushConstantRange>& get_push_constant_ranges() { return this->m_push_constant_ranges; }
             private:
                 void compile();
                 VkShaderModule compile_shader(shader_type type, const shader_parser& parser);
@@ -48,6 +49,7 @@ namespace bve {
                 VkDevice m_device;
                 std::vector<VkPipelineShaderStageCreateInfo> m_pipeline_create_info;
                 std::map<uint32_t, descriptor_set> m_descriptor_sets;
+                std::vector<VkPushConstantRange> m_push_constant_ranges;
                 VkDescriptorPool m_descriptor_pool;
                 friend class vulkan_context;
             };

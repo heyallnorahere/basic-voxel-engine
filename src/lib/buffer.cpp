@@ -71,7 +71,7 @@ namespace bve {
                     temp.copy(*this);
                 }
                 this->alloc(size + offset);
-                if (temp) {
+                if (temp.m_pointer) {
                     this->copy(temp);
                 }
             } else {
@@ -94,9 +94,6 @@ namespace bve {
     }
     size_t buffer::size() const {
         return this->m_size;
-    }
-    buffer::operator bool() const {
-        return this->m_pointer;
     }
     void* buffer::operator+(size_t offset) {
         return (void*)((size_t)this->m_pointer + offset);

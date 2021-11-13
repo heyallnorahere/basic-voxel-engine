@@ -73,6 +73,9 @@ namespace bve {
         cmdlist->index_buffer->bind();
         pipeline->set_vertex_attributes(attributes);
     }
+    ref<graphics::pipeline> renderer::get_command_list_pipeline(command_list* cmdlist) {
+        return cmdlist->pipeline;
+    }
     void renderer::new_frame() {
         this->m_created_uniform_buffers.clear();
     }

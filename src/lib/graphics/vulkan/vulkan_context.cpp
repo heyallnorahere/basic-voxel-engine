@@ -218,6 +218,12 @@ namespace bve {
                     }
                     VkPipelineLayout layout = vk_pipeline->get_layout();
                     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0, (uint32_t)sets_to_bind.size(), sets_to_bind.data(), 0, nullptr);
+                    std::vector<vulkan_pipeline::pushed_constant> pushed_constants;
+                    vk_pipeline->get_pushed_constants(pushed_constants);
+                    for (const auto& constant : pushed_constants) {
+                        const auto& data = constant.data;
+                        vkCmdPushConstants(command_buffer, layout, constant.stage, constant.offset, data.size(), data.get<void>());
+                    }
                 } else {
                     throw std::runtime_error("[vulkan context] a pipeline must be bound in order to render");
                 }
@@ -488,6 +494,7 @@ namespace bve {
                 VkPhysicalDeviceFeatures features;
                 util::zero(features);
                 features.samplerAnisotropy = true;
+                features.vertexPipelineStoresAndAtomics = true;
                 create_info.pEnabledFeatures = &features;
                 create_info.enabledExtensionCount = (uint32_t)this->m_device_extensions.size();
                 create_info.ppEnabledExtensionNames = this->m_device_extensions.data();

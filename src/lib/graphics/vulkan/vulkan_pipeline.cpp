@@ -27,6 +27,33 @@ namespace bve {
                     this->m_factory->m_current_pipeline.reset();
                 }
             }
+            void vulkan_pipeline::push_constants(shader_type stage, const void* data, size_t size, size_t offset) {
+                pushed_constant constant;
+                constant.data.alloc(size);
+                constant.data.copy(data, size);
+                constant.offset = offset;
+                switch (stage) {
+                case shader_type::VERTEX:
+                    constant.stage = VK_SHADER_STAGE_VERTEX_BIT;
+                    break;
+                case shader_type::FRAGMENT:
+                    constant.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+                    break;
+                case shader_type::GEOMETRY:
+                    constant.stage = VK_SHADER_STAGE_GEOMETRY_BIT;
+                    break;
+                default:
+                    throw std::runtime_error("[vulkan pipeline] invalid shader stage");
+                }
+                this->m_pushed_constants.push_back(constant);
+            }
+            void vulkan_pipeline::get_pushed_constants(std::vector<pushed_constant>& destination) {
+                destination.resize(this->m_pushed_constants.size());
+                for (size_t i = 0; i < this->m_pushed_constants.size(); i++) {
+                    destination[i] = this->m_pushed_constants[i];
+                }
+                this->m_pushed_constants.clear();
+            }
             void vulkan_pipeline::bind_buffer(VkBufferUsageFlags type, ref<vulkan_buffer> buffer) {
                 if (buffer) {
                     this->unbind_buffer(type, buffer);
@@ -187,11 +214,16 @@ namespace bve {
                     for (const auto& [id, set] : this->m_shader->get_descriptor_sets()) {
                         layouts.push_back(set.layout);
                     }
-                    pipeline_layout_info.setLayoutCount = (uint32_t)layouts.size();
-                    pipeline_layout_info.pSetLayouts = layouts.data();
+                    if (!layouts.empty()) {
+                        pipeline_layout_info.setLayoutCount = (uint32_t)layouts.size();
+                        pipeline_layout_info.pSetLayouts = layouts.data();
+                    }
+                    const auto& push_constant_ranges = this->m_shader->get_push_constant_ranges();
+                    if (!push_constant_ranges.empty()) {
+                        pipeline_layout_info.pushConstantRangeCount = push_constant_ranges.size();
+                        pipeline_layout_info.pPushConstantRanges = push_constant_ranges.data();
+                    }
                 }
-                pipeline_layout_info.pushConstantRangeCount = 0;
-                pipeline_layout_info.pPushConstantRanges = nullptr;
                 if (vkCreatePipelineLayout(device, &pipeline_layout_info, nullptr, &this->m_layout) != VK_SUCCESS) {
                     throw std::runtime_error("[vulkan pipeline] could not create pipeline layout");
                 }

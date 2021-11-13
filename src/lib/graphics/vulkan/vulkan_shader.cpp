@@ -156,6 +156,7 @@ namespace bve {
                 uint32_t descriptor_count;
             };
             void vulkan_shader::create_descriptor_sets() {
+                this->m_push_constant_ranges.clear();
                 auto context = this->m_factory->get_current_context().as<vulkan_context>();
                 size_t image_count = context->get_swapchain_image_count();
                 this->m_descriptor_pool = context->get_descriptor_pool();
@@ -182,6 +183,13 @@ namespace bve {
                         layout_binding.descriptor_type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
                         layout_binding.stage = get_stage_flags(resource_info.stage);
                         layout_binding.descriptor_count = resource_info.type->array_size;
+                    }
+                    for (const auto& [binding, resource_info] : set_data.push_constant_buffers) {
+                        VkPushConstantRange range;
+                        util::zero(range);
+                        range.stageFlags = get_stage_flags(resource_info.stage);
+                        range.size = resource_info.type->size;
+                        this->m_push_constant_ranges.push_back(range);
                     }
                 }
                 std::vector<VkDescriptorSetLayout> layouts;

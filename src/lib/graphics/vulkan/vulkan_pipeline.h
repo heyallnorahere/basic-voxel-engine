@@ -8,11 +8,18 @@ namespace bve {
         namespace vulkan {
             class vulkan_pipeline : public pipeline {
             public:
+                struct pushed_constant {
+                    ::bve::buffer data;
+                    size_t offset;
+                    VkShaderStageFlagBits stage;
+                };
                 vulkan_pipeline(ref<vulkan_object_factory> factory);
                 virtual ~vulkan_pipeline() override;
                 virtual void set_vertex_attributes(const std::vector<vertex_attribute>& attributes) override;
                 virtual void bind() override;
                 virtual void unbind() override;
+                virtual void push_constants(shader_type stage, const void* data, size_t size, size_t offset) override;
+                void get_pushed_constants(std::vector<pushed_constant>& destination);
                 VkPipeline get_pipeline() { return this->m_pipeline; }
                 VkPipelineLayout get_layout() { return this->m_layout; }
                 void set_shader(ref<vulkan_shader> shader) { this->m_shader = shader; }
@@ -31,6 +38,7 @@ namespace bve {
                 std::vector<vertex_attribute> m_vertex_attributes;
                 VkPipeline m_pipeline;
                 VkPipelineLayout m_layout;
+                std::vector<pushed_constant> m_pushed_constants;
             };
         }
     }

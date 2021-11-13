@@ -24,6 +24,7 @@ namespace bve {
         void destroy_command_list(command_list* cmdlist);
         void add_mesh(command_list* cmdlist, ref<mesh> mesh_);
         void close_command_list(command_list* cmdlist, const std::vector<graphics::vertex_attribute>& attributes);
+        ref<graphics::pipeline> get_command_list_pipeline(command_list* cmdlist);
         void new_frame();
         void render(command_list* cmdlist, ref<graphics::context> context);
         void set_shader(ref<graphics::shader> shader_);

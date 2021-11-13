@@ -1,4 +1,6 @@
 #pragma once
+#include "../shader_parser.h"
+#include "../buffer.h"
 namespace bve {
     namespace graphics {
         enum class vertex_attribute_type {
@@ -26,6 +28,13 @@ namespace bve {
             virtual void set_vertex_attributes(const std::vector<vertex_attribute>& attributes) = 0;
             virtual void bind() = 0;
             virtual void unbind() = 0;
+            virtual void push_constants(shader_type stage, const void* data, size_t size, size_t offset = 0) = 0;
+            template<typename T> void push_constants(shader_type stage, const T& data, size_t offset = 0) {
+                this->push_constants(stage, &data, sizeof(T), offset);
+            }
+            void push_constants(shader_type stage, const ::bve::buffer& data, size_t offset = 0) {
+                this->push_constants(stage, data.get<void>(), data.size(), offset);
+            }
         };
     }
 }
