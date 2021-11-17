@@ -16,8 +16,18 @@ namespace bve {
                 std::vector<VkSurfaceFormatKHR> formats;
                 std::vector<VkPresentModeKHR> present_modes;
             };
-            static swap_chain_support_details query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
+            static std::optional<swap_chain_support_details> query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR window_surface) {
+                auto indices = find_queue_families(device, window_surface);
                 swap_chain_support_details details;
+                bool swap_chain_supported = false;
+                if (indices.present_family) {
+                    VkBool32 supported;
+                    vkGetPhysicalDeviceSurfaceSupportKHR(device, *indices.present_family, window_surface, &supported);
+                    swap_chain_supported = (bool)supported;
+                }
+                if (!swap_chain_supported) {
+                    return std::optional<swap_chain_support_details>();
+                }
                 vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, window_surface, &details.capabilities);
                 uint32_t format_count = 0;
                 vkGetPhysicalDeviceSurfaceFormatsKHR(device, window_surface, &format_count, nullptr);
@@ -90,7 +100,7 @@ namespace bve {
                 std::string message = "[vulkan context] validation layer: " + std::string(callback_data->pMessage);
                 switch (severity) {
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-                    spdlog::debug("(debug) {0}", message);
+                    spdlog::debug(message);
                     break;
                 case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
                     spdlog::warn(message);
@@ -507,13 +517,16 @@ namespace bve {
             }
             void vulkan_context::create_swap_chain(glm::ivec2 size) {
                 auto details = query_swap_chain_support(this->m_physical_device, this->m_window_surface);
-                auto format = choose_swap_surface_format(details.formats);
-                auto present_mode = choose_swap_present_mode(details.present_modes);
-                auto extent = choose_swap_extent(details.capabilities, size);
-                this->m_min_image_count = details.capabilities.minImageCount;
+                if (!details) {
+                    throw std::runtime_error("[vulkan context] the given physical device does not support swapchains");
+                }
+                auto format = choose_swap_surface_format(details->formats);
+                auto present_mode = choose_swap_present_mode(details->present_modes);
+                auto extent = choose_swap_extent(details->capabilities, size);
+                this->m_min_image_count = details->capabilities.minImageCount;
                 this->m_image_count = this->m_min_image_count + 1;
-                if (details.capabilities.maxImageCount > 0 && this->m_image_count > details.capabilities.maxImageCount) {
-                    this->m_image_count = details.capabilities.maxImageCount;
+                if (details->capabilities.maxImageCount > 0 && this->m_image_count > details->capabilities.maxImageCount) {
+                    this->m_image_count = details->capabilities.maxImageCount;
                 }
                 VkSwapchainCreateInfoKHR create_info;
                 util::zero(create_info);
@@ -536,7 +549,7 @@ namespace bve {
                     create_info.queueFamilyIndexCount = 0;
                     create_info.pQueueFamilyIndices = nullptr;
                 }
-                create_info.preTransform = details.capabilities.currentTransform;
+                create_info.preTransform = details->capabilities.currentTransform;
                 create_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
                 create_info.presentMode = present_mode;
                 create_info.clipped = true;
@@ -781,7 +794,9 @@ namespace bve {
                 bool swap_chain_adequate = false;
                 if (extensions_supported) {
                     auto details = query_swap_chain_support(device, this->m_window_surface);
-                    swap_chain_adequate = !details.formats.empty() && !details.present_modes.empty();
+                    if (details) {
+                        swap_chain_adequate = !details->formats.empty() && !details->present_modes.empty();
+                    }
                 }
                 std::vector<bool> requirements = {
                     (bool)features.geometryShader,
